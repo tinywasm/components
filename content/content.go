@@ -6,85 +6,46 @@ import (
 
 // Content helps construct a standard Content layout
 type Content struct {
-	handlerName string
-	title       string
+	title string
 
 	// Layout Sections
-	headerControl string
-	sidebar       dom.HTMLRenderer
-	content       dom.HTMLRenderer
-
-	// Internal tracking
-	handler    any
-	components []dom.HTMLRenderer // Track all used components for asset collection
+	header  dom.Component
+	sidebar dom.Component
+	content dom.Component
 }
 
-func New(h any) *Content {
+func New(title string) *Content {
 	b := &Content{
-		handler: h,
+		title: title,
 	}
-
-	// 1. Get handler name
-	if name, ok := h.(string); ok {
-		b.handlerName = name
-	} else if named, ok := h.(interface{ HandlerName() string }); ok {
-		b.handlerName = named.HandlerName()
-	}
-
 	return b
-}
-
-func (b *Content) HandlerName() string {
-	return b.handlerName
-}
-
-func (b *Content) SetTitle(title string) *Content {
-	b.title = title
-	return b
-}
-
-func (b *Content) Title() string {
-	return b.title
-}
-
-func (b *Content) track(c dom.HTMLRenderer) {
-	if c != nil {
-		b.components = append(b.components, c)
-	}
-}
-
-func (b *Content) TrackedComponents() []dom.HTMLRenderer {
-	return b.components
 }
 
 // WithHeader adds a component to the header controls area.
-func (b *Content) WithHeader(c dom.HTMLRenderer) *Content {
-	b.headerControl = c.RenderHTML()
-	b.track(c)
+func (b *Content) WithHeader(c dom.Component) *Content {
+	b.header = c
 	return b
 }
 
 // WithSidebar sets the sidebar component (formerly searchList).
-func (b *Content) WithSidebar(c dom.HTMLRenderer) *Content {
+func (b *Content) WithSidebar(c dom.Component) *Content {
 	b.sidebar = c
-	b.track(c)
 	return b
 }
 
 // WithContent sets the main content component (formerly form/buttons).
-func (b *Content) WithContent(c dom.HTMLRenderer) *Content {
+func (b *Content) WithContent(c dom.Component) *Content {
 	b.content = c
-	b.track(c)
 	return b
 }
 
 func (b *Content) RenderHTML() string {
 	// 1. Header
-	head := &header.ContentHeader{
-		Title:    b.title,
-		Controls: b.headerControl,
+
+	var headerHtml string
+	if b.header != nil {
+		headerHtml = b.header.RenderHTML()
 	}
-	b.track(head)
 
 	// 2. Sidebar + Content Layout
 	// Combine sidebar and content into the expected layout structure
@@ -102,14 +63,12 @@ func (b *Content) RenderHTML() string {
 	sContainer := &container.ScrollContainer{
 		Content: contentHtml,
 	}
-	b.track(sContainer)
 
 	// 4. Panel
 	p := &panel.Panel{
 		ID:      b.handlerName,
 		Content: head.RenderHTML() + sContainer.RenderHTML(),
 	}
-	b.track(p)
 
 	return p.RenderHTML()
 }

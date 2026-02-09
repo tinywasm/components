@@ -1,0 +1,544 @@
+   .hour-li {
+       margin-left: 2px;
+       /* color: var(--color-primary); */
+       position: relative;
+       display: inline-flex;
+
+       width: 100%;
+       height: 50px;
+       margin: 0em 0em 1em 0em;
+       border-radius: .3em;
+       border: 1px solid var(--color-gray);
+
+       display: flex;
+       align-items: center;
+       transition: 0.3s all ease;
+   }
+
+   .left-hour-enable,
+   .left-hour-disable {
+       height: 52px;
+       /* min-height: 40px; */
+       /* max-height: 40px; */
+   }
+
+   .hour-disable {
+       background: var(--color-gray);
+   }
+
+   .hour-enable:hover {
+       border: 2px solid var(--color-secondary);
+   }
+
+   .hour-enable {
+       cursor: pointer;
+       background: var(--color-primary);
+   }
+
+   .hour-text {
+       font-size: 1.1rem;
+       text-transform: capitalize;
+       text-decoration: none;
+       color: var(--color-quaternary);
+       pointer-events: none;
+       width: 70%;
+       text-overflow: ellipsis;
+       white-space: nowrap;
+       overflow: hidden;
+       display: inline-block;
+   }
+
+   .hour-li .right-info {
+       color: var(--color-quaternary);
+       font-size: .8rem;
+       width: 20%;
+   }
+
+   .hour-li .down-hour-info {
+       color: var(--color-quaternary);
+       font-size: .8rem;
+       display: block;
+   }
+
+   .footer-hour-description {
+       margin-bottom: -50px;
+       right: 5px;
+       position: absolute;
+       background: var(--color-primary);
+       color: var(--color-tertiary);
+       font-size: .7rem;
+       border-radius: .3em;
+       padding: .1em;
+       display: flex;
+       align-items: center;
+       border: 1px solid var(--color-gray);
+   }
+
+
+   .left-hour-enable,
+   .left-hour-disable {
+       display: flex;
+       width: 70px;
+       min-width: 70px;
+       font-size: 1.6rem;
+       font-weight: bold;
+       align-items: flex-end;
+       justify-content: left;
+       margin-right: 10px;
+       border-radius: .3em;
+       margin-left: -1px;
+
+       padding: 5px;
+   }
+
+   .left-hour-enable {
+       color: var(--color-quaternary);
+       background: var(--color-primary);
+       border: 3px solid var(--color-quaternary);
+   }
+
+   .left-hour-disable {
+       color: var(--color-primary);
+       background: var(--color-tertiary);
+       border: 2px solid var(--color-gray);
+   }
+
+
+   .left-hour-disable::after,
+   .left-hour-enable::after {
+       content: attr(data-minutes);
+       position: absolute;
+       font-size: 1rem;
+       left: 43px;
+       top: 3px;
+   }
+
+   .left-hour-enable::after {
+       color: var(--color-quaternary);
+   }
+
+   .left-hour-disable::after {
+       color: var(--color-primary);
+   }
+
+   .selected-hour {
+       background: var(--color-selection);
+   }
+
+   input[type=number]::-webkit-inner-spin-button,
+   input[type=number]::-webkit-outer-spin-button,
+   input[type=date]::-webkit-inner-spin-button,
+   input[type=date]::-webkit-outer-spin-button {
+       -webkit-appearance: none;
+   }
+
+   span.right-age,
+   input[type=time] {
+       font-weight: bold;
+       font-size: 101%;
+       border: 0;
+       outline: 0;
+       background: none;
+       width: 100%;
+   }
+
+   label.date-spanish input[type=text] {
+       width: 0px;
+       display: none;
+       position: absolute;
+   }
+
+   label.date-spanish::before {
+       text-transform: capitalize;
+       content: attr(data-spanish);
+       color: var(--color-quaternary);
+       position: relative;
+       top: 10px;
+       /* margin-top: auto; */
+       /* margin-bottom: auto; */
+       font-weight: bold;
+   }
+
+   input[type=date] {
+       font-weight: bold;
+       width: 100%;
+       font-size: 101%;
+       border: none;
+   }
+
+   input[type=time]::after {
+       content: ' Horas';
+       font-size: 80%;
+   }
+
+   .age-number input {
+       width: 8%;
+   }
+
+   .age-number:after,
+   .age-date::before {
+       color: var(--color-tertiary);
+       font-size: 70%;
+   }
+
+   label.age-number:after {
+       content: 'Aos';
+   }
+
+   .age-date input {
+       width: 60%;
+   }
+
+   .age-date {
+       float: right;
+   }
+
+   .age-date::before {
+       content: 'Fecha Nacimiento:';
+       margin-right: 7px;
+   }
+
+   .hour-chat-message {
+       color: var(--color-tertiary);
+       position: absolute;
+       right: 5px;
+       top: 70%;
+       font-size: 80%;
+   }
+
+   /* *** calendario **** */
+   .calendar-form-container {
+       min-height: 53%;
+   }
+
+   .hour-select-container {
+       color: var(--color-secondary);
+       margin-bottom: 0;
+       font-size: 80%;
+
+       display: grid;
+       grid-template-columns: repeat(4, 1fr);
+       grid-template-rows: repeat(2, 1fr);
+
+       align-items: center;
+       justify-content: center;
+       row-gap: 4px;
+   }
+
+   .break-space {
+       grid-column: 1 /-1;
+   }
+
+   select.hour-selection {
+       margin-left: 5px;
+       margin-right: 5px;
+       /* width: 4vw; */
+       text-align: center;
+   }
+
+   .check-all-days {
+       cursor: pointer;
+   }
+
+   .check-all-days:hover {
+       color: var(--color-secondary);
+   }
+
+   .weekday-selectable {
+       box-shadow: 0 2px 2px color-mix(in srgb, var(--color-quaternary), transparent 50%);
+       border-radius: 3px;
+       cursor: pointer;
+       margin-bottom: 10px;
+       height: 2vw;
+       /* width: 20px; */
+       align-content: center;
+       position: relative;
+   }
+
+   /* no seleccionable */
+   .weekday-selectable,
+   .hour-li {
+       /* supported by Chrome and Opera */
+       -webkit-user-select: none;
+       /* Safari */
+       -khtml-user-select: none;
+       /* Konqueror HTML */
+       -moz-user-select: none;
+       /* Firefox */
+       -ms-user-select: none;
+       /* Internet Explorer/Edge */
+       user-select: none;
+   }
+
+
+   .normal-text-weekday-title::before {
+       content: attr(data-title);
+   }
+
+   .weekday-work-info,
+   .weekday-disable-info {
+       display: flex;
+       flex-wrap: nowrap;
+       flex-direction: column;
+       width: 100%;
+       height: 25vh;
+   }
+
+   .weekday-work-info {
+       border-right: 1px solid var(--color-secondary);
+   }
+
+   .weekdays-shedule-container {
+       display: grid;
+       grid-template-columns: repeat(7, 1fr);
+       column-gap: 5px;
+       height: 62%;
+   }
+
+   .weekday-work-info i.shedule-info-work_hour {
+       height: 100%;
+       margin: 2px;
+       text-align: center;
+       border-bottom: 1px solid var(--color-gray);
+       /* font-size: 70%; */
+       font-size: 1vw;
+   }
+
+   .weekday-cover-selected {
+       box-shadow: var(--color-selection) 0px 1px 5px, var(--color-selection) 0px 0px 0px 3px;
+       font-size: 115%;
+       z-index: 3;
+   }
+
+   .weekday-cover-activated {
+       border-radius: 3px;
+       color: var(--color-primary);
+       background-color: var(--color-secondary);
+   }
+
+   input[type="time"]::-webkit-calendar-picker-indicator {
+       background: none;
+       display: none;
+   }
+
+   /* *** configuracion dia *** */
+   .day-selectable {
+       box-shadow: 0 2px 2px color-mix(in srgb, var(--color-quaternary), transparent 50%);
+       border-radius: 3px;
+       cursor: pointer;
+   }
+
+   .day-text-disable,
+   .day-selectable,
+   .day-text-red,
+   .day-text-normal,
+   .day-cover-today {
+       margin-left: auto;
+       margin-right: auto;
+       height: 1.4rem;
+       width: 1.4rem;
+       max-width: 100%;
+       position: relative;
+       display: flex;
+       align-content: center;
+   }
+
+   .weekday li,
+   .day-selectable,
+   .footer-title-month,
+   .day-text-normal::before,
+   .day-cover-today::before,
+   .day-text-red::before {
+       font-weight: bold;
+       font-size: .7rem;
+   }
+
+   .day-text-disable::before,
+   .day-selectable::before,
+   .day-text-normal::before,
+   .day-cover-today::before,
+   .day-text-red::before {
+       content: attr(data-number);
+       width: 100%;
+       text-align: center;
+       margin-top: auto;
+       margin-bottom: auto;
+       z-index: 2;
+   }
+
+   .day-cover-day {
+       border-radius: 3px;
+       background-color: var(--color-selection);
+   }
+
+   .day-cover-today {
+       border-radius: 3px;
+       background-color: var(--color-secondary);
+   }
+
+   .day-cover-selected {
+       box-shadow: var(--color-selection) 0px 1px 5px, var(--color-selection) 0px 0px 0px 3px;
+       font-size: 112%;
+       color: var(--color-primary);
+       text-shadow: 1px 1px var(--color-quaternary);
+   }
+
+   .day-cover-selected {
+       background-color: var(--color-selection);
+   }
+
+   .day-selectable:hover {
+       box-shadow: var(--color-secondary) 0px 1px 4px, var(--color-secondary) 0px 0px 0px 2px;
+   }
+
+   .day-text-red::before {
+       color: var(--color-error);
+   }
+
+   .day-text-white::before {
+       color: var(--color-primary);
+   }
+
+   .day-text-disable::before {
+       color: var(--color-tertiary);
+   }
+
+   .day-text-normal::before {
+       color: var(--color-quaternary);
+   }
+
+   .day-used,
+   .hour-used {
+       height: 0;
+       /* width: 2vw; */
+       width: 1.4rem;
+       transition: width 0.5s ease-in;
+       position: absolute;
+       right: 0;
+       z-index: 0;
+   }
+
+   .day-used {
+       bottom: 0;
+       background: color-mix(in srgb, var(--color-tertiary), transparent 50%);
+   }
+
+   .hour-used {
+       border-radius: 3px;
+       background: var(--color-secondary);
+   }
+
+   .week-star-mon {
+       grid-column-start: 1;
+   }
+
+   .week-star-tue {
+       grid-column-start: 2;
+   }
+
+   .week-star-wed {
+       grid-column-start: 3;
+   }
+
+   .week-star-thu {
+       grid-column-start: 4;
+   }
+
+   .week-star-fri {
+       grid-column-start: 5;
+   }
+
+   .week-star-sat {
+       grid-column-start: 6;
+   }
+
+   .week-star-sun {
+       grid-column-start: 7;
+   }
+
+   /* *** calendario configuracion *** */
+   .calendar-container,
+   .calendar-form-container {
+       padding-left: 2vw;
+       padding-right: 2vw;
+       width: 100%;
+       overflow: hidden;
+       position: relative;
+   }
+
+   .calendar-container {
+       min-height: 29vh;
+   }
+
+   .month {
+       height: 23vh;
+   }
+
+   .weekday {
+       margin-bottom: .3rem;
+   }
+
+   .month,
+   .weekday {
+       display: grid;
+       grid-template-columns: repeat(7, 1fr);
+   }
+
+   .footer-title-month {
+       right: 0;
+       left: 0;
+       bottom: 0;
+   }
+
+   /* ** slider ***/
+   ul.months-slider-container,
+   .weekdays-shedule-container {
+       display: flex;
+       height: 20vh;
+       z-index: 1;
+   }
+
+   ul.months-slider-container {
+       margin-left: -100%;
+   }
+
+   .slider-month-section {
+       width: 100%;
+   }
+
+   /* configuracion botones calendario  */
+   div[name*="btn-calendar"] {
+       position: absolute;
+       height: 100%;
+       width: 2vw;
+       top: 50%;
+       transform: translateY(-50%);
+       background: var(--color-primary);
+       color: var(--color-primary);
+       font-size: 30px;
+       font-weight: bold;
+       font-family: monospace;
+       cursor: pointer;
+       text-align: center;
+       display: flex;
+       justify-content: center;
+       align-content: center;
+       flex-direction: column;
+       z-index: 2;
+   }
+
+   div[name*="btn-calendar"]:hover {
+       color: var(--color-quaternary);
+   }
+
+   div[name="btn-calendar-left"] {
+       left: 0px;
+   }
+
+   div[name="btn-calendar-right"] {
+       right: 0px;
+   }
+
+   ul.months-slider-container {
+       width: 300%;
+   }

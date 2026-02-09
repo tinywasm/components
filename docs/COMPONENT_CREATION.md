@@ -40,19 +40,21 @@ func (c *MyComponent) RenderHTML() string {
 
 **CRITICAL:** This file must have the `//go:build !wasm` tag. Here, CSS and any logic that should not reach the WASM client are defined to keep the binary lightweight.
 
+By using separate build tags, we can leverage `go:embed` to include CSS from a separate file (e.g., `mycomponent.css`). This is highly recommended as it makes it much easier for developers to review and edit CSS or JS (if any server-side JS is needed) compared to inline strings.
+
 ```go
 //go:build !wasm
 
 package mycomponent
 
+import _ "embed"
+
+//go:embed mycomponent.css
+var css string
+
 // RenderCSS returns the specific CSS for this component.
 func (c *MyComponent) RenderCSS() string {
-    return `
-    .my-class {
-        background: #fff;
-        padding: 1rem;
-    }
-    `
+    return css
 }
 ```
 

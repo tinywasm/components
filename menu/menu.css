@@ -1,0 +1,31 @@
+.menu-container {
+    background-color: var(--color-gray);
+    z-index: 6;
+    grid-area: menu-container;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+/* menu pricipal de navegacion */
+.slider_panel {
+    border: .1vw solid var(--color-gray);
+    top: var(--header-height);
+    width: calc(100vw - var(--menu-width-collapsed));
+    height: var(--content-height);
+    position: absolute;
+    background-color: var(--color-quaternary);
+    margin-left: -104vw;
+    z-index: 2;
+    -webkit-transition: all .6s ease-in-out;
+    -moz-transition: all .6s ease-in-out;
+    -o-transition: all .6s ease-in-out;
+    -ms-transition: all .6s ease-in-out;
+    transition: all .6s ease-in-out;
+}
+
+.slider_panel:target {
+    margin-left: 0%;
+    background-color: var(--color-secondary);
+}

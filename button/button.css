@@ -1,0 +1,158 @@
+    .btn-url-up {
+        margin-bottom: auto;
+    }
+
+    .btn-url-down {
+        margin-top: auto;
+        margin-bottom: .3rem;
+    }
+
+    .btn-url-down .btn-url {
+        background: var(--color-gray);
+    }
+
+    .btn-url-down svg.btn-url path {
+        fill: var(--color-secondary);
+    }
+
+    button {
+        cursor: pointer;
+        border: 0;
+        outline: 0;
+    }
+
+    button[name*="btn"] {
+        background-position: center;
+        /* background-size: 30px; */
+        background-size: 12%;
+        background-repeat: no-repeat;
+        background-color: var(--color-secondary);
+        color: var(--color-primary);
+        padding: .4rem;
+        border-radius: .4em;
+        flex: auto;
+        margin: .25em;
+    }
+
+    button[name*="btn"]:disabled {
+        background-color: var(--color-tertiary);
+        pointer-events: none;
+        /*  border-color: #e9e9e9; */
+    }
+
+    button[name*="btn"]:hover {
+        background-color: var(--color-selection);
+    }
+
+    button[name="btn_crudnew"] {
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGNsYXNzPSdidG5fY3J1ZG5ldycgdmlld0JveD0nMCAwIDE2IDE2Jz4KPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTE1LjUgNmgtNS41di01LjVjMC0wLjI3Ni0wLjIyNC0wLjUtMC41LTAuNWgtM2MtMC4yNzYgMC0wLjUgMC4yMjQtMC41IDAuNXY1LjVoLTUuNWMtMC4yNzYgMC0wLjUgMC4yMjQtMC41IDAuNXYzYzAgMC4yNzYgMC4yMjQgMC41IDAuNSAwLjVoNS41djUuNWMwIDAuMjc2IDAuMjI0IDAuNSAwLjUgMC41aDNjMC4yNzYgMCAwLjUtMC4yMjQgMC41LTAuNXYtNS41aDUuNWMwLjI3NiAwIDAuNS0wLjIyNCAwLjUtMC41di0zYzAtMC4yNzYtMC4yMjQtMC41LTAuNS0wLjV6Ii8+Cjwvc3ZnPg==");
+    }
+
+    button[name="btn_cruddel"] {
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGNsYXNzPSdidG5fY3J1ZGRlbCcgdmlld0JveD0nMCAwIDE2IDE2Jz4KPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTAgNi41djNjMCAwLjI3NiAwLjIyNCAwLjUgMC41IDAuNWgxNWMwLjI3NiAwIDAuNS0wLjIyNCAwLjUtMC41di0zYzAtMC4yNzYtMC4yMjQtMC41LTAuNS0wLjVoLTE1Yy0wLjI3NiAwLTAuNSAwLjIyNC0wLjUgMC41eiIvPgo8L3N2Zz4=");
+    }
+
+    .contebuton {
+        display: flex;
+        height: 100%;
+        background: var(--color-primary);
+        justify-content: space-between;
+        margin-left: var(--mag-cua);
+        padding: .1em;
+        border-radius: 0em 0em .4em .4em;
+    }
+
+    .cont-centered-btn {
+        margin-top: 0.5em;
+        display: flex;
+        height: 3em;
+        width: 100%;
+    }
+
+    button[name="btn_crudcancel"] {
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGNsYXNzPSdidG5fY3J1ZGNhbmNlbCcgdmlld0JveD0nMCAwIDE2IDE2Jz4KPHBhdGggZmlsbD0iI2ZmZmZmZiIgZD0iTTggMWMtMi4yMDkgMC00LjIwOSAwLjg5Ni01LjY1NyAyLjM0M2wtMi4zNDMtMi4zNDN2Nmg2bC0yLjI0My0yLjI0M2MxLjA4Ni0xLjA4NiAyLjU4Ni0xLjc1NyA0LjI0My0xLjc1NyAzLjMxNCAwIDYgMi42ODYgNiA2IDAgMS43OTItMC43ODYgMy40MDEtMi4wMzIgNC41bDEuMzIzIDEuNWMxLjY2MS0xLjQ2NiAyLjcwOS0zLjYxMSAyLjcwOS02IDAtNC40MTgtMy41ODItOC04LTh6Ii8+Cjwvc3ZnPg==");
+    }
+
+    button[name="btn_crudsave"] {
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGNsYXNzPSdidG5fY3J1ZHNhdmUnIHZpZXdCb3g9JzAgMCAxNiAxNic+CjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Ik0xNCAwaC0xNHYxNmgxNnYtMTRsLTItMnpNOCAyaDJ2NGgtMnYtNHpNMTQgMTRoLTEydi0xMmgxdjVoOXYtNWgxLjE3MmwwLjgyOCAwLjgyOHYxMS4xNzJ6Ii8+Cjwvc3ZnPg==");
+    }
+
+    button[name="btn-login"] {
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGNsYXNzPSdidG4tbG9naW4nIHZpZXdCb3g9JzAgMCAxNiAxNic+CjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im0xLjEgNS4yYzEuNi0xLjYgNC4xLTEuNiA1LjYgMCAwLjE4IDAuMTggMC4zMyAwLjM2IDAuNDcgMC41Nmg2LjhsMS43IDEuN2MwLjMxIDAuMzEgMC4zMSAwLjgxIDAgMS4xbC0wLjU2IDAuNTYtMC41Ni0wLjU2LTEuMSAxLjEtMS4xLTEuMS0xLjEgMS4xLTEuMS0xLjEtMS4xIDEuMWgtMS41Yy0wLjE5IDAuNDEtMC40NSAwLjc5LTAuNzkgMS4xLTEuNiAxLjYtNC4xIDEuNi01LjYgMC0xLjYtMS42LTEuNi00LjEgMC01LjZ6bTIgMy42YzAuNDctMC40NiAwLjQ3LTEuMiAwLTEuNy0wLjQ3LTAuNDYtMS4yLTAuNDYtMS43IDAtMC40NyAwLjQ2LTAuNDcgMS4yIDAgMS43IDAuNDcgMC40NiAxLjIgMC40NiAxLjcgMHoiIHN0cm9rZS13aWR0aD0iLjc5Ii8+Cjwvc3ZnPg==");
+    }
+
+    button[name="btn_crudsend"] {
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGNsYXNzPSdidG5fY3J1ZHNlbmQnIHZpZXdCb3g9JzAgMCAxNiAxNic+CjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im04LjUgMTZjLTAuMDM2IDAtMC4wNzItNGUtMyAtMC4xMDgtMC4wMTItMC4yMjktMC4wNTEtMC4zOTItMC4yNTQtMC4zOTIdMC40ODggMC4yMTY1LTkuMDE4IDEuMDkyLTcuNS03LjUtNy41LTAuMjM0IDAtMC40MzctMC4xNjMtMC40ODgtMC4zOTJzMC4wNjQtMC40NjIgMC4yNzctMC41NjFsMTUtN2MwLjE5MS0wLjA4OSAwLjQxNi0wLjA0OSAwLjU2NSAwLjFzMC4xODggMC4zNzQgMC4xIDAuNTY1bC03IDE1Yy0wLjA4MyAwLjE3OS0wLjI2MiAwLjI4OS0wLjQ1MyAwLjI4OXptLTUuNzQ2LTljLTEuODM2LTQuNjY3LTAuOTE4LTIuMzMzIDAgMHoiLz4KPC9zdmc+");
+    }
+
+    button[name="btn_crudsend"] {
+        background-size: 25%;
+        width: 20%;
+    }
+
+    .btn-url,
+    .btn-selected,
+    .btn-url-disable,
+    .btn-login {
+        box-shadow: .1em .1em .2em var(--color-quaternary);
+        height: 2.5rem;
+        border-radius: var(--mag-sec);
+        padding: .3em;
+    }
+
+    .btn-url,
+    .btn-url-disable,
+    .btn-selected {
+        margin-top: var(--mag-pri);
+    }
+
+    .btn-url-disable {
+        pointer-events: none;
+        background: var(--color-tertiary);
+    }
+
+    .btn-url,
+    .btn-login {
+        background: var(--color-secondary);
+    }
+
+    .btn-selected {
+        background: var(--color-selection);
+    }
+
+    input[type=submit] {
+        background-color: var(--color-secondary);
+        color: var(--color-primary);
+        cursor: pointer;
+        border: none;
+        padding: .4em .8em;
+        border-radius: .4em;
+    }
+
+    .btn-url-pulse {
+        box-shadow: .1rem .1rem .2rem var(--color-quaternary);
+        height: 2.5rem;
+        border-radius: var(--mag-sec);
+        padding: .3em;
+        background: var(--color-tertiary);
+        margin-top: var(--mag-sec);
+        animation: pulse-url 2s infinite;
+    }
+
+    @keyframes pulse-url {
+        0% {
+            transform: scale(0.90);
+            box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-selection), transparent 30%);
+        }
+
+        70% {
+            transform: scale(1);
+            box-shadow: 0 0 0 1vw transparent;
+        }
+
+        100% {
+            background: var(--color-selection);
+            transform: scale(0.90);
+            box-shadow: 0 0 0 0 transparent;
+        }
+    }

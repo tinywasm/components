@@ -1,0 +1,86 @@
+:root {
+    --color-primary: #ffffff;
+    --color-secondary: #3f88bf;
+    --color-tertiary: #c2c1c1;
+    --color-quaternary: #000000;
+    --color-gray: #e9e9e9;
+    --color-selection: #ff9300;
+    --color-hover: #ff95008e;
+    --color-success: #aadaff7c;
+    --color-error: #f20707;
+
+    --header-height: 3vh;
+    --content-height: 97vh;
+    --title-height: 8vh;
+    --mag-pri: .5rem;
+    --mag-sec: .2rem;
+    --mag-cua: .2rem;
+    --controls-height: 9vh;
+
+    --menu-width-collapsed: 4vw;
+    --menu-width-expanded: 20vw;
+}
+
+* {
+    -webkit-box-sizing: border-box;
+    -moz-box-sizing: border-box;
+    margin: 0;
+    box-sizing: border-box;
+    outline: none;
+    text-decoration: none;
+    list-style: none;
+    list-style-type: none;
+}
+
+a:link,
+a:visited {
+    text-decoration: none;
+    color: var(--color-quaternary);
+}
+
+body {
+    height: 100vh;
+    max-height: 100vh;
+    font-family: Arvo;
+    font-size: 16px;
+
+    overflow: hidden;
+    padding: 0;
+    background-color: var(--color-gray);
+    display: grid;
+    grid-template:
+        "header         header" var(--header-height) "module-content menu-container" var(--content-height) /
+        calc(100vw - var(--menu-width-collapsed)) var(--menu-width-collapsed);
+}
+
+header {
+    background-color: var(--color-gray);
+    font-size: 70%;
+    text-align: left;
+    grid-area: header;
+    z-index: 5;
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;
+}
+
+@font-face {
+    font-family: Arvo;
+    src: url("../fonts/Arvo-Regular.ttf") format("truetype");
+}
+
+h1 {
+    font-size: 2rem;
+}
+
+svg {
+    display: flex;
+    margin: auto;
+    pointer-events: none;
+}
+
+:checked+span {
+    font-weight: bold;
+    font-size: 101%;
+    color: var(--color-quaternary);
+    transition: 0.3s all ease;
+}

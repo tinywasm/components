@@ -1,0 +1,108 @@
+.module-content {
+    border-radius: 0em .4em .4em 0em;
+    border: .1vw solid var(--color-tertiary);
+    grid-area: module-content;
+    display: flex;
+}
+
+.article-contend {
+    flex: none;
+    display: grid;
+    grid-template: "title" var(--title-height) "article" 80vh "controls" var(--controls-height) / 66vw;
+}
+
+.article-contend-full-page {
+    display: grid;
+    grid-template: "title" var(--title-height) "article" 89vh / 96vw;
+}
+
+.aside-contend {
+    flex: none;
+    margin-left: var(--mag-pri);
+
+    display: grid;
+    grid-template: "aside-list" var(--title-height) "aside-list" 80vh "aside-search" var(--controls-height) / 29vw;
+}
+
+.title h1 {
+    margin-left: calc(.7em);
+    text-align: left;
+    color: var(--color-primary);
+}
+
+.title-container {
+    grid-area: title;
+    display: flex;
+}
+
+.title {
+    position: relative;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+article {
+    grid-area: article;
+    border-radius: .4em .4em 0em 0em;
+    background: var(--color-primary);
+    margin-left: var(--mag-cua);
+    display: flex;
+    flex-direction: column;
+}
+
+.box-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+
+    /* for Firefox */
+    min-height: 0;
+
+    background: var(--color-tertiary);
+    border-radius: .4em;
+    padding-top: var(--mag-pri);
+    padding-left: var(--mag-pri);
+    padding-bottom: var(--mag-pri);
+    margin-top: var(--mag-sec);
+    margin-left: var(--mag-sec);
+    margin-right: var(--mag-sec);
+}
+
+.controls {
+    grid-area: controls;
+    margin-bottom: var(--mag-pri);
+}
+
+.all-space-centered {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    background: transparent;
+}
+
+.head-aside-info {
+    height: 9vh;
+    background: var(--color-secondary);
+    margin-top: -.5em;
+    margin-bottom: var(--mag-sec);
+}
+
+.ferr {
+    border-color: var(--color-error);
+}
+
+.search-error {
+    background-color: var(--color-success);
+}
+
+.hiden {
+    display: none;
+}
+
+.off-title-color {
+    color: var(--color-tertiary);
+}

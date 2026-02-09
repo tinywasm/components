@@ -2,7 +2,11 @@
 
 package content
 
-func (b *Content) RenderCSS() string {
+import _ "embed"
 
-	return ""
+//go:embed content.css
+var css string
+
+func (b *Content) RenderCSS() string {
+	return css
 }
