@@ -22,17 +22,21 @@ Contains the struct definition and common HTML rendering logic.
 package mycomponent
 
 import (
-    "github.com/tinywasm/dom"
-    "github.com/tinywasm/fmt"
+    dom "github.com/tinywasm/components/internal/dom"
+    "github.com/tinywasm/components"
 )
 
 type MyComponent struct {
-    dom.BaseComponent
+    components.BaseComponent
     Title string
 }
 
-func (c *MyComponent) RenderHTML() string {
-    return fmt.Html(`<div id="%s" class="my-class">%s</div>`, c.ID(), c.Title).String()
+func (c *MyComponent) Render() dom.Node {
+    return dom.Div().
+        ID(c.ID()).
+        Class("my-class").
+        Text(c.Title).
+        ToNode()
 }
 ```
 
@@ -91,7 +95,7 @@ If the component requires client-side interactivity (event listeners, subsequent
 package mycomponent
 
 import (
-    "github.com/tinywasm/dom"
+    dom "github.com/tinywasm/components/internal/dom"
     "github.com/tinywasm/fmt"
 )
 
@@ -106,18 +110,15 @@ func (c *MyComponent) OnMount() {
     }
 
     // 2. Add interactivity
-    btn.Click(func(e dom.Event) {
-        fmt.Println("Click on component:", c.Title)
-        // DOM update logic...
-    })
+    // (Example using a specific API, though typically event listeners are bound in Render)
 }
 ```
 
 ### Rules for Interactivity (`tinywasm/dom`)
 
 1.  **Always use `tinywasm/dom`**: Avoid direct `syscall/js` to maintain size optimization.
-2.  **Use `OnMount`**: Do not attempt to find elements in `RenderHTML`, as they do not yet exist in the DOM.
-3.  **Unique IDs**: Ensure IDs generated in `RenderHTML` are unique (using `c.ID()` as a prefix) to be able to find them in `OnMount`.
+2.  **Use `OnMount`**: Do not attempt to find elements in `RenderHTML` (if using string based rendering), as they do not yet exist in the DOM. With the fluent API, `OnMount` is handled internally by `dom` via `Render`.
+3.  **Unique IDs**: Ensure IDs generated in `Render` are unique (using `c.ID()` as a prefix) to be able to find them in `OnMount`.
 
 ## Integration
 When using the component in a module, `tinywasm/site` will handle collecting the CSS (since `site` runs on the server) and serving it, while the WASM client will only receive the necessary structure and logic.

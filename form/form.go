@@ -1,35 +1,28 @@
 package form
 
-// InputType defines supported input types
-type InputType string
-
-const (
-	Text     InputType = "text"
-	Password InputType = "password"
-	Email    InputType = "email"
-	Number   InputType = "number"
-	Date     InputType = "date"
-	Hidden   InputType = "hidden"
+import (
+	"github.com/tinywasm/components"
+	dom "github.com/tinywasm/components/internal/dom"
 )
 
-// Form represents a form definition
 type Form struct {
-	ID           string
-	Name         string
-	Autocomplete bool
-	Fieldsets    []*Fieldset
-	// Additional attributes can be added here
+	components.BaseComponent
+	Fields   []dom.Component
+	OnSubmit func(dom.Event)
 }
 
-// Fieldset represents a group of fields
-type Fieldset struct {
-	Legend   string
-	TabIndex int
-	Fields   []Field
-	Class    string
-}
+func (f *Form) Render() dom.Node {
+	form := dom.Tag("form").
+		ID(f.ID()).
+		Class("form")
 
-// Field interface for different types of form elements
-type Field interface {
-	Render() string
+	if f.OnSubmit != nil {
+		form.OnSubmit(f.OnSubmit)
+	}
+
+	for _, field := range f.Fields {
+		form.Append(field)
+	}
+
+	return form.ToNode()
 }
