@@ -10,3 +10,7 @@ var css string
 func (f *Form) RenderCSS() string {
 	return css
 }
+
+func (f *Form) IconSvg() map[string]string {
+	return nil
+}

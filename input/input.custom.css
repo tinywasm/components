@@ -116,3 +116,22 @@ input[name="hour-verified"]:checked+.left-hour-disable::after {
     color: var(--color-primary);
     transition: all 0.5s;
 }
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 1rem;
+}
+
+.input-group label {
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+}
+
+.input-group input {
+    padding: 0.5rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.25rem;
+    background: white;
+    width: 100%;
+}

@@ -78,7 +78,7 @@
     }
 
     button[name="btn-login"] {
-        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGNsYXNzPSdidG4tbG9naW4nIHZpZXdCb3g9JzAgMCAxNiAxNic+CjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im0xLjEgNS4yYzEuNi0xLjYgNC4xLTEuNiA1LjYgMCAwLjE4IDAuMTggMC4zMyAwLjM2IDAuNDcgMC41Nmg2LjhsMS43IDEuN2MwLjMxIDAuMzEgMC4zMSAwLjgxIDAgMS4xbC0wLjU2IDAuNTYtMC41Ni0wLjU2LTEuMSAxLjEtMS4xLTEuMS0xLjEgMS4xLTEuMS0xLjEtMS4xIDEuMWgtMS41Yy0wLjE5IDAuNDEtMC40NSAwLjc5LTAuNzkgMS4xLTEuNiAxLjYtNC4xIDEuNi01LjYgMC0xLjYtMS42LTEuNi00LjEgMC01LjZ6bTIgMy42YzAuNDctMC40NiAwLjQ3LTEuMiAwLTEuNy0wLjQ3LTAuNDYtMS4yLTAuNDYtMS43IDAtMC40NyAwLjQ2LTAuNDcgMS4yIDAgMS43IDAuNDcgMC40NiAxLjIgMC40NiAxLjcgMHoiIHN0cm9rZS13aWR0aD0iLjc5Ii8+Cjwvc3ZnPg==");
+        background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0naHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmcnIGNsYXNzPSdidG4tbG9naW4nIHZpZXdCb3g9JzAgMCAxNiAxNic+CjxwYXRoIGZpbGw9IiNmZmZmZmYiIGQ9Im0xLjEgNS4yYzEuNiA0LjYgNC4xLTEuNiA1LjYgMCAwLjE4IDAuMTggMC4zMyAwLjM2IDAuNDcgMC41Nmg2LjhsMS43IDEuN2MwLjMxIDAuMzEgMC4zMSAwLjgxIDAgMS4xbC0wLjU2IDAuNTYtMC41Ni0wLjU2LTEuMSAxLjEtMS4xLTEuMS0xLjEgMS4xLTEuMS0xLjEtMS4xIDEuMWgtMS41Yy0wLjE5IDAuNDEtMC40NSAwLjc5LTAuNzkgMS4xLTEuNiAxLjYtNC4xIDEuNi01LjYgMC0xLjYtMS42LTEuNi00LjEgMC01LjZ6bTIgMy42YzAuNDctMC40NiAwLjQ3LTEuMiAwLTEuNy0wLjQ3LTAuNDYtMS4yLTAuNDYtMS43IDAtMC40NyAwLjQ2LTAuNDcgMS4yIDAgMS43IDAuNDcgMC40NiAxLjIgMC40NiAxLjcgMHoiIHN0cm9rZS13aWR0aD0iLjc5Ii8+Cjwvc3ZnPg==");
     }
 
     button[name="btn_crudsend"] {
@@ -156,3 +156,30 @@
             box-shadow: 0 0 0 0 transparent;
         }
     }
+
+.btn {
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    font-size: 1rem;
+}
+
+.btn-primary {
+    background: var(--color-primary, #3b82f6);
+    color: white;
+}
+
+.btn-secondary {
+    background: var(--color-secondary, #6b7280);
+    color: white;
+}
+
+.btn-danger {
+    background: var(--color-error, #ef4444);
+    color: white;
+}
+
+.btn:hover {
+    opacity: 0.9;
+}
