@@ -2,7 +2,7 @@ package input
 
 import (
 	"github.com/tinywasm/components"
-	dom "github.com/tinywasm/components/internal/dom"
+	"github.com/tinywasm/dom"
 )
 
 type Input struct {

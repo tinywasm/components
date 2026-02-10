@@ -2,7 +2,7 @@ package table
 
 import (
 	"github.com/tinywasm/components"
-	dom "github.com/tinywasm/components/internal/dom"
+	"github.com/tinywasm/dom"
 )
 
 type Table struct {

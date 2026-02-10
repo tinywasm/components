@@ -22,7 +22,7 @@ Contains the struct definition and common HTML rendering logic.
 package mycomponent
 
 import (
-    dom "github.com/tinywasm/components/internal/dom"
+    "github.com/tinywasm/dom"
     "github.com/tinywasm/components"
 )
 
@@ -95,7 +95,7 @@ If the component requires client-side interactivity (event listeners, subsequent
 package mycomponent
 
 import (
-    dom "github.com/tinywasm/components/internal/dom"
+    "github.com/tinywasm/dom"
     "github.com/tinywasm/fmt"
 )
 

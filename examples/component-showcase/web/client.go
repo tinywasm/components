@@ -10,7 +10,7 @@ import (
 	"github.com/tinywasm/components/modal"
 	"github.com/tinywasm/components/nav"
 	"github.com/tinywasm/components/table"
-	dom "github.com/tinywasm/components/internal/dom"
+	"github.com/tinywasm/dom"
 )
 
 func main() {

@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	dom "github.com/tinywasm/components/internal/dom"
+	"github.com/tinywasm/dom"
 )
 
 func TestCard_Render(t *testing.T) {
