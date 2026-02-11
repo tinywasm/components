@@ -22,7 +22,7 @@ func (m *Modal) Render() dom.Node {
 	backdrop := dom.Div().
 		Class("modal-backdrop")
 
-	backdrop.OnClick(func(e dom.Event) {
+	backdrop.On("click", func(e dom.Event) {
 		m.Close(e)
 	})
 
@@ -31,7 +31,7 @@ func (m *Modal) Render() dom.Node {
 		Text("×").
 		Class("modal-close")
 
-	closeBtn.OnClick(func(e dom.Event) {
+	closeBtn.On("click", func(e dom.Event) {
 		m.Close(e)
 	})
 

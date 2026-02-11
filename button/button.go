@@ -25,7 +25,7 @@ func (b *Button) Render() dom.Node {
 		Text(b.Text)
 
 	if b.OnClick != nil {
-		btn.OnClick(b.OnClick)
+		btn.On("click", b.OnClick)
 	}
 
 	return btn.ToNode()
