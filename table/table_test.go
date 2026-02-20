@@ -6,27 +6,36 @@ import (
 )
 
 func TestTable_Render(t *testing.T) {
-	tab := &Table{
-		Headers: []string{"ID", "Name"},
+	tbl := &Table{
+		Headers: []string{"Name", "Age"},
 		Rows: [][]string{
-			{"1", "Alice"},
-			{"2", "Bob"},
+			{"Alice", "30"},
+			{"Bob", "25"},
 		},
 	}
 
-	node := tab.Render()
+	html := tbl.Render().RenderHTML()
 
-	if node.Tag != "table" {
+	if !strings.HasPrefix(html, "<table") {
 		t.Error("expected table tag")
 	}
-
-	hasClass := false
-	for _, attr := range node.Attrs {
-		if attr.Key == "class" && strings.Contains(attr.Value, "table") {
-			hasClass = true
-		}
-	}
-	if !hasClass {
+	if !strings.Contains(html, "class='table'") {
 		t.Error("expected table class")
+	}
+
+	// Check headers
+	if !strings.Contains(html, "<th>Name</th>") {
+		t.Error("expected Name header")
+	}
+	if !strings.Contains(html, "<th>Age</th>") {
+		t.Error("expected Age header")
+	}
+
+	// Check rows
+	if !strings.Contains(html, "<td>Alice</td>") {
+		t.Error("expected Alice cell")
+	}
+	if !strings.Contains(html, "<td>30</td>") {
+		t.Error("expected 30 cell")
 	}
 }

@@ -1,19 +1,21 @@
 package form
 
 import (
-	"github.com/tinywasm/components"
 	"github.com/tinywasm/dom"
 )
 
 type Form struct {
-	components.BaseComponent
+	*dom.Element
 	Fields   []dom.Component
 	OnSubmit func(dom.Event)
 }
 
-func (f *Form) Render() dom.Node {
-	form := dom.Tag("form").
-		ID(f.ID()).
+func (f *Form) Render() *dom.Element {
+	if f.Element == nil {
+		f.Element = &dom.Element{}
+	}
+
+	form := dom.Form().
 		Class("form")
 
 	if f.OnSubmit != nil {
@@ -21,8 +23,8 @@ func (f *Form) Render() dom.Node {
 	}
 
 	for _, field := range f.Fields {
-		form.Append(field)
+		form.Add(field)
 	}
 
-	return form.ToNode()
+	return form.AsElement()
 }

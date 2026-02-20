@@ -1,40 +1,42 @@
 package table
 
 import (
-	"github.com/tinywasm/components"
 	"github.com/tinywasm/dom"
 )
 
 type Table struct {
-	components.BaseComponent
+	*dom.Element
 	Headers []string
 	Rows    [][]string
 }
 
-func (t *Table) Render() dom.Node {
-	table := dom.Tag("table").
-		ID(t.ID()).
+func (t *Table) Render() *dom.Element {
+	if t.Element == nil {
+		t.Element = &dom.Element{}
+	}
+
+	table := dom.Table().
 		Class("table")
 
 	// Header
-	thead := dom.Tag("thead")
-	tr := dom.Tag("tr")
+	thead := dom.Thead()
+	tr := dom.Tr()
 	for _, header := range t.Headers {
-		tr.Append(dom.Tag("th").Text(header))
+		tr.Add(dom.Th().Text(header))
 	}
-	thead.Append(tr)
-	table.Append(thead)
+	thead.Add(tr)
+	table.Add(thead)
 
 	// Body
-	tbody := dom.Tag("tbody")
+	tbody := dom.Tbody()
 	for _, row := range t.Rows {
-		tr := dom.Tag("tr")
+		tr := dom.Tr()
 		for _, cell := range row {
-			tr.Append(dom.Tag("td").Text(cell))
+			tr.Add(dom.Td().Text(cell))
 		}
-		tbody.Append(tr)
+		tbody.Add(tr)
 	}
-	table.Append(tbody)
+	table.Add(tbody)
 
-	return table.ToNode()
+	return table
 }

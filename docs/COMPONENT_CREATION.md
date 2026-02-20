@@ -23,20 +23,20 @@ package mycomponent
 
 import (
     "github.com/tinywasm/dom"
-    "github.com/tinywasm/components"
 )
 
 type MyComponent struct {
-    components.BaseComponent
+    *dom.Element
     Title string
 }
 
-func (c *MyComponent) Render() dom.Node {
+func (c *MyComponent) Render() *dom.Element {
+    if c.Element == nil {
+        c.Element = &dom.Element{}
+    }
     return dom.Div().
-        ID(c.ID()).
         Class("my-class").
-        Text(c.Title).
-        ToNode()
+        Text(c.Title)
 }
 ```
 
@@ -102,15 +102,9 @@ import (
 // OnMount runs automatically when the component's HTML has been injected into the DOM.
 // It is the correct place to add event listeners using tinywasm/dom.
 func (c *MyComponent) OnMount() {
-    // 1. Get reference to the element (using the ID provided by BaseComponent)
-    btn, ok := dom.Get(c.ID() + "-btn")
-    if !ok {
-        fmt.Println("Error finding button")
-        return
-    }
-
-    // 2. Add interactivity
-    // (Example using a specific API, though typically event listeners are bound in Render)
+    // 1. Get reference to the element (using the ID provided by Element)
+    id := c.GetID()
+    dom.Log("Component mounted with ID:", id)
 }
 ```
 

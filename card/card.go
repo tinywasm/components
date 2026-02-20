@@ -1,33 +1,35 @@
 package card
 
 import (
-	"github.com/tinywasm/components"
 	"github.com/tinywasm/dom"
 )
 
 type Card struct {
-	components.BaseComponent
+	*dom.Element
 	Header dom.Component
 	Body   dom.Component
 	Footer dom.Component
 }
 
-func (c *Card) Render() dom.Node {
+func (c *Card) Render() *dom.Element {
+	if c.Element == nil {
+		c.Element = &dom.Element{}
+	}
+
 	card := dom.Div().
-		ID(c.ID()).
 		Class("card")
 
 	if c.Header != nil {
-		card.Append(dom.Div().Class("card-header").Append(c.Header))
+		card.Add(dom.Div().Class("card-header").Add(c.Header))
 	}
 
 	if c.Body != nil {
-		card.Append(dom.Div().Class("card-body").Append(c.Body))
+		card.Add(dom.Div().Class("card-body").Add(c.Body))
 	}
 
 	if c.Footer != nil {
-		card.Append(dom.Div().Class("card-footer").Append(c.Footer))
+		card.Add(dom.Div().Class("card-footer").Add(c.Footer))
 	}
 
-	return card.ToNode()
+	return card
 }

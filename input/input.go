@@ -1,12 +1,11 @@
 package input
 
 import (
-	"github.com/tinywasm/components"
 	"github.com/tinywasm/dom"
 )
 
 type Input struct {
-	components.BaseComponent
+	*dom.Element
 	Label       string
 	Placeholder string
 	Value       string
@@ -15,13 +14,17 @@ type Input struct {
 	OnInput     func(dom.Event)
 }
 
-func (i *Input) Render() dom.Node {
+func (i *Input) Render() *dom.Element {
+	if i.Element == nil {
+		i.Element = &dom.Element{}
+	}
 	container := dom.Div().Class("input-group")
 
+	inputId := i.GetID() + "-field"
 	if i.Label != "" {
-		container.Append(
-			dom.Tag("label").
-				Attr("for", i.ID()).
+		container.Add(
+			dom.Label().
+				Attr("for", inputId).
 				Text(i.Label),
 		)
 	}
@@ -31,20 +34,20 @@ func (i *Input) Render() dom.Node {
 		inputType = "text"
 	}
 
-	input := dom.Tag("input").
-		ID(i.ID()).
+	input := dom.Input(inputType).
+		ID(inputId).
 		Attr("type", inputType).
 		Attr("placeholder", i.Placeholder).
 		Attr("value", i.Value)
 
 	if i.Required {
-		input.Attr("required", "required")
+		input.Required()
 	}
 
 	if i.OnInput != nil {
-		input.OnInput(i.OnInput)
+		input.On("input", i.OnInput)
 	}
 
-	container.Append(input)
-	return container.ToNode()
+	container.Add(input.AsElement())
+	return container
 }

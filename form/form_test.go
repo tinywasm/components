@@ -3,26 +3,37 @@ package form
 import (
 	"strings"
 	"testing"
+
+	"github.com/tinywasm/dom"
 )
 
 func TestForm_Render(t *testing.T) {
 	f := &Form{
-		Fields: nil,
+		Fields: []dom.Component{
+			&simpleComponent{html: "<input>"},
+		},
 	}
 
-	node := f.Render()
+	html := f.Render().RenderHTML()
 
-	if node.Tag != "form" {
+	if !strings.HasPrefix(html, "<form") {
 		t.Error("expected form tag")
 	}
 
-	hasClass := false
-	for _, attr := range node.Attrs {
-		if attr.Key == "class" && strings.Contains(attr.Value, "form") {
-			hasClass = true
-		}
-	}
-	if !hasClass {
+	if !strings.Contains(html, "class='form'") {
 		t.Error("expected form class")
 	}
+
+	if !strings.Contains(html, "<input>") {
+		t.Error("expected input field")
+	}
 }
+
+type simpleComponent struct {
+	html string
+}
+
+func (s *simpleComponent) RenderHTML() string        { return s.html }
+func (s *simpleComponent) GetID() string             { return "" }
+func (s *simpleComponent) SetID(id string)           {}
+func (s *simpleComponent) Children() []dom.Component { return nil }

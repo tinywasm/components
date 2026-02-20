@@ -9,31 +9,48 @@ import (
 
 func TestCard_Render(t *testing.T) {
 	c := &Card{
-		Header: dom.Tag("h3").Text("Header").ToComponent(),
-		Body:   dom.Tag("p").Text("Body").ToComponent(),
-		Footer: dom.Tag("div").Text("Footer").ToComponent(),
+		Header: &simpleComponent{html: "Header"},
+		Body:   &simpleComponent{html: "Body"},
+		Footer: &simpleComponent{html: "Footer"},
 	}
 
-	node := c.Render()
+	html := c.Render().RenderHTML()
 
-	if node.Tag != "div" {
+	if !strings.HasPrefix(html, "<div") {
 		t.Error("expected div tag")
 	}
 
-	hasClass := false
-	for _, attr := range node.Attrs {
-		if attr.Key == "class" && strings.Contains(attr.Value, "card") {
-			hasClass = true
-		}
-	}
-	if !hasClass {
+	if !strings.Contains(html, "class='card'") {
 		t.Error("expected card class")
 	}
 
-	// Check for children (header, body, footer)
-	// This is hard to check deeply because children are any, and might be nested.
-	// But we can check count or structure roughly.
-	if len(node.Children) < 3 {
-		t.Error("expected at least 3 children")
+	if !strings.Contains(html, "class='card-header'") {
+		t.Error("expected card-header")
+	}
+	if !strings.Contains(html, "Header") {
+		t.Error("expected Header content")
+	}
+
+	if !strings.Contains(html, "class='card-body'") {
+		t.Error("expected card-body")
+	}
+	if !strings.Contains(html, "Body") {
+		t.Error("expected Body content")
+	}
+
+	if !strings.Contains(html, "class='card-footer'") {
+		t.Error("expected card-footer")
+	}
+	if !strings.Contains(html, "Footer") {
+		t.Error("expected Footer content")
 	}
 }
+
+type simpleComponent struct {
+	html string
+}
+
+func (s *simpleComponent) RenderHTML() string        { return s.html }
+func (s *simpleComponent) GetID() string             { return "" }
+func (s *simpleComponent) SetID(id string)           {}
+func (s *simpleComponent) Children() []dom.Component { return nil }

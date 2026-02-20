@@ -6,27 +6,40 @@ import (
 )
 
 func TestInput_Render(t *testing.T) {
-	i := &Input{
+	inp := &Input{
 		Label:       "Username",
 		Placeholder: "Enter username",
 		Value:       "test",
 		Type:        "text",
+		Required:    true,
 	}
 
-	node := i.Render()
+	html := inp.Render().RenderHTML()
 
-	// Input group container
-	if node.Tag != "div" {
-		t.Error("expected div tag for input group")
-	}
-
-	hasClass := false
-	for _, attr := range node.Attrs {
-		if attr.Key == "class" && strings.Contains(attr.Value, "input-group") {
-			hasClass = true
-		}
-	}
-	if !hasClass {
+	if !strings.Contains(html, "class='input-group'") {
 		t.Error("expected input-group class")
+	}
+
+	if !strings.Contains(html, "<label") {
+		t.Error("expected label tag")
+	}
+	if !strings.Contains(html, "Username") {
+		t.Error("expected label text 'Username'")
+	}
+
+	if !strings.Contains(html, "<input") {
+		t.Error("expected input tag")
+	}
+	if !strings.Contains(html, "type='text'") {
+		t.Error("expected type='text'")
+	}
+	if !strings.Contains(html, "placeholder='Enter username'") {
+		t.Error("expected placeholder")
+	}
+	if !strings.Contains(html, "value='test'") {
+		t.Error("expected value='test'")
+	}
+	if !strings.Contains(html, "required=''") {
+		t.Error("expected required attribute")
 	}
 }

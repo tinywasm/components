@@ -1,18 +1,17 @@
 package modal
 
 import (
-	"github.com/tinywasm/components"
 	"github.com/tinywasm/dom"
 )
 
 type Modal struct {
-	components.BaseComponent
+	*dom.Element
 	Title   string
 	Content dom.Component
 	Visible bool
 }
 
-func (m *Modal) Render() dom.Node {
+func (m *Modal) Render() *dom.Element {
 	class := "modal"
 	if !m.Visible {
 		class += " hidden"
@@ -36,21 +35,23 @@ func (m *Modal) Render() dom.Node {
 	})
 
 	modalContent := dom.Div().Class("modal-content").
-		Append(
+		Add(
 			dom.Div().Class("modal-header").
-				Append(dom.Tag("h2").Text(m.Title)).
-				Append(closeBtn),
+				Add(dom.H2().Text(m.Title)).
+				Add(closeBtn),
 		).
-		Append(
-			dom.Div().Class("modal-body").Append(m.Content),
+		Add(
+			dom.Div().Class("modal-body").Add(m.Content),
 		)
 
+	if m.Element == nil {
+		m.Element = &dom.Element{}
+	}
+
 	return dom.Div().
-		ID(m.ID()).
 		Class(class).
-		Append(backdrop).
-		Append(modalContent).
-		ToNode()
+		Add(backdrop).
+		Add(modalContent)
 }
 
 func (m *Modal) Close(e dom.Event) {
