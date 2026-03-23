@@ -51,7 +51,7 @@ func main() {
 
 ## Available Components
 
-See [Component Catalog](docs/COMPONENT_CATALOG.md) for full documentation.
+See [Component Catalog](docs/CATALOG.md) for full documentation.
 
 -   **Button**: Primary/secondary actions with variants.
 -   **Card**: Content container with header/body/footer.
