@@ -2,6 +2,6 @@ module github.com/tinywasm/components
 
 go 1.25.2
 
-require github.com/tinywasm/dom v0.5.6
+require github.com/tinywasm/dom v0.7.0
 
-require github.com/tinywasm/fmt v0.21.1 // indirect
+require github.com/tinywasm/fmt v0.23.2 // indirect
