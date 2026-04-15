@@ -8,6 +8,7 @@ A catalog of reusable, efficient, and WebAssembly-ready UI components for the Ti
 -   **Zero Boilerplate**: Components handle their own state, styling, and event binding.
 -   **SSR/CSR Split**: CSS and heavy assets are server-side only; WASM binaries remain tiny.
 -   **Fluent API**: Uses `tinywasm/dom` for type-safe, declarative UI construction.
+-   **Theme Integration**: Consumes canonical tokens from `tinywasm/dom`.
 -   **Explicit Registration**: Only pay for what you use (tree-shakeable).
 -   **No Magic**: Standard Go structs and interfaces.
 
@@ -16,6 +17,8 @@ A catalog of reusable, efficient, and WebAssembly-ready UI components for the Ti
 ```bash
 go get github.com/tinywasm/components
 ```
+
+To enable the default theme, inject `dom.ThemeCSS` into your page `<head>` once via your site builder.
 
 ## Quick Start
 
@@ -57,15 +60,18 @@ See [Component Catalog](docs/CATALOG.md) for full documentation.
 -   **Nav**: Navigation menu with icon support.
 -   **Modal**: Dialog overlays.
 -   **Table**: Data tables.
--   **Form**: Form wrapper with submission handling.
+
+## Forms
+
+Forms are NOT part of `tinywasm/components`. Use `github.com/tinywasm/form` directly — it is the standard form library for the tinywasm ecosystem.
 
 ## Development
 
-See [Component Creation Guide](docs/COMPONENT_CREATION.md) to learn how to build your own components.
+See [Component Creation Guide](docs/CREATION.md) to learn how to build your own components.
 
 ### Prerequisites
 
--   Go 1.21+
+-   Go 1.25+
 -   TinyGo (for WASM compilation)
 
 ### Running Tests

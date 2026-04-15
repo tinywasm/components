@@ -1,7 +1,7 @@
 .nav {
-    background-color: #1f2937;
-    color: white;
-    padding: 1rem;
+    background-color: var(--color-quaternary, #161B22);
+    color: var(--color-primary, #E6EDF3);
+    padding: var(--mag-pri, 0.5rem);
 }
 
 .nav-list {
@@ -9,7 +9,7 @@
     padding: 0;
     margin: 0;
     display: flex;
-    gap: 1rem;
+    gap: var(--mag-pri, 0.5rem);
 }
 
 .nav-item a {
@@ -17,11 +17,12 @@
     text-decoration: none;
     display: flex;
     align-items: center;
-    gap: 0.5rem;
+    gap: var(--mag-sec, 0.2rem);
 }
 
 .nav-item a:hover {
     text-decoration: underline;
+    color: var(--color-secondary, #00ADD8);
 }
 
 .icon {

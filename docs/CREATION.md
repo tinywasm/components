@@ -14,6 +14,16 @@ tinywasm/components/
     └── front.go         # Frontend: WASM logic (build tag wasm)
 ```
 
+## CSS guidelines
+
+- All colors must use `--color-*` CSS custom properties from `tinywasm/dom` theme.
+- Never hardcode hex values for colors. Always provide a fallback:
+  `var(--color-secondary, #00ADD8)`.
+- Spacing must use `--mag-pri`, `--mag-sec`, `--mag-cua` variables.
+- CSS class names must be prefixed with the component name to avoid collisions.
+- CSS lives in `<component>.css`, embedded in `ssr.go` via `//go:embed`.
+- Do NOT create or embed form-related CSS — use `tinywasm/form`.
+
 ## 1. Main File (`mycomponent.go`)
 
 Contains the struct definition and common HTML rendering logic.
