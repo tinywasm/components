@@ -166,18 +166,18 @@
 }
 
 .btn-primary {
-    background: var(--color-primary, #3b82f6);
-    color: white;
+    background: var(--color-secondary, #00ADD8);
+    color: var(--color-gray, #0D1117);
 }
 
 .btn-secondary {
-    background: var(--color-secondary, #6b7280);
-    color: white;
+    background: var(--color-tertiary, #8B949E);
+    color: var(--color-primary, #E6EDF3);
 }
 
 .btn-danger {
-    background: var(--color-error, #ef4444);
-    color: white;
+    background: var(--color-error, #E34F26);
+    color: var(--color-primary, #E6EDF3);
 }
 
 .btn:hover {

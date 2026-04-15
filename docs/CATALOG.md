@@ -4,9 +4,15 @@ This catalog documents the available reusable components in `tinywasm/components
 
 [← Back to Main README](../README.md)
 
+## Theme
+
+All components consume CSS custom properties from `tinywasm/dom`'s `theme.css`.
+Inject `dom.ThemeCSS` into your page `<head>` once via the site builder.
+Components do not define colors — they inherit from the theme.
+
 ## Overview
 
-All components follow the [Component Creation Guide](./COMPONENT_CREATION.md).
+All components follow the [Component Creation Guide](./CREATION.md).
 
 ---
 
@@ -46,6 +52,8 @@ Data table for structured information.
 
 ---
 
-## 7. [Form](../form/README.md)
-Wrapper for form fields with submission handling.
-[Detailed Documentation →](../form/README.md)
+## Forms
+
+Forms are NOT part of `tinywasm/components`.
+Use `github.com/tinywasm/form` directly — it is the only form library in the
+tinywasm ecosystem and provides field layout, validation, labels and submission.
