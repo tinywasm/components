@@ -52,6 +52,12 @@ Data table for structured information.
 
 ---
 
+## 7. [SelectSearch](../selectsearch/README.md)
+Searchable dropdown with static options, live filtering, and optional DB search callback.
+[Detailed Documentation →](../selectsearch/README.md)
+
+---
+
 ## Forms
 
 Forms are NOT part of `tinywasm/components`.
