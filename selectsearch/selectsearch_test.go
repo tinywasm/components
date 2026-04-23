@@ -1,7 +1,7 @@
 package selectsearch
 
 import (
-	"strings"
+	"github.com/tinywasm/fmt"
 	"testing"
 )
 
@@ -16,22 +16,22 @@ func TestSelectSearch_Render(t *testing.T) {
 
 	html := c.Render().RenderHTML()
 
-	if !strings.Contains(html, "ss-box") {
+	if !fmt.Contains(html, "ss-box") {
 		t.Error("expected ss-box class")
 	}
-	if !strings.Contains(html, "ss-toggle") {
+	if !fmt.Contains(html, "ss-toggle") {
 		t.Error("expected ss-toggle checkbox")
 	}
-	if !strings.Contains(html, "Choose category") {
+	if !fmt.Contains(html, "Choose category") {
 		t.Error("expected placeholder text")
 	}
-	if !strings.Contains(html, "Automobiles") {
+	if !fmt.Contains(html, "Automobiles") {
 		t.Error("expected option label")
 	}
-	if !strings.Contains(html, "auto") {
+	if !fmt.Contains(html, "auto") {
 		t.Error("expected option description")
 	}
-	if !strings.Contains(html, "#ss-arrow-down") {
+	if !fmt.Contains(html, "#ss-arrow-down") {
 		t.Error("expected icon use reference")
 	}
 }
@@ -39,30 +39,30 @@ func TestSelectSearch_Render(t *testing.T) {
 func TestSelectSearch_SelectedValue(t *testing.T) {
 	c := &SelectSearch{
 		Placeholder:   "Choose category",
-		SelectedLabel: "Automobiles",
+		selectedLabel: "Automobiles",
 	}
 	html := c.Render().RenderHTML()
-	if !strings.Contains(html, "Automobiles") {
+	if !fmt.Contains(html, "Automobiles") {
 		t.Error("expected selected label")
 	}
-	if strings.Contains(html, "Choose category") {
+	if fmt.Contains(html, "Choose category") {
 		// Placeholder should be replaced by selected label
 	}
 }
 
 func TestSelectSearch_Filtering(t *testing.T) {
 	c := &SelectSearch{
-		FilterTerm: "Film",
+		filterTerm: "Film",
 		Options: []Option{
 			{ID: "1", Label: "Automobiles"},
 			{ID: "2", Label: "Film & Animation"},
 		},
 	}
 	html := c.Render().RenderHTML()
-	if strings.Contains(html, "Automobiles") {
+	if fmt.Contains(html, "Automobiles") {
 		t.Error("expected Automobiles to be filtered out")
 	}
-	if !strings.Contains(html, "Film & Animation") {
+	if !fmt.Contains(html, "Film & Animation") {
 		t.Error("expected Film & Animation to be present")
 	}
 }

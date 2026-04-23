@@ -4,7 +4,7 @@ package selectsearch
 
 import (
 	"github.com/tinywasm/dom"
-	"strings"
+	"github.com/tinywasm/fmt"
 )
 
 func (c *SelectSearch) OnMount() {
@@ -14,14 +14,13 @@ func (c *SelectSearch) OnMount() {
 	if searchEl, ok := dom.Get(id + "-search"); ok {
 		searchEl.On("input", func(e dom.Event) {
 			term := e.TargetValue()
-			c.FilterTerm = term
+			c.filterTerm = term
 
 			// Check if we need to call OnSearch
 			allHidden := true
-			lowerTerm := strings.ToLower(term)
+			lowerTerm := fmt.Convert(term).ToLower().String()
 			for _, opt := range c.Options {
-				if strings.Contains(strings.ToLower(opt.Label), lowerTerm) ||
-				   strings.Contains(strings.ToLower(opt.Description), lowerTerm) {
+				if c.matches(opt, lowerTerm) {
 					allHidden = false
 					break
 				}
@@ -34,11 +33,40 @@ func (c *SelectSearch) OnMount() {
 				}
 			}
 
-			dom.Update(c)
+			c.Update()
 
 			// After update, we need to restore focus to search input and put cursor at the end
 			if newSearchEl, ok := dom.Get(id + "-search"); ok {
 				newSearchEl.Focus()
+			}
+		})
+	}
+
+	// Wire option click — close dropdown and call OnSelect
+	if optionsEl, ok := dom.Get(id + "-options"); ok {
+		optionsEl.On("click", func(e dom.Event) {
+			target, ok := dom.Get(e.TargetID())
+			if !ok {
+				return
+			}
+			optID := target.GetAttr("data-id")
+			optDesc := target.GetAttr("data-description")
+
+			if optID != "" {
+				// Find the option in c.Options to get the label
+				for _, opt := range c.Options {
+					if opt.ID == optID {
+						c.selectedLabel = opt.Label
+						break
+					}
+				}
+
+				if c.OnSelect != nil {
+					c.OnSelect(optID, optDesc)
+				}
+
+				c.filterTerm = ""
+				c.Update()
 			}
 		})
 	}
