@@ -22,6 +22,7 @@ type SelectSearch struct {
 	// Internal state
 	selectedLabel string
 	filterTerm    string
+	isOpen        bool // tracks dropdown visibility across re-renders
 }
 
 func (c *SelectSearch) matches(opt Option, term string) bool {
@@ -43,10 +44,14 @@ func (c *SelectSearch) Render() *dom.Element {
 		headerText = "Select..."
 	}
 
-	// Hidden checkbox — drives the CSS toggle
+	// Hidden checkbox — drives the CSS toggle; must carry "checked" when open
+	// so outerHTML replacement during re-render preserves dropdown visibility.
 	toggle := dom.Input("checkbox").
 		ID(id+"-toggle").
 		Class("ss-toggle")
+	if c.isOpen {
+		toggle.Attr("checked", "")
+	}
 
 	// Header label — clicking it toggles the checkbox
 	header := dom.Label().

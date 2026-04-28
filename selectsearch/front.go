@@ -10,13 +10,26 @@ import (
 func (c *SelectSearch) OnMount() {
 	id := c.GetID()
 
+	// Wire toggle change — sync isOpen and auto-focus search when opening
+	if toggleEl, ok := dom.Get(id + "-toggle"); ok {
+		toggleEl.On("change", func(e dom.Event) {
+			c.isOpen = e.TargetChecked()
+			c.Update()
+			if c.isOpen {
+				if searchEl, ok := dom.Get(id + "-search"); ok {
+					searchEl.Focus()
+				}
+			}
+		})
+	}
+
 	// Wire search filtering
 	if searchEl, ok := dom.Get(id + "-search"); ok {
 		searchEl.On("input", func(e dom.Event) {
 			term := e.TargetValue()
 			c.filterTerm = term
+			c.isOpen = true // keep dropdown open while filtering
 
-			// Check if we need to call OnSearch
 			allHidden := true
 			lowerTerm := fmt.Convert(term).ToLower().String()
 			for _, opt := range c.Options {
@@ -35,7 +48,6 @@ func (c *SelectSearch) OnMount() {
 
 			c.Update()
 
-			// After update, we need to restore focus to search input and put cursor at the end
 			if newSearchEl, ok := dom.Get(id + "-search"); ok {
 				newSearchEl.Focus()
 			}
@@ -53,7 +65,6 @@ func (c *SelectSearch) OnMount() {
 			optDesc := target.GetAttr("data-description")
 
 			if optID != "" {
-				// Find the option in c.Options to get the label
 				for _, opt := range c.Options {
 					if opt.ID == optID {
 						c.selectedLabel = opt.Label
@@ -61,11 +72,13 @@ func (c *SelectSearch) OnMount() {
 					}
 				}
 
+				c.isOpen = false // collapse dropdown on selection
+				c.filterTerm = ""
+
 				if c.OnSelect != nil {
 					c.OnSelect(optID, optDesc)
 				}
 
-				c.filterTerm = ""
 				c.Update()
 			}
 		})

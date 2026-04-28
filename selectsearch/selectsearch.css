@@ -51,7 +51,7 @@
     align-items: center;
 }
 
-.ss-option:hover { background: var(--color-hover, #B8860B); color: var(--color-gray, #fff); }
+.ss-option:hover { background: var(--color-hover); color: var(--color-gray, #fff); }
 
 .ss-label, .ss-desc {
     pointer-events: none;
