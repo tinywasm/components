@@ -13,8 +13,8 @@
 package main
 
 import (
-	. "github.com/tinywasm/dom"                        // https://pkg.go.dev/github.com/tinywasm/dom
-	"github.com/tinywasm/components/selectsearch"      // https://pkg.go.dev/github.com/tinywasm/components/selectsearch
+	"github.com/tinywasm/components/selectsearch" // https://pkg.go.dev/github.com/tinywasm/components/selectsearch
+	. "github.com/tinywasm/dom"                   // https://pkg.go.dev/github.com/tinywasm/dom
 )
 
 type App struct {
@@ -28,7 +28,7 @@ func (a *App) Render() *Element {
 	if len(a.ss.Options) == 0 {
 		a.ss.Placeholder = "Choose a fruit..."
 		a.ss.Options = []selectsearch.Option{
-			{ID: "1", Label: "Apple", Description: "fruit"},
+			{ID: "1", Label: "Apple 1", Description: "fruit"},
 			{ID: "2", Label: "Banana", Description: "fruit"},
 			{ID: "3", Label: "Cherry", Description: "fruit"},
 			{ID: "4", Label: "Mango", Description: "tropical"},

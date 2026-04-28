@@ -47,10 +47,6 @@ func (c *SelectSearch) OnMount() {
 			}
 
 			c.Update()
-
-			if newSearchEl, ok := dom.Get(id + "-search"); ok {
-				newSearchEl.Focus()
-			}
 		})
 	}
 
