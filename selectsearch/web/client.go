@@ -28,7 +28,7 @@ func (a *App) Render() *Element {
 	if len(a.ss.Options) == 0 {
 		a.ss.Placeholder = "Choose a fruit..."
 		a.ss.Options = []selectsearch.Option{
-			{ID: "1", Label: "Apple 1", Description: "fruit"},
+			{ID: "1", Label: "Apple 2", Description: "fruit"},
 			{ID: "2", Label: "Banana", Description: "fruit"},
 			{ID: "3", Label: "Cherry", Description: "fruit"},
 			{ID: "4", Label: "Mango", Description: "tropical"},
@@ -53,7 +53,7 @@ func (a *App) Render() *Element {
 }
 
 func main() {
-	Render("body", &App{})
+	Render("app", &App{})
 
 	// select{} keeps the WASM goroutine alive so JS event callbacks keep working.
 	select {}

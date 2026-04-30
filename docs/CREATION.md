@@ -109,25 +109,41 @@ func (c *MyComponent) RenderCSS() string {
 
 ## 3. Icon Management (`IconSvgProvider`)
 
-To register SVG icons in the site's global sprite (accessible via `<use href="#id">`), implement `IconSvgProvider` in `ssr.go`.
+El framework inyecta el sprite SVG **directamente en el `<body>` del HTML** en tiempo de servidor. No existe una URL pública `/assets/icons.svg` — el sprite vive solo en memoria e inline en el HTML.
+
+La cadena es: **`IconSvg()` en `ssr.go`** → sprite generado en memoria → **inyectado inline en HTML** → `<svg><use href="#id">` en `Render()` resuelve sin ningún request de red.
 
 > **MANDATORY:** `IconSvg()` MUST be in `ssr.go` (`//go:build !wasm`).
 > SVG strings are dead code on WASM — never define icons in the main file.
 
+> **MANDATORY:** All paths and shapes MUST include `fill="currentColor"` (or `stroke="currentColor"` if stroke-based) so CSS can control the icon color via `fill` or `color` on any ancestor.
+
+**`ssr.go` — registrar el icono:**
 ```go
-// In ssr.go (already has !wasm build tag)
 func (c *MyComponent) IconSvg() map[string]string {
     return map[string]string{
         // Do NOT include the wrapping <svg> tag — the system adds it.
         // Only internal content: paths, circles, etc.
-        // Default viewBox is "0 0 16 16".
-        // If you need a different size, include viewBox="..." in your string.
-        "my-icon-id": `<path d="..." />`,
+        // Default viewBox is "0 0 16 16". Include viewBox="..." in string to override.
+        "my-icon-id": `<path fill="currentColor" d="..." />`,
     }
 }
 ```
 
-The map key (`"my-icon-id"`) becomes the sprite ID, referenced as `<use href="#my-icon-id">`.
+**`component.go` `Render()` — referenciar el icono con `<svg><use>`:**
+```go
+dom.Svg(dom.Use().Attr("href", "#my-icon-id")).Class("my-icon")
+```
+
+**`component.css` — controlar apariencia desde CSS:**
+```css
+.my-icon {
+    width: 1em;
+    height: 1em;
+    fill: currentColor; /* hereda el color del texto del ancestro */
+    transition: transform 0.2s;
+}
+```
 
 ## 4. Tests (`mycomponent_test.go`)
 

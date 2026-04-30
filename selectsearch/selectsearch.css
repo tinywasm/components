@@ -4,9 +4,9 @@
 .ss-toggle:checked ~ .ss-dropdown { display: block; }
 
 .ss-header {
-    background: var(--color-secondary, #00ADD8);
-    color: var(--color-gray, #fff);
-    padding: var(--mag-pri, 0.5rem) calc(var(--mag-pri, 0.5rem) * 2);
+    background: var(--color-secondary);
+    color: var(--color-gray);
+    padding: var(--mag-pri) calc(var(--mag-pri) * 2);
     cursor: pointer;
     border-radius: 0.4em;
     display: flex;
@@ -27,9 +27,9 @@
 
 .ss-search {
     width: 100%;
-    border: 0.2em solid var(--color-tertiary, #6E6E73);
+    border: 0.2em solid var(--color-tertiary);
     border-radius: 0.4em 0.4em 0 0;
-    padding: var(--mag-pri, 0.5rem);
+    padding: var(--mag-pri);
     font-size: 1rem;
     box-sizing: border-box;
 }
@@ -39,19 +39,20 @@
 .ss-options {
     max-height: 240px;
     overflow-y: auto;
-    background: var(--color-quaternary, #F2F2F7);
+    background: var(--color-quaternary);
 }
 
 .ss-option {
-    padding: var(--mag-pri, 0.5rem) calc(var(--mag-pri, 0.5rem) * 2);
-    border-bottom: 1px solid var(--color-tertiary, #6E6E73);
+    padding: var(--mag-pri) calc(var(--mag-pri) * 2);
+    border-bottom: 1px solid var(--color-tertiary);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.ss-option:hover { background: var(--color-hover); color: var(--color-gray, #fff); }
+.ss-option:hover { background: var(--color-hover); color: var(--color-gray); }
+.ss-option:hover .ss-desc { background: transparent; color: inherit; }
 
 .ss-label, .ss-desc {
     pointer-events: none;
@@ -59,12 +60,12 @@
 
 .ss-desc {
     font-size: 0.8em;
-    background: var(--color-quaternary, #F2F2F7);
+    background: var(--color-quaternary);
     border-radius: 0.3em;
-    padding: 0.2em 0.4em;
-    color: var(--color-primary, #1C1C1E);
+    padding: var(--mag-sec) calc(var(--mag-sec) * 2);
+    color: var(--color-primary);
 }
 
 /* Scrollbar */
 .ss-options::-webkit-scrollbar { width: 0.4em; background: none; }
-.ss-options::-webkit-scrollbar-thumb { background: var(--color-secondary, #00ADD8); }
+.ss-options::-webkit-scrollbar-thumb { background: var(--color-secondary); }
