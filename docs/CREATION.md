@@ -20,13 +20,22 @@ tinywasm/components/
 
 ## CSS Guidelines
 
-- All colors MUST use `--color-*` CSS custom properties from `tinywasm/dom` theme.
-- Never hardcode hex values. Always provide a fallback:
-  `var(--color-secondary, #00ADD8)`.
+- All colors MUST use `--color-*` CSS custom properties exposed by `tinywasm/dom`'s default theme (see `dom/theme.css`, injected as `:root { … }` by `assetmin`).
+- Never hardcode hex values. Use the token directly **without fallback** — `var(--color-secondary)`, not `var(--color-secondary, #00ADD8)`. Fallbacks break reusability: a component with a hardcoded fallback stops following the active theme when an app overrides it.
 - Spacing MUST use `--mag-pri`, `--mag-sec`, `--mag-cua` variables.
+- A component MUST NOT declare its own `:root { … }` block. Theme tokens are global state owned by the app (or `tinywasm/dom`'s default). Component CSS only consumes them.
 - CSS class names MUST be prefixed with the component name to avoid collisions: `mycomponent-*`.
 - CSS lives in `<component>.css`, embedded in `ssr.go` via `//go:embed`.
 - Do NOT create or embed form-related CSS — use `tinywasm/form`.
+
+Available tokens (from `dom/theme.css`):
+```
+--color-primary, --color-secondary, --color-tertiary, --color-quaternary
+--color-gray, --color-selection, --color-hover, --color-success, --color-error
+--menu-width-collapsed, --menu-width-expanded
+--title-height, --content-height, --controls-height
+--mag-pri, --mag-sec, --mag-cua
+```
 
 ## 1. Main File (`mycomponent.go`)
 
@@ -107,6 +116,10 @@ func (c *MyComponent) RenderCSS() string {
 }
 ```
 
+`RenderCSS()` ships **component-scoped** CSS. `assetmin` extracts it (via the `CSSProvider` interface at runtime, or via AST when declared as a free `RenderCSS()` function) and routes it to the `middle` slot of `<head>`.
+
+Do NOT declare a `RootCSS()` function in a component package. `RootCSS()` is reserved for the app or `tinywasm/dom` (single-override rule — third-party `RootCSS()` is silently ignored by `assetmin` with a warning). See [`assetmin/docs/SSR.md`](../../assetmin/docs/SSR.md).
+
 ## 3. Icon Management (`IconSvgProvider`)
 
 El framework inyecta el sprite SVG **directamente en el `<body>` del HTML** en tiempo de servidor. No existe una URL pública `/assets/icons.svg` — el sprite vive solo en memoria e inline en el HTML.
@@ -173,4 +186,14 @@ func TestMyComponent_Render(t *testing.T) {
 
 ## Integration
 
-`tinywasm/site` collects `RenderCSS()` and `IconSvg()` from all registered components (SSR build, `!wasm`). The WASM client receives only the struct logic and `Render()`/`OnMount()` — CSS and SVG strings never reach the binary.
+Components are consumed by the asset pipeline (`tinywasm/assetmin`) in two ways:
+
+1. **Runtime registration** — `am.RegisterComponents(myComponent)` inspects the struct for `CSSProvider`, `JSProvider`, `IconSvgProvider`, and `HTMLProvider` interfaces and routes the returned content into the bundle. This is how live components register themselves at server startup.
+2. **AST extraction** — for static modules that ship assets without instantiation, `assetmin` parses `ssr.go` looking for free functions named `RenderCSS`, `RenderJS`, `RenderHTML`, `IconSvg`, and `RootCSS`. Component packages typically use the runtime path (above); standalone modules use the AST path.
+
+Either way: the WASM client receives only struct logic and `Render()`/`OnMount()`. CSS and SVG strings stay on the SSR side, gated by the `!wasm` build tag, and never reach the binary.
+
+**Slot routing reminder:**
+- Component `RenderCSS()` → `middle` slot (loaded after the document `:root`).
+- App's `RootCSS()` (or `dom`'s default) → `open` slot.
+- Root project's `RenderCSS()` → `close` slot (last word, can override anything).
