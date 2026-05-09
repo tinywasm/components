@@ -3,18 +3,18 @@
     border-collapse: collapse;
     text-align: left;
     margin-bottom: var(--mag-pri, 0.5rem);
-    color: var(--color-primary, #E6EDF3);
+    color: var(--color-on-surface, #E6EDF3);
 }
 
 .table th,
 .table td {
     padding: 0.75rem;
-    border-bottom: 1px solid var(--color-tertiary, #8B949E);
+    border-bottom: 1px solid var(--color-muted, #8B949E);
 }
 
 .table th {
     font-weight: 600;
-    background-color: var(--color-quaternary, #161B22);
+    background-color: var(--color-surface, #161B22);
 }
 
 .table tbody tr:hover {

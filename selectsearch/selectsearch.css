@@ -4,8 +4,8 @@
 .ss-toggle:checked ~ .ss-dropdown { display: block; }
 
 .ss-header {
-    background: var(--color-secondary);
-    color: var(--color-primary);
+    background: var(--color-primary, #00ADD8);
+    color: var(--color-on-primary, #0D1117);
     padding: var(--mag-pri) calc(var(--mag-pri) * 2);
     cursor: pointer;
     border-radius: 0.4em;
@@ -27,13 +27,13 @@
 
 .ss-search {
     width: 100%;
-    border: 0.2em solid var(--color-tertiary);
+    border: 0.2em solid var(--color-muted, #8B949E);
     border-radius: 0.4em 0.4em 0 0;
     padding: var(--mag-pri);
     font-size: 1rem;
     box-sizing: border-box;
-    background: var(--color-gray);
-    color: var(--color-primary);
+    background: var(--color-background, #0D1117);
+    color: var(--color-on-surface, #E6EDF3);
 }
 
 .ss-search:focus { outline: none; }
@@ -41,20 +41,20 @@
 .ss-options {
     max-height: 240px;
     overflow-y: auto;
-    background: var(--color-quaternary);
+    background: var(--color-surface, #161B22);
 }
 
 .ss-option {
     padding: var(--mag-pri) calc(var(--mag-pri) * 2);
-    border-bottom: 1px solid var(--color-tertiary);
+    border-bottom: 1px solid var(--color-muted, #8B949E);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    color: var(--color-primary);
+    color: var(--color-on-surface, #E6EDF3);
 }
 
-.ss-option:hover { background: var(--color-hover); color: var(--color-gray); }
+.ss-option:hover { background: var(--color-hover, #F7DF1E); color: var(--color-on-surface, #E6EDF3); }
 .ss-option:hover .ss-desc { background: transparent; color: inherit; }
 
 .ss-label, .ss-desc {
@@ -63,12 +63,12 @@
 
 .ss-desc {
     font-size: 0.8em;
-    background: var(--color-quaternary);
+    background: var(--color-surface, #161B22);
     border-radius: 0.3em;
     padding: var(--mag-sec) calc(var(--mag-sec) * 2);
-    color: var(--color-primary);
+    color: var(--color-on-surface, #E6EDF3);
 }
 
 /* Scrollbar */
 .ss-options::-webkit-scrollbar { width: 0.4em; background: none; }
-.ss-options::-webkit-scrollbar-thumb { background: var(--color-secondary); }
+.ss-options::-webkit-scrollbar-thumb { background: var(--color-primary, #00ADD8); }

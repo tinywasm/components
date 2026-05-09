@@ -1,6 +1,6 @@
 .nav {
-    background-color: var(--color-quaternary, #161B22);
-    color: var(--color-primary, #E6EDF3);
+    background-color: var(--color-surface, #161B22);
+    color: var(--color-on-surface, #E6EDF3);
     padding: var(--mag-pri, 0.5rem);
 }
 
@@ -22,7 +22,7 @@
 
 .nav-item a:hover {
     text-decoration: underline;
-    color: var(--color-secondary, #00ADD8);
+    color: var(--color-primary, #00ADD8);
 }
 
 .icon {
