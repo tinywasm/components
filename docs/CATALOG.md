@@ -58,6 +58,12 @@ Searchable dropdown with static options, live filtering, and optional DB search 
 
 ---
 
+## 8. [ThemeSwitch](../themeswitch/README.md)
+Floating button that cycles between `auto → dark → light` theme modes. Persists preference in `localStorage`. Owns the `[data-theme]` CSS overrides — include its CSS in `<head>` via `RenderCSS()`.
+[Detailed Documentation →](../themeswitch/README.md)
+
+---
+
 ## Forms
 
 Forms are NOT part of `tinywasm/components`.
