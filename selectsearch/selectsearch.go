@@ -13,9 +13,9 @@ type Option struct {
 }
 
 type SelectSearch struct {
-	dom.Element          // value embed — NEVER pointer (TinyGo heap constraint)
-	Placeholder string   // text shown when nothing is selected
-	Options     []Option // initial static options
+	dom.Element                              // value embed — NEVER pointer (TinyGo heap constraint)
+	Placeholder string                       // text shown when nothing is selected
+	Options     []Option                     // initial static options
 	OnSelect    func(id, description string) // called when user picks an option
 	OnSearch    func(term string) []Option   // called when ALL local options are filtered out
 
@@ -26,12 +26,6 @@ type SelectSearch struct {
 	searchID      string // stable across re-renders for auto-focus in OnMount
 }
 
-func (c *SelectSearch) matches(opt Option, term string) bool {
-	if term == "" {
-		return true
-	}
-	return fmt.Matches(opt.Label, term) || fmt.Matches(opt.Description, term)
-}
 
 func (c *SelectSearch) Render() *dom.Element {
 	headerText := c.Placeholder
@@ -77,7 +71,7 @@ func (c *SelectSearch) Render() *dom.Element {
 
 		allHidden := true
 		for _, opt := range c.Options {
-			if c.matches(opt, term) {
+			if term == "" || fmt.Matches(opt.Label, term) || fmt.Matches(opt.Description, term) {
 				allHidden = false
 				break
 			}
@@ -96,7 +90,7 @@ func (c *SelectSearch) Render() *dom.Element {
 	optList := dom.Div().Class("ss-options")
 
 	for _, opt := range c.Options {
-		if !c.matches(opt, c.filterTerm) {
+		if c.filterTerm != "" && !fmt.Matches(opt.Label, c.filterTerm) && !fmt.Matches(opt.Description, c.filterTerm) {
 			continue
 		}
 
@@ -132,7 +126,6 @@ func (c *SelectSearch) Render() *dom.Element {
 		Add(dropdown)
 }
 
-// OnMount auto-focuses the search input when the dropdown is open.
 // No build tag needed — TinyGo eliminates this as dead code in SSR builds.
 func (c *SelectSearch) OnMount() {
 	if c.isOpen && c.searchID != "" {

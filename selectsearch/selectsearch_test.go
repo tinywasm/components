@@ -1,8 +1,9 @@
 package selectsearch
 
 import (
-	"github.com/tinywasm/fmt"
 	"testing"
+
+	"github.com/tinywasm/fmt"
 )
 
 func TestSelectSearch_Render(t *testing.T) {
