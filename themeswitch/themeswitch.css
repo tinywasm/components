@@ -4,19 +4,26 @@
     top: 1rem;
     right: 1rem;
     z-index: 9999;
-    padding: var(--mag-pri) calc(var(--mag-pri) * 2);
-    border-radius: 0.4em;
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0;
+    border-radius: 50%;
     border: none;
     cursor: pointer;
-    font-size: 0.85rem;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     background: var(--color-secondary, #00ADD8);
     color: var(--color-primary, #1C1C1E);
-    opacity: 0.9;
-    transition: opacity 0.2s;
+    opacity: 0.85;
+    transition: opacity 0.2s, transform 0.2s;
 }
 
 .ts-btn:hover {
     opacity: 1;
+    transform: scale(1.12);
     background: var(--color-selection, #654FF0);
     color: var(--color-gray, #FFFFFF);
 }

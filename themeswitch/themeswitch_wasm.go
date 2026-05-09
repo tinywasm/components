@@ -21,7 +21,6 @@ func (t *ThemeSwitch) OnMount() {
 		return
 	}
 	dom.SetDocumentAttr("data-theme", string(theme))
-	t.Update()
 }
 
 func (t *ThemeSwitch) onClick(dom.Event) {

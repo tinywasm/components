@@ -1,3 +1,5 @@
+//go:build !wasm
+
 package themeswitch
 
 import (
@@ -45,6 +47,16 @@ func TestValid(t *testing.T) {
 	}
 	if valid("invalid") {
 		t.Error("valid(\"invalid\") should be false")
+	}
+}
+
+func TestIcon_AllThemes_NonEmpty(t *testing.T) {
+	themes := []Theme{ThemeAuto, ThemeDark, ThemeLight, "invalid"}
+	for _, theme := range themes {
+		i := icon(theme)
+		if i == "" {
+			t.Errorf("icon(%q) is empty", theme)
+		}
 	}
 }
 

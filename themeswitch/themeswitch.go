@@ -27,8 +27,10 @@ type ThemeSwitch struct {
 
 func (t *ThemeSwitch) Render() *dom.Element {
 	current := Theme(dom.GetDocumentAttr("data-theme"))
-	return dom.Button(label(current)).
+	return dom.Button(icon(current)).
 		Class("ts-btn").
+		Attr("title", label(current)).
+		Attr("aria-label", label(current)).
 		On("click", t.onClick) // implementado por build tag
 }
 
@@ -44,15 +46,27 @@ func cycle(current Theme) Theme {
 	}
 }
 
-// label retorna el texto visible del botón. Switch (no map) — TinyGo.
+// icon retorna el símbolo visible del botón. Switch (no map) — TinyGo.
+func icon(theme Theme) string {
+	switch theme {
+	case ThemeDark:
+		return "🌙"
+	case ThemeLight:
+		return "☀"
+	default: // ThemeAuto ("")
+		return "◑"
+	}
+}
+
+// label retorna el nombre del modo actual (usado como tooltip y aria-label).
 func label(theme Theme) string {
 	switch theme {
 	case ThemeDark:
-		return "🌙 dark"
+		return "dark"
 	case ThemeLight:
-		return "☀ light"
+		return "light"
 	default: // ThemeAuto ("")
-		return "☀/🌙 auto"
+		return "auto"
 	}
 }
 

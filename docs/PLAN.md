@@ -1,372 +1,183 @@
-# PLAN: `ThemeSwitch` — `tinywasm/components/themeswitch`
+# PLAN: Migración de tokens CSS v2 — `tinywasm/components`
 
 ## Contexto
 
-Componente visual para alternar el tema de la aplicación (light / dark / auto).
-Usa `dom.SetDocumentAttr`/`dom.GetDocumentAttr` para escribir `data-theme` en
-`<html>`, y `dom.LocalStorage*` para persistir la preferencia del usuario.
+Migración consecuente al breaking change de `tinywasm/dom` que adopta la
+convención Material Design 3 / Bootstrap 5 con patrón two-layer variables.
+Todos los archivos CSS de este módulo referencian los tokens viejos y deben
+actualizarse a los nuevos.
 
-Se inyecta como botón flotante fijo en la esquina superior derecha.
-
-Propósito principal: **herramienta de desarrollo** para probar componentes en
-diferentes modos sin cambiar la preferencia del OS.
-
-**Este paquete posee:**
-- El tipo `Theme` y sus constantes (`ThemeAuto/ThemeDark/ThemeLight`)
-- Los bloques CSS `[data-theme="light"]` y `[data-theme="dark"]`
-- La lógica de ciclo (`auto → dark → light → auto`) y persistencia
-
-`dom` solo expone las primitivas del DOM (`SetDocumentAttr`, `GetDocumentAttr`,
-`LocalStorage*`). La semántica de tema vive aquí.
+**Prerequisito bloqueante:** completar `tinywasm/dom` → `dom/docs/PLAN.md`
+antes de ejecutar este plan.
 
 ---
 
-## Decisiones confirmadas
+## Tabla de sustitución
 
-| Decisión | Valor |
-|----------|-------|
-| Nombre | `ThemeSwitch` — paquete `themeswitch` |
-| Implementación | `Render() *dom.Element` con `.On("click", ...)` — canónico |
-| CSS | Tokens `--color-*` del tema activo + bloques `[data-theme]` propios |
-| Estados | 3: `auto → dark → light → auto` (ciclo local, sin depender de `dom`) |
-| `ThemeAuto` | `Theme("")` — mapeado directo a "sin atributo"; coherente con `GetDocumentAttr` retornando `""` cuando no hay atributo |
-| Posición | `fixed`, esquina superior derecha |
+| Token viejo | Token nuevo | Cuándo |
+|---|---|---|
+| `--color-primary` (como texto) | `--color-on-surface` | texto sobre cualquier superficie |
+| `--color-primary` (como texto sobre cyan) | `--color-on-primary` | texto cuyo fondo es `--color-primary` |
+| `--color-secondary` | `--color-primary` | fondo cyan / acento de marca |
+| `--color-selection` | `--color-secondary` | fondo purple / acento interactivo |
+| `--color-gray` (como texto sobre purple) | `--color-on-secondary` | texto cuyo fondo es `--color-secondary` |
+| `--color-tertiary` | `--color-muted` | texto apagado / bordes sutiles |
+| `--color-quaternary` | `--color-surface` | fondo de paneles / cards |
+| `--color-gray` (como fondo) | `--color-background` | fondo de página / inputs |
+| `--color-hover` | `--color-hover` | sin cambio |
 
----
-
-## Prerequisito de instalación
-
-```bash
-go install github.com/tinywasm/devflow/cmd/gotest@latest
-```
-
-`gotest` corre los tests en browser real — necesario porque `OnMount()` y el handler
-de click usan `dom.LocalStorage*` que solo funciona en entorno WASM.
+**Regla clave:** el token `on-X` se usa cuando el elemento tiene
+`background: var(--color-X)`. En cualquier otro contexto con texto: `--color-on-surface`.
 
 ---
 
-## Estructura de archivos
+## Archivos afectados y cambios requeridos
 
-```
-components/themeswitch/
-├── themeswitch.go         — Theme type + struct + Render() + helpers puros (sin build tag)
-├── themeswitch_wasm.go    — OnMount() + onClick() — usan dom.LocalStorage* y dom.SetDocumentAttr
-├── themeswitch_backend.go — OnMount() + onClick() no-op para SSR
-├── themeswitch.css        — .ts-btn + bloques [data-theme="light"] y [data-theme="dark"]
-├── ssr.go                 — //go:build !wasm — RenderCSS(), IconSvg()
-├── themeswitch_test.go    — tests SSR (label, cycle, valid, RenderCSS)
-├── uc_themeswitch_test.go — tests WASM en browser real (API pública)
-├── web/
-│   └── client.go
-└── README.md
-```
+### `button/button.css`
 
-**Por qué split `_wasm.go` / `_backend.go` para `OnMount/onClick`:** ambas funciones
-llaman a `dom.LocalStorage*` que es wasm-only (sin stub backend, decisión del PLAN
-de `dom`). Para que `themeswitch.go` (sin tag) compile en SSR, las operaciones de
-storage se aíslan en archivos taggeados.
-
-**Sin `syscall/js` en ningún archivo.** Todo el acceso al browser pasa por `dom`.
+| Selector | Propiedad | Viejo | Nuevo |
+|---|---|---|---|
+| `button[name*="btn"]` | `background-color` | `--color-secondary` | `--color-primary` |
+| `button[name*="btn"]` | `color` | `--color-primary` | `--color-on-primary` |
+| `button[name*="btn"]:disabled` | `background-color` | `--color-tertiary` | `--color-muted` |
+| `button[name*="btn"]:hover` | `background-color` | `--color-selection` | `--color-secondary` |
+| `.contebuton` | `background` | `--color-primary` | `--color-surface` |
+| `.btn-url, .btn-login` | `background` | `--color-secondary` | `--color-primary` |
+| `.btn-url-down` | `background` | `--color-gray` | `--color-background` |
+| `.btn-url-down svg path` | `fill` | `--color-secondary` | `--color-primary` |
+| `.btn-url-disable` | `background` | `--color-tertiary` | `--color-muted` |
+| `.btn-selected` | `background` | `--color-selection` | `--color-secondary` |
+| `.btn-url, .btn-selected, ...` | `box-shadow` | `--color-quaternary` | `--color-surface` |
+| `.btn-url-pulse` | `box-shadow` | `--color-quaternary` | `--color-surface` |
+| `@keyframes pulse-url 0%` | `box-shadow` | `--color-selection` | `--color-secondary` |
+| `@keyframes pulse-url 100%` | `background` | `--color-selection` | `--color-secondary` |
+| `input[type=submit]` | `background-color` | `--color-secondary` | `--color-primary` |
+| `input[type=submit]` | `color` | `--color-primary` | `--color-on-primary` |
+| `.btn-primary` | `background` | `--color-secondary` | `--color-primary` |
+| `.btn-primary` | `color` | `--color-gray` | `--color-on-primary` |
+| `.btn-secondary` | `background` | `--color-tertiary` | `--color-muted` |
+| `.btn-secondary` | `color` | `--color-primary` | `--color-on-surface` |
+| `.btn-danger` | `color` | `--color-primary` | `--color-on-surface` |
 
 ---
 
-## Implementación
+### `card/card.css`
 
-### `themeswitch.go` (sin build tag) — Theme type + struct + Render + helpers puros
+| Selector | Propiedad | Viejo | Nuevo |
+|---|---|---|---|
+| `.card` | `background-color` | `--color-gray` | `--color-background` |
+| `.card-header, .card-body, .card-footer` | `color` | `--color-primary` | `--color-on-surface` |
+| `.card, .card-header, .card-footer` | `border` | `--color-tertiary` | `--color-muted` |
+| `.card-footer` | `background-color` | `--color-quaternary` | `--color-surface` |
 
-```go
-package themeswitch
+---
 
-import "github.com/tinywasm/dom"
+### `modal/modal.css`
 
-// storageKey identifica la entrada de localStorage del componente.
-const storageKey = "tinywasm-themeswitch"
+| Selector | Propiedad | Viejo | Nuevo |
+|---|---|---|---|
+| `.modal-backdrop` | `background-color` | `--color-quaternary` | `--color-surface` |
+| `.modal-content` | `background-color` | `--color-gray` | `--color-background` |
+| `.modal-content, .modal-close` | `color` | `--color-primary` | `--color-on-surface` |
+| `.modal-header` | `border` | `--color-tertiary` | `--color-muted` |
 
-// Theme representa el estado de tema del componente.
-// ThemeAuto ("") = sin atributo data-theme → OS preference via @media.
-// Los valores "dark" y "light" se escriben literalmente en data-theme.
-type Theme string
+---
 
-const (
-    ThemeAuto  Theme = ""      // no data-theme attribute → OS preference
-    ThemeDark  Theme = "dark"
-    ThemeLight Theme = "light"
-)
+### `nav/nav.css`
 
-// ThemeSwitch es un botón flotante que cicla entre los 3 modos de tema.
-// Restaura automáticamente el tema guardado en localStorage al montarse.
-//
-//   ts := &themeswitch.ThemeSwitch{}
-//   dom.Append("body", ts)
-type ThemeSwitch struct {
-    dom.Element
-}
+| Selector | Propiedad | Viejo | Nuevo |
+|---|---|---|---|
+| `.nav` | `background-color` | `--color-quaternary` | `--color-surface` |
+| `.nav` | `color` | `--color-primary` | `--color-on-surface` |
+| `.nav-item a:hover` | `color` | `--color-secondary` | `--color-primary` |
 
-func (t *ThemeSwitch) Render() *dom.Element {
-    current := Theme(dom.GetDocumentAttr("data-theme"))
-    return dom.Button(label(current)).
-        Class("ts-btn").
-        On("click", t.onClick) // implementado por build tag
-}
+---
 
-// cycle define el orden de los 3 estados. Switch (no map) — TinyGo.
-func cycle(current Theme) Theme {
-    switch current {
-    case ThemeDark:
-        return ThemeLight
-    case ThemeLight:
-        return ThemeAuto
-    default: // ThemeAuto ("") o cualquier valor inesperado
-        return ThemeDark
-    }
-}
+### `selectsearch/selectsearch.css`
 
-// label retorna el texto visible del botón. Switch (no map) — TinyGo.
-func label(theme Theme) string {
-    switch theme {
-    case ThemeDark:
-        return "🌙 dark"
-    case ThemeLight:
-        return "☀ light"
-    default: // ThemeAuto ("")
-        return "☀/🌙 auto"
-    }
-}
+| Selector | Propiedad | Viejo | Nuevo |
+|---|---|---|---|
+| `.ss-header` | `background` | `--color-secondary` | `--color-primary` |
+| `.ss-header` | `color` | `--color-primary` | `--color-on-primary` |
+| `.ss-search` | `background` | `--color-gray` | `--color-background` |
+| `.ss-search` | `color` | `--color-primary` | `--color-on-surface` |
+| `.ss-search` | `border` | `--color-tertiary` | `--color-muted` |
+| `.ss-options` | `background` | `--color-quaternary` | `--color-surface` |
+| `.ss-option` | `color` | `--color-primary` | `--color-on-surface` |
+| `.ss-option` | `border-bottom` | `--color-tertiary` | `--color-muted` |
+| `.ss-desc` | `background` | `--color-quaternary` | `--color-surface` |
+| `.ss-desc` | `color` | `--color-primary` | `--color-on-surface` |
+| `.ss-options scrollbar-thumb` | `background` | `--color-secondary` | `--color-primary` |
 
-func valid(t Theme) bool {
-    return t == ThemeAuto || t == ThemeDark || t == ThemeLight
-}
-```
+---
 
-**Por qué `ThemeAuto = ""`:**
-`dom.GetDocumentAttr("data-theme")` retorna `""` cuando el atributo no existe.
-`Theme("") == ThemeAuto` — no se necesita conversión ni comparación especial.
-`dom.SetDocumentAttr("data-theme", "")` elimina el atributo — coherente con
-la semántica de "modo auto = sin override". El ciclo y la persistencia funcionan
-sin casos especiales.
+### `table/table.css`
 
-### `themeswitch_wasm.go` (`//go:build wasm`) — OnMount + click handler
+| Selector | Propiedad | Viejo | Nuevo |
+|---|---|---|---|
+| `.table` | `color` | `--color-primary` | `--color-on-surface` |
+| `.table th` | `background-color` | `--color-quaternary` | `--color-surface` |
+| `.table th, .table td` | `border-bottom` | `--color-tertiary` | `--color-muted` |
 
-```go
-//go:build wasm
+---
 
-package themeswitch
+### `themeswitch/themeswitch.css`
 
-import "github.com/tinywasm/dom"
+**Los bloques `[data-theme]` se eliminan de este archivo** — ahora viven
+exclusivamente en `dom/theme.css`. Este archivo queda solo con estilos del botón.
 
-// OnMount restaura el tema guardado en localStorage al montarse en el DOM.
-// Si el storage no está disponible o la entrada está corrupta, sale limpiamente
-// sin modificar el tema (modo auto por defecto).
-func (t *ThemeSwitch) OnMount() {
-    if !dom.LocalStorageAvailable() {
-        return
-    }
-    saved, err := dom.LocalStorageGet(storageKey)
-    if err != nil || saved == "" {
-        return
-    }
-    theme := Theme(saved)
-    if !valid(theme) {
-        dom.LocalStorageDel(storageKey) // best-effort cleanup, error ignorado
-        return
-    }
-    dom.SetDocumentAttr("data-theme", string(theme))
-}
+| Selector | Propiedad | Viejo | Nuevo |
+|---|---|---|---|
+| `.ts-btn` | `background` | `--color-secondary` | `--color-primary` |
+| `.ts-btn` | `color` | `--color-primary` | `--color-on-primary` |
+| `.ts-btn:hover` | `background` | `--color-selection` | `--color-secondary` |
+| `.ts-btn:hover` | `color` | `--color-gray` | `--color-on-secondary` |
 
-func (t *ThemeSwitch) onClick(dom.Event) {
-    current := Theme(dom.GetDocumentAttr("data-theme"))
-    next := cycle(current)
-    dom.SetDocumentAttr("data-theme", string(next)) // "" elimina el atributo para ThemeAuto
-    // Persistencia best-effort: el tema se aplica aunque el storage falle.
-    if next == ThemeAuto {
-        dom.LocalStorageDel(storageKey) // error ignorado — tema ya aplicado
-    } else {
-        dom.LocalStorageSet(storageKey, string(next)) // error ignorado — tema ya aplicado
-    }
-    t.Update()
-}
-```
-
-### `themeswitch_backend.go` (`//go:build !wasm`) — stubs SSR
-
-```go
-//go:build !wasm
-
-package themeswitch
-
-import "github.com/tinywasm/dom"
-
-// En SSR no hay localStorage ni clicks. Stubs no-op para compilación correcta.
-func (t *ThemeSwitch) OnMount()          {}
-func (t *ThemeSwitch) onClick(dom.Event) {}
-```
-
-### `themeswitch.css`
-
-El CSS tiene dos responsabilidades:
-1. Estilos del botón `.ts-btn`
-2. Definir los overrides de tema `[data-theme]` — movidos desde `dom/theme.css`
+**CSS resultante de `themeswitch.css` después de la migración:**
 
 ```css
-/* ── Botón flotante ────────────────────────────────────────────── */
 .ts-btn {
     position: fixed;
     top: 1rem;
     right: 1rem;
     z-index: 9999;
-    padding: var(--mag-pri) calc(var(--mag-pri) * 2);
-    border-radius: 0.4em;
+    width: 2.4rem;
+    height: 2.4rem;
+    padding: 0;
+    border-radius: 50%;
     border: none;
     cursor: pointer;
-    font-size: 0.85rem;
-    background: var(--color-secondary);
-    color: var(--color-primary);
-    opacity: 0.9;
-    transition: opacity 0.2s;
+    font-size: 1.1rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+    opacity: 0.85;
+    transition: opacity 0.2s, transform 0.2s;
 }
 
 .ts-btn:hover {
     opacity: 1;
-    background: var(--color-selection);
-    color: var(--color-gray);
-}
-
-/* ── Manual light override ([data-theme="light"] on <html>) ─────── */
-[data-theme="light"] {
-    --color-primary:    #1C1C1E;
-    --color-secondary:  #00ADD8;
-    --color-tertiary:   #6E6E73;
-    --color-quaternary: #F2F2F7;
-    --color-gray:       #FFFFFF;
-    --color-selection:  #654FF0;
-    --color-hover:      #B8860B;
-}
-
-/* ── Manual dark override ([data-theme="dark"] on <html>) ──────── */
-[data-theme="dark"] {
-    --color-primary:    #E6EDF3;
-    --color-secondary:  #00ADD8;
-    --color-tertiary:   #8B949E;
-    --color-quaternary: #161B22;
-    --color-gray:       #0D1117;
-    --color-selection:  #654FF0;
-    --color-hover:      #F7DF1E;
+    transform: scale(1.12);
+    background: var(--color-secondary);
+    color: var(--color-on-secondary);
 }
 ```
-
-**Por qué los bloques `[data-theme]` viven aquí y no en `dom/theme.css`:**
-El modo auto funciona solo con `@media prefers-color-scheme` (que permanece en
-`dom/theme.css`). Los overrides manuales solo son necesarios cuando `ThemeSwitch`
-está en la app. Moverlos aquí evita que `dom` cargue CSS para una feature que
-puede no usarse, y mantiene toda la lógica de tema en este paquete.
-
-**Orden de carga:** el servidor SSR inyecta `themeswitch.RenderCSS()` en `<head>`
-antes del WASM — los tokens están disponibles desde el primer frame.
-
-**Por qué `--color-secondary` como fondo del botón:** es el cyan de Go (`#00ADD8`),
-siempre presente y reconocible en ambos modos. `--color-primary` como texto adapta
-el contraste automáticamente.
-
-### `ssr.go` (`//go:build !wasm`)
-
-```go
-//go:build !wasm
-
-package themeswitch
-
-import _ "embed"
-
-//go:embed themeswitch.css
-var css string
-
-func (t *ThemeSwitch) RenderCSS() string          { return css }
-func (t *ThemeSwitch) IconSvg() map[string]string { return nil }
-```
-
----
-
-## Uso desde `web/client.go` de cualquier componente
-
-```go
-//go:build wasm
-
-package main
-
-import (
-    "github.com/tinywasm/components/themeswitch"
-    . "github.com/tinywasm/dom"
-)
-
-func main() {
-    ts := &themeswitch.ThemeSwitch{}
-    Render("app", &App{})
-    Append("body", ts) // OnMount se dispara automáticamente — restaura el tema guardado
-    select {}
-}
-```
-
----
-
-## Restricciones TinyGo a respetar
-
-- **Sin `map[string]string`** en código que compile a WASM — usar `switch`/`if-else`.
-- **Sin stdlib Go** (`strings`, `fmt`, etc.) — usar `github.com/tinywasm/fmt`.
-- **Embed solo en `!wasm`** — los `//go:embed` van en `ssr.go`.
-- El struct **embebe `dom.Element` como valor**, nunca como puntero.
-
----
-
-## Tests requeridos
-
-### `themeswitch_test.go` (`//go:build !wasm`) — lógica pura
-
-| Test | Verifica |
-|------|----------|
-| `TestLabel_AllThemes_NonEmpty` | `label()` retorna string no vacío para los 3 themes |
-| `TestCycle_AutoToDark` | `cycle(ThemeAuto) == ThemeDark` |
-| `TestCycle_DarkToLight` | `cycle(ThemeDark) == ThemeLight` |
-| `TestCycle_LightToAuto` | `cycle(ThemeLight) == ThemeAuto` |
-| `TestValid_AcceptsAllThemes` | `valid()` retorna `true` para los 3 valores legales |
-| `TestValid_RejectsInvalid` | `valid("xyz")` retorna `false` |
-| `TestRenderCSS_NotEmpty` | `(&ThemeSwitch{}).RenderCSS()` retorna el CSS embebido |
-
-### `uc_themeswitch_test.go` (`//go:build wasm`) — integración browser
-
-| Test | Verifica |
-|------|----------|
-| `TestThemeSwitch_OnMount_NoSavedValue_StaysAuto` | Sin entrada en localStorage → `dom.GetDocumentAttr("data-theme") == ""` |
-| `TestThemeSwitch_OnMount_RestoresDark` | Pre-cargar `"dark"` en localStorage + mount → `dom.GetDocumentAttr("data-theme") == "dark"` |
-| `TestThemeSwitch_OnMount_InvalidValue_Cleans` | Pre-cargar `"xyz"` + mount → entrada borrada de localStorage |
-| `TestThemeSwitch_Click_CyclesAndPersists` | Simular click → `dom.GetDocumentAttr("data-theme")` avanza ciclo + `LocalStorageGet` refleja el nuevo valor |
-| `TestThemeSwitch_Click_AutoDeletesEntry` | Llegar a `ThemeAuto` por click → `v, err := dom.LocalStorageGet(storageKey); v == "" && err == nil` |
-
-**Convención de ubicación:**
-- `uc_themeswitch_test.go` — tests de API pública (`package themeswitch_test`). Todos los tests WASM van aquí.
-- `themeswitch_test.go` — tests de lógica pura que usan internals (`package themeswitch`).
-
-**Cleanup en cada test WASM:** `dom.LocalStorageDel(storageKey)` y
-`dom.SetDocumentAttr("data-theme", "")` en setUp/tearDown para aislamiento.
 
 ---
 
 ## Checklist de implementación
 
-Prerequisito: `go install github.com/tinywasm/devflow/cmd/gotest@latest`
+**Prerequisito:** `tinywasm/dom` → `dom/docs/PLAN.md` completado y publicado.
 
-**Bloqueador:** este componente depende de `LocalStorage*`, `SetDocumentAttr` y
-`GetDocumentAttr` de `tinywasm/dom`. Implementar `dom` primero
-(ver `dom/docs/PLAN.md`). Verificar también que `dom/theme.css` ya no tiene los
-bloques `[data-theme]` antes de añadirlos a `themeswitch.css`.
-
-- [ ] Crear `themeswitch.go` (sin tag) — `type Theme string` + constantes, `ThemeSwitch`, `Render()`, `cycle()`, `label()`, `valid()`, `storageKey`
-- [ ] Crear `themeswitch_wasm.go` (`wasm`) — `OnMount()` y `onClick()` con `dom.LocalStorage*` y `dom.SetDocumentAttr/GetDocumentAttr`
-- [ ] Crear `themeswitch_backend.go` (`!wasm`) — `OnMount()` y `onClick()` no-op
-- [ ] Crear `themeswitch.css` con `.ts-btn` + bloques `[data-theme="light"]` y `[data-theme="dark"]`
-- [ ] Crear `ssr.go` (`!wasm`) con `RenderCSS()` e `IconSvg()`
-- [ ] Crear `themeswitch_test.go` (`!wasm`) con los 7 tests de lógica pura (raíz — accede a helpers internos)
-- [ ] Crear `uc_themeswitch_test.go` (`wasm`) con los 5 tests de integración browser
-- [ ] Crear `web/client.go` con ejemplo de uso
-- [ ] Crear `README.md`
-- [ ] Verificar con `gotest` (corre browser + ambos build tags)
-- [ ] Actualizar `selectsearch/web/client.go` para usar `ThemeSwitch` como demo
-- [ ] `gopush 'feat(components): add ThemeSwitch component'`
+- [ ] `button/button.css` — aplicar tabla de cambios
+- [ ] `card/card.css` — aplicar tabla de cambios
+- [ ] `modal/modal.css` — aplicar tabla de cambios
+- [ ] `nav/nav.css` — aplicar tabla de cambios
+- [ ] `selectsearch/selectsearch.css` — aplicar tabla de cambios
+- [ ] `table/table.css` — aplicar tabla de cambios
+- [ ] `themeswitch/themeswitch.css` — aplicar tabla + eliminar bloques `[data-theme]`
+- [ ] Ejecutar `gotest` en cada componente con demo browser para validar visualmente
+- [ ] `gopush 'feat(components)!: migrate CSS tokens to v2 (Material/Bootstrap convention)'`

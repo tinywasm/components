@@ -1,15 +1,12 @@
 //go:build wasm
 
-package themeswitch_test
+package themeswitch
 
 import (
 	"testing"
 
-	"github.com/tinywasm/components/themeswitch"
 	"github.com/tinywasm/dom"
 )
-
-const storageKey = "tinywasm-themeswitch"
 
 func setUp() {
 	dom.LocalStorageDel(storageKey)
@@ -18,7 +15,7 @@ func setUp() {
 
 func TestThemeSwitch_OnMount_NoSavedValue_StaysAuto(t *testing.T) {
 	setUp()
-	ts := &themeswitch.ThemeSwitch{}
+	ts := &ThemeSwitch{}
 	ts.OnMount()
 
 	got := dom.GetDocumentAttr("data-theme")
@@ -31,7 +28,7 @@ func TestThemeSwitch_OnMount_RestoresDark(t *testing.T) {
 	setUp()
 	dom.LocalStorageSet(storageKey, "dark")
 
-	ts := &themeswitch.ThemeSwitch{}
+	ts := &ThemeSwitch{}
 	ts.OnMount()
 
 	got := dom.GetDocumentAttr("data-theme")
@@ -44,7 +41,7 @@ func TestThemeSwitch_OnMount_InvalidValue_Cleans(t *testing.T) {
 	setUp()
 	dom.LocalStorageSet(storageKey, "xyz")
 
-	ts := &themeswitch.ThemeSwitch{}
+	ts := &ThemeSwitch{}
 	ts.OnMount()
 
 	got := dom.GetDocumentAttr("data-theme")
@@ -63,11 +60,11 @@ func TestThemeSwitch_OnMount_InvalidValue_Cleans(t *testing.T) {
 
 func TestThemeSwitch_Click_CyclesAndPersists(t *testing.T) {
 	setUp()
-	ts := &themeswitch.ThemeSwitch{}
+	ts := &ThemeSwitch{}
 	ts.OnMount()
 
-	// Initial is Auto ("") -> Click -> Dark
-	ts.Render().Click()
+	// Auto ("") -> click -> Dark
+	ts.onClick(nil)
 	if got := dom.GetDocumentAttr("data-theme"); got != "dark" {
 		t.Errorf("expected dark after 1st click, got %q", got)
 	}
@@ -75,8 +72,8 @@ func TestThemeSwitch_Click_CyclesAndPersists(t *testing.T) {
 		t.Errorf("expected dark in localStorage, got %q", val)
 	}
 
-	// Dark -> Click -> Light
-	ts.Render().Click()
+	// Dark -> click -> Light
+	ts.onClick(nil)
 	if got := dom.GetDocumentAttr("data-theme"); got != "light" {
 		t.Errorf("expected light after 2nd click, got %q", got)
 	}
@@ -84,8 +81,8 @@ func TestThemeSwitch_Click_CyclesAndPersists(t *testing.T) {
 		t.Errorf("expected light in localStorage, got %q", val)
 	}
 
-	// Light -> Click -> Auto
-	ts.Render().Click()
+	// Light -> click -> Auto
+	ts.onClick(nil)
 	if got := dom.GetDocumentAttr("data-theme"); got != "" {
 		t.Errorf("expected auto after 3rd click, got %q", got)
 	}
