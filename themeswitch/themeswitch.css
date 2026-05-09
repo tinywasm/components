@@ -1,0 +1,44 @@
+/* ── Botón flotante ────────────────────────────────────────────── */
+.ts-btn {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    z-index: 9999;
+    padding: var(--mag-pri) calc(var(--mag-pri) * 2);
+    border-radius: 0.4em;
+    border: none;
+    cursor: pointer;
+    font-size: 0.85rem;
+    background: var(--color-secondary, #00ADD8);
+    color: var(--color-primary, #1C1C1E);
+    opacity: 0.9;
+    transition: opacity 0.2s;
+}
+
+.ts-btn:hover {
+    opacity: 1;
+    background: var(--color-selection, #654FF0);
+    color: var(--color-gray, #FFFFFF);
+}
+
+/* ── Manual light override ([data-theme="light"] on <html>) ─────── */
+[data-theme="light"] {
+    --color-primary:    #1C1C1E;
+    --color-secondary:  #00ADD8;
+    --color-tertiary:   #6E6E73;
+    --color-quaternary: #F2F2F7;
+    --color-gray:       #FFFFFF;
+    --color-selection:  #654FF0;
+    --color-hover:      #B8860B;
+}
+
+/* ── Manual dark override ([data-theme="dark"] on <html>) ──────── */
+[data-theme="dark"] {
+    --color-primary:    #E6EDF3;
+    --color-secondary:  #00ADD8;
+    --color-tertiary:   #8B949E;
+    --color-quaternary: #161B22;
+    --color-gray:       #0D1117;
+    --color-selection:  #654FF0;
+    --color-hover:      #F7DF1E;
+}

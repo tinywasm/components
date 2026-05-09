@@ -14,7 +14,8 @@ package main
 
 import (
 	"github.com/tinywasm/components/selectsearch" // https://pkg.go.dev/github.com/tinywasm/components/selectsearch
-	. "github.com/tinywasm/dom"                   // https://pkg.go.dev/github.com/tinywasm/dom
+	"github.com/tinywasm/components/themeswitch"
+	. "github.com/tinywasm/dom" // https://pkg.go.dev/github.com/tinywasm/dom
 )
 
 type App struct {
@@ -53,7 +54,9 @@ func (a *App) Render() *Element {
 }
 
 func main() {
+	ts := &themeswitch.ThemeSwitch{}
 	Render("app", &App{})
+	Append("body", ts)
 
 	// select{} keeps the WASM goroutine alive so JS event callbacks keep working.
 	select {}
