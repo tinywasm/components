@@ -2,20 +2,33 @@
 
 This guide establishes the standard for creating reusable components in `tinywasm/components`.
 
+## Naming Convention
+
+Component names **must be composed of at least two words** — single-word names are reserved for primitive builder functions in `tinywasm/dom` (e.g. `Div`, `Button`, `Input`).
+
+```
+✅ ThemeSwitch   NavBar   DataTable   UserCard   SearchBox
+❌ Switch        Nav      Table       Card       Search
+```
+
+This applies to both the Go struct name (`ThemeSwitch`) and the folder/package name (`themeswitch`). Two-word names make it immediately clear that something is a reusable component rather than a dom primitive or a stdlib type.
+
+---
+
 ## File Structure
 
 Each component must reside in its own folder within `tinywasm/components` and consist of at least 2 files:
 
 ```
 tinywasm/components/
-└── mycomponent/
-    ├── mycomponent.go        # Shared struct, Render(), OnMount()
-    ├── mycomponent.css       # Component-scoped styles
-    ├── mycomponent_test.go   # Tests
+└── themeswitch/
+    ├── themeswitch.go        # Shared struct, Render(), OnMount()
+    ├── themeswitch.css       # Component-scoped styles
+    ├── themeswitch_test.go   # Tests
     └── ssr.go                # Backend only: CSS embed, IconSvg() — build tag !wasm
 ```
 
-> There is NO `front.go`. WASM interactivity lives in `mycomponent.go` via `OnMount()`.
+> There is NO `front.go`. WASM interactivity lives in `themeswitch.go` via `OnMount()`.
 > The build system separates concerns via build tags on `ssr.go`, not by splitting files.
 
 ## CSS Guidelines

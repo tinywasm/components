@@ -40,7 +40,7 @@ diferentes modos sin cambiar la preferencia del OS.
 go install github.com/tinywasm/devflow/cmd/gotest@latest
 ```
 
-`gotest` corre los tests en browser real — necesario porque `Init()` y el handler
+`gotest` corre los tests en browser real — necesario porque `OnMount()` y el handler
 de click usan `dom.LocalStorage*` que solo funciona en entorno WASM.
 
 ---
@@ -50,8 +50,8 @@ de click usan `dom.LocalStorage*` que solo funciona en entorno WASM.
 ```
 components/themeswitch/
 ├── themeswitch.go         — Theme type + struct + Render() + helpers puros (sin build tag)
-├── themeswitch_wasm.go    — Init() + onClick() — usan dom.LocalStorage* y dom.SetDocumentAttr
-├── themeswitch_backend.go — Init() + onClick() no-op para SSR
+├── themeswitch_wasm.go    — OnMount() + onClick() — usan dom.LocalStorage* y dom.SetDocumentAttr
+├── themeswitch_backend.go — OnMount() + onClick() no-op para SSR
 ├── themeswitch.css        — .ts-btn + bloques [data-theme="light"] y [data-theme="dark"]
 ├── ssr.go                 — //go:build !wasm — RenderCSS(), IconSvg()
 ├── themeswitch_test.go    — tests SSR (label, cycle, valid, RenderCSS)
@@ -61,7 +61,7 @@ components/themeswitch/
 └── README.md
 ```
 
-**Por qué split `_wasm.go` / `_backend.go` para `Init/onClick`:** ambas funciones
+**Por qué split `_wasm.go` / `_backend.go` para `OnMount/onClick`:** ambas funciones
 llaman a `dom.LocalStorage*` que es wasm-only (sin stub backend, decisión del PLAN
 de `dom`). Para que `themeswitch.go` (sin tag) compile en SSR, las operaciones de
 storage se aíslan en archivos taggeados.
@@ -94,9 +94,9 @@ const (
 )
 
 // ThemeSwitch es un botón flotante que cicla entre los 3 modos de tema.
+// Restaura automáticamente el tema guardado en localStorage al montarse.
 //
 //   ts := &themeswitch.ThemeSwitch{}
-//   ts.Init()                  // restaura tema guardado (no-op en SSR)
 //   dom.Append("body", ts)
 type ThemeSwitch struct {
     dom.Element
@@ -145,7 +145,7 @@ func valid(t Theme) bool {
 la semántica de "modo auto = sin override". El ciclo y la persistencia funcionan
 sin casos especiales.
 
-### `themeswitch_wasm.go` (`//go:build wasm`) — Init + click handler
+### `themeswitch_wasm.go` (`//go:build wasm`) — OnMount + click handler
 
 ```go
 //go:build wasm
@@ -154,11 +154,12 @@ package themeswitch
 
 import "github.com/tinywasm/dom"
 
-// Init restaura el tema guardado en localStorage. Si el storage no está disponible
-// o la entrada está corrupta, sale limpiamente sin modificar el tema.
-func (t *ThemeSwitch) Init() {
+// OnMount restaura el tema guardado en localStorage al montarse en el DOM.
+// Si el storage no está disponible o la entrada está corrupta, sale limpiamente
+// sin modificar el tema (modo auto por defecto).
+func (t *ThemeSwitch) OnMount() {
     if !dom.LocalStorageAvailable() {
-        return // storage bloqueado — modo auto por defecto
+        return
     }
     saved, err := dom.LocalStorageGet(storageKey)
     if err != nil || saved == "" {
@@ -195,9 +196,8 @@ package themeswitch
 
 import "github.com/tinywasm/dom"
 
-// En SSR no hay localStorage ni clicks. Init es no-op para que el código de
-// la app que llama ts.Init() compile y se comporte coherentemente en build !wasm.
-func (t *ThemeSwitch) Init()             {}
+// En SSR no hay localStorage ni clicks. Stubs no-op para compilación correcta.
+func (t *ThemeSwitch) OnMount()          {}
 func (t *ThemeSwitch) onClick(dom.Event) {}
 ```
 
@@ -299,9 +299,8 @@ import (
 
 func main() {
     ts := &themeswitch.ThemeSwitch{}
-    ts.Init()          // restaura tema guardado antes del primer render
     Render("app", &App{})
-    Append("body", ts)
+    Append("body", ts) // OnMount se dispara automáticamente — restaura el tema guardado
     select {}
 }
 ```
@@ -335,9 +334,9 @@ func main() {
 
 | Test | Verifica |
 |------|----------|
-| `TestThemeSwitch_Init_NoSavedValue_StaysAuto` | Sin entrada en localStorage → `dom.GetDocumentAttr("data-theme") == ""` |
-| `TestThemeSwitch_Init_RestoresDark` | Pre-cargar `"dark"` en localStorage + `Init()` → `dom.GetDocumentAttr("data-theme") == "dark"` |
-| `TestThemeSwitch_Init_InvalidValue_Cleans` | Pre-cargar `"xyz"` + `Init()` → entrada borrada de localStorage |
+| `TestThemeSwitch_OnMount_NoSavedValue_StaysAuto` | Sin entrada en localStorage → `dom.GetDocumentAttr("data-theme") == ""` |
+| `TestThemeSwitch_OnMount_RestoresDark` | Pre-cargar `"dark"` en localStorage + mount → `dom.GetDocumentAttr("data-theme") == "dark"` |
+| `TestThemeSwitch_OnMount_InvalidValue_Cleans` | Pre-cargar `"xyz"` + mount → entrada borrada de localStorage |
 | `TestThemeSwitch_Click_CyclesAndPersists` | Simular click → `dom.GetDocumentAttr("data-theme")` avanza ciclo + `LocalStorageGet` refleja el nuevo valor |
 | `TestThemeSwitch_Click_AutoDeletesEntry` | Llegar a `ThemeAuto` por click → `v, err := dom.LocalStorageGet(storageKey); v == "" && err == nil` |
 
@@ -360,8 +359,8 @@ Prerequisito: `go install github.com/tinywasm/devflow/cmd/gotest@latest`
 bloques `[data-theme]` antes de añadirlos a `themeswitch.css`.
 
 - [ ] Crear `themeswitch.go` (sin tag) — `type Theme string` + constantes, `ThemeSwitch`, `Render()`, `cycle()`, `label()`, `valid()`, `storageKey`
-- [ ] Crear `themeswitch_wasm.go` (`wasm`) — `Init()` y `onClick()` con `dom.LocalStorage*` y `dom.SetDocumentAttr/GetDocumentAttr`
-- [ ] Crear `themeswitch_backend.go` (`!wasm`) — `Init()` y `onClick()` no-op
+- [ ] Crear `themeswitch_wasm.go` (`wasm`) — `OnMount()` y `onClick()` con `dom.LocalStorage*` y `dom.SetDocumentAttr/GetDocumentAttr`
+- [ ] Crear `themeswitch_backend.go` (`!wasm`) — `OnMount()` y `onClick()` no-op
 - [ ] Crear `themeswitch.css` con `.ts-btn` + bloques `[data-theme="light"]` y `[data-theme="dark"]`
 - [ ] Crear `ssr.go` (`!wasm`) con `RenderCSS()` e `IconSvg()`
 - [ ] Crear `themeswitch_test.go` (`!wasm`) con los 7 tests de lógica pura (raíz — accede a helpers internos)

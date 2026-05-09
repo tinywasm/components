@@ -143,8 +143,8 @@ El botón flotante (esquina superior derecha) permite ciclar entre
 
 ## Checklist de implementación
 
-- [ ] En `selectsearch.css`: cambiar `color: var(--color-gray)` → `color: var(--color-primary)` en `.ss-header`
-- [ ] En `selectsearch.css`: añadir `background: var(--color-gray)` y `color: var(--color-primary)` en `.ss-search`
+- [x] En `selectsearch.css`: cambiar `color: var(--color-gray)` → `color: var(--color-primary)` en `.ss-header`
+- [x] En `selectsearch.css`: añadir `background: var(--color-gray)` y `color: var(--color-primary)` en `.ss-search`
 - [ ] Verificar visualmente en modo dark con `ThemeSwitch`
 - [ ] Verificar que el modo light sigue correcto
 - [ ] Actualizar `web/client.go` para usar `ThemeSwitch` como demo

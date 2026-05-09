@@ -5,7 +5,7 @@
 
 .ss-header {
     background: var(--color-secondary);
-    color: var(--color-gray);
+    color: var(--color-primary);
     padding: var(--mag-pri) calc(var(--mag-pri) * 2);
     cursor: pointer;
     border-radius: 0.4em;
@@ -32,6 +32,8 @@
     padding: var(--mag-pri);
     font-size: 1rem;
     box-sizing: border-box;
+    background: var(--color-gray);
+    color: var(--color-primary);
 }
 
 .ss-search:focus { outline: none; }

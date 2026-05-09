@@ -22,20 +22,18 @@ type SelectSearch struct {
 	// Internal state
 	selectedLabel string
 	filterTerm    string
-	isOpen        bool // tracks dropdown visibility across re-renders
+	isOpen        bool
+	searchID      string // stable across re-renders for auto-focus in OnMount
 }
 
 func (c *SelectSearch) matches(opt Option, term string) bool {
 	if term == "" {
 		return true
 	}
-	return fmt.Contains(fmt.Convert(opt.Label).ToLower().String(), term) ||
-		fmt.Contains(fmt.Convert(opt.Description).ToLower().String(), term)
+	return fmt.Matches(opt.Label, term) || fmt.Matches(opt.Description, term)
 }
 
 func (c *SelectSearch) Render() *dom.Element {
-	id := c.GetID()
-
 	headerText := c.Placeholder
 	if c.selectedLabel != "" {
 		headerText = c.selectedLabel
@@ -44,44 +42,78 @@ func (c *SelectSearch) Render() *dom.Element {
 		headerText = "Select..."
 	}
 
-	// Hidden checkbox — drives the CSS toggle; must carry "checked" when open
-	// so outerHTML replacement during re-render preserves dropdown visibility.
-	toggle := dom.Input("checkbox").
-		ID(id+"-toggle").
-		Class("ss-toggle")
+	toggle := dom.Input("checkbox").Class("ss-toggle")
 	if c.isOpen {
 		toggle.Attr("checked", "")
 	}
+	toggle.On("change", func(e dom.Event) {
+		c.isOpen = e.TargetChecked()
+		c.Update()
+	})
 
-	// Header label — clicking it toggles the checkbox
+	// For(toggle) auto-generates toggle's ID and sets for= — no manual string needed
 	header := dom.Label().
-		Attr("for", id+"-toggle").
+		For(toggle).
 		Class("ss-header").
 		Text(headerText).
 		Add(dom.Svg(dom.Use().Attr("href", "#ss-arrow-down")).Class("ss-icon"))
 
-	// Search input
 	searchInput := dom.Input("search").
-		ID(id+"-search").
 		Class("ss-search").
 		Attr("placeholder", "Search...").
 		Attr("value", c.filterTerm)
 
-	// Options list
-	optList := dom.Div().Class("ss-options").ID(id + "-options")
+	// Stable ID: generated once on first render, reused so OnMount can focus it
+	if c.searchID == "" {
+		c.searchID = searchInput.GetID()
+	} else {
+		searchInput.ID(c.searchID)
+	}
 
-	filterTerm := fmt.Convert(c.filterTerm).ToLower().String()
+	searchInput.On("input", func(e dom.Event) {
+		term := e.TargetValue()
+		c.filterTerm = term
+		c.isOpen = true
+
+		allHidden := true
+		for _, opt := range c.Options {
+			if c.matches(opt, term) {
+				allHidden = false
+				break
+			}
+		}
+
+		if allHidden && c.OnSearch != nil {
+			newOptions := c.OnSearch(term)
+			if len(newOptions) > 0 {
+				c.Options = append(c.Options, newOptions...)
+			}
+		}
+
+		c.Update()
+	})
+
+	optList := dom.Div().Class("ss-options")
+
 	for _, opt := range c.Options {
-		if !c.matches(opt, filterTerm) {
+		if !c.matches(opt, c.filterTerm) {
 			continue
 		}
 
+		o := opt // capture loop variable for the closure
 		item := dom.Div().
-			ID(id + "-opt-" + opt.ID).
 			Class("ss-option").
-			Attr("data-id", opt.ID).
-			Attr("data-description", opt.Description).
 			Add(dom.Span().Class("ss-label").Text(opt.Label))
+
+		item.On("click", func(e dom.Event) {
+			c.selectedLabel = o.Label
+			c.isOpen = false
+			c.filterTerm = ""
+			if c.OnSelect != nil {
+				c.OnSelect(o.ID, o.Description)
+			}
+			c.Update()
+		})
 
 		if opt.Description != "" {
 			item.Add(dom.Span().Class("ss-desc").Text(opt.Description))
@@ -98,4 +130,14 @@ func (c *SelectSearch) Render() *dom.Element {
 		Add(toggle).
 		Add(header).
 		Add(dropdown)
+}
+
+// OnMount auto-focuses the search input when the dropdown is open.
+// No build tag needed — TinyGo eliminates this as dead code in SSR builds.
+func (c *SelectSearch) OnMount() {
+	if c.isOpen && c.searchID != "" {
+		if el, ok := dom.Get(c.searchID); ok {
+			el.Focus()
+		}
+	}
 }
