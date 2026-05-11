@@ -1,183 +1,161 @@
-# PLAN: Migración de tokens CSS v2 — `tinywasm/components`
+# PLAN — Typed CSS migration for tinywasm/components
 
-## Contexto
+## Goal
 
-Migración consecuente al breaking change de `tinywasm/dom` que adopta la
-convención Material Design 3 / Bootstrap 5 con patrón two-layer variables.
-Todos los archivos CSS de este módulo referencian los tokens viejos y deben
-actualizarse a los nuevos.
+Migrate every component in `tinywasm/components/` to the typed CSS DSL. After this plan:
+- No component contains a `.css` file.
+- No component uses `//go:embed *.css`.
+- Every `RenderCSS()` returns `*css.Stylesheet`.
+- Class names are declared as exported `css.Class` constants and shared between the HTML and CSS sides of the same component.
 
-**Prerequisito bloqueante:** completar `tinywasm/dom` → `dom/docs/PLAN.md`
-antes de ejecutar este plan.
+## Scope (big-bang)
 
----
+Seven components migrate in the same cycle:
 
-## Tabla de sustitución
+| Component | Current `.css` LOC (approx) |
+|---|---|
+| `button`        | ~180 |
+| `card`          | ~30 |
+| `modal`         | tbd |
+| `nav`           | tbd |
+| `selectsearch`  | tbd |
+| `table`         | tbd |
+| `themeswitch`   | tbd |
 
-| Token viejo | Token nuevo | Cuándo |
-|---|---|---|
-| `--color-primary` (como texto) | `--color-on-surface` | texto sobre cualquier superficie |
-| `--color-primary` (como texto sobre cyan) | `--color-on-primary` | texto cuyo fondo es `--color-primary` |
-| `--color-secondary` | `--color-primary` | fondo cyan / acento de marca |
-| `--color-selection` | `--color-secondary` | fondo purple / acento interactivo |
-| `--color-gray` (como texto sobre purple) | `--color-on-secondary` | texto cuyo fondo es `--color-secondary` |
-| `--color-tertiary` | `--color-muted` | texto apagado / bordes sutiles |
-| `--color-quaternary` | `--color-surface` | fondo de paneles / cards |
-| `--color-gray` (como fondo) | `--color-background` | fondo de página / inputs |
-| `--color-hover` | `--color-hover` | sin cambio |
 
-**Regla clave:** el token `on-X` se usa cuando el elemento tiene
-`background: var(--color-X)`. En cualquier otro contexto con texto: `--color-on-surface`.
+## Why big-bang
 
----
+Decided in the design discussion: gradual coexistence would require assetmin to keep both the AST extractor and the invoke path alive, doubling the surface that this initiative is meant to shrink. Migrating all components at once lets the AST extractor be deleted in the same cycle.
 
-## Archivos afectados y cambios requeridos
+## Component template (canonical form)
 
-### `button/button.css`
+Each component's `ssr.go` becomes the **single** SSR file (no separate `.css`, no second Go file unless a component is exceptionally large — in which case a `ssr_styles.go` in the same package is acceptable as an exception, not a pattern).
 
-| Selector | Propiedad | Viejo | Nuevo |
-|---|---|---|---|
-| `button[name*="btn"]` | `background-color` | `--color-secondary` | `--color-primary` |
-| `button[name*="btn"]` | `color` | `--color-primary` | `--color-on-primary` |
-| `button[name*="btn"]:disabled` | `background-color` | `--color-tertiary` | `--color-muted` |
-| `button[name*="btn"]:hover` | `background-color` | `--color-selection` | `--color-secondary` |
-| `.contebuton` | `background` | `--color-primary` | `--color-surface` |
-| `.btn-url, .btn-login` | `background` | `--color-secondary` | `--color-primary` |
-| `.btn-url-down` | `background` | `--color-gray` | `--color-background` |
-| `.btn-url-down svg path` | `fill` | `--color-secondary` | `--color-primary` |
-| `.btn-url-disable` | `background` | `--color-tertiary` | `--color-muted` |
-| `.btn-selected` | `background` | `--color-selection` | `--color-secondary` |
-| `.btn-url, .btn-selected, ...` | `box-shadow` | `--color-quaternary` | `--color-surface` |
-| `.btn-url-pulse` | `box-shadow` | `--color-quaternary` | `--color-surface` |
-| `@keyframes pulse-url 0%` | `box-shadow` | `--color-selection` | `--color-secondary` |
-| `@keyframes pulse-url 100%` | `background` | `--color-selection` | `--color-secondary` |
-| `input[type=submit]` | `background-color` | `--color-secondary` | `--color-primary` |
-| `input[type=submit]` | `color` | `--color-primary` | `--color-on-primary` |
-| `.btn-primary` | `background` | `--color-secondary` | `--color-primary` |
-| `.btn-primary` | `color` | `--color-gray` | `--color-on-primary` |
-| `.btn-secondary` | `background` | `--color-tertiary` | `--color-muted` |
-| `.btn-secondary` | `color` | `--color-primary` | `--color-on-surface` |
-| `.btn-danger` | `color` | `--color-primary` | `--color-on-surface` |
+```go
+//go:build !wasm
+package button
 
----
+import . "github.com/tinywasm/css"
 
-### `card/card.css`
+// Exported classes — consumed by both the HTML side (button.go) and the CSS below.
+var (
+    ClsBtn       Class = "btn"
+    ClsPrimary   Class = "btn-primary"
+    ClsSecondary Class = "btn-secondary"
+    ClsDanger    Class = "btn-danger"
+)
 
-| Selector | Propiedad | Viejo | Nuevo |
-|---|---|---|---|
-| `.card` | `background-color` | `--color-gray` | `--color-background` |
-| `.card-header, .card-body, .card-footer` | `color` | `--color-primary` | `--color-on-surface` |
-| `.card, .card-header, .card-footer` | `border` | `--color-tertiary` | `--color-muted` |
-| `.card-footer` | `background-color` | `--color-quaternary` | `--color-surface` |
+// SSRInstance satisfies the assetmin invoke convention.
+func SSRInstance() *Button { return &Button{} }
 
----
-
-### `modal/modal.css`
-
-| Selector | Propiedad | Viejo | Nuevo |
-|---|---|---|---|
-| `.modal-backdrop` | `background-color` | `--color-quaternary` | `--color-surface` |
-| `.modal-content` | `background-color` | `--color-gray` | `--color-background` |
-| `.modal-content, .modal-close` | `color` | `--color-primary` | `--color-on-surface` |
-| `.modal-header` | `border` | `--color-tertiary` | `--color-muted` |
-
----
-
-### `nav/nav.css`
-
-| Selector | Propiedad | Viejo | Nuevo |
-|---|---|---|---|
-| `.nav` | `background-color` | `--color-quaternary` | `--color-surface` |
-| `.nav` | `color` | `--color-primary` | `--color-on-surface` |
-| `.nav-item a:hover` | `color` | `--color-secondary` | `--color-primary` |
-
----
-
-### `selectsearch/selectsearch.css`
-
-| Selector | Propiedad | Viejo | Nuevo |
-|---|---|---|---|
-| `.ss-header` | `background` | `--color-secondary` | `--color-primary` |
-| `.ss-header` | `color` | `--color-primary` | `--color-on-primary` |
-| `.ss-search` | `background` | `--color-gray` | `--color-background` |
-| `.ss-search` | `color` | `--color-primary` | `--color-on-surface` |
-| `.ss-search` | `border` | `--color-tertiary` | `--color-muted` |
-| `.ss-options` | `background` | `--color-quaternary` | `--color-surface` |
-| `.ss-option` | `color` | `--color-primary` | `--color-on-surface` |
-| `.ss-option` | `border-bottom` | `--color-tertiary` | `--color-muted` |
-| `.ss-desc` | `background` | `--color-quaternary` | `--color-surface` |
-| `.ss-desc` | `color` | `--color-primary` | `--color-on-surface` |
-| `.ss-options scrollbar-thumb` | `background` | `--color-secondary` | `--color-primary` |
-
----
-
-### `table/table.css`
-
-| Selector | Propiedad | Viejo | Nuevo |
-|---|---|---|---|
-| `.table` | `color` | `--color-primary` | `--color-on-surface` |
-| `.table th` | `background-color` | `--color-quaternary` | `--color-surface` |
-| `.table th, .table td` | `border-bottom` | `--color-tertiary` | `--color-muted` |
-
----
-
-### `themeswitch/themeswitch.css`
-
-**Los bloques `[data-theme]` se eliminan de este archivo** — ahora viven
-exclusivamente en `dom/theme.css`. Este archivo queda solo con estilos del botón.
-
-| Selector | Propiedad | Viejo | Nuevo |
-|---|---|---|---|
-| `.ts-btn` | `background` | `--color-secondary` | `--color-primary` |
-| `.ts-btn` | `color` | `--color-primary` | `--color-on-primary` |
-| `.ts-btn:hover` | `background` | `--color-selection` | `--color-secondary` |
-| `.ts-btn:hover` | `color` | `--color-gray` | `--color-on-secondary` |
-
-**CSS resultante de `themeswitch.css` después de la migración:**
-
-```css
-.ts-btn {
-    position: fixed;
-    top: 1rem;
-    right: 1rem;
-    z-index: 9999;
-    width: 2.4rem;
-    height: 2.4rem;
-    padding: 0;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    font-size: 1.1rem;
-    line-height: 1;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--color-primary);
-    color: var(--color-on-primary);
-    opacity: 0.85;
-    transition: opacity 0.2s, transform 0.2s;
+func (b *Button) RenderCSS() *Stylesheet {
+    return New(
+        Rule(ClsBtn,
+            Padding(Rem(0.5), Rem(1)),
+            Border(None),
+            BorderRadius(RadiusSm),
+            Cursor(Pointer),
+            FontSize(TextBase),
+        ),
+        Rule(ClsPrimary,
+            Background(ColorPrimary),
+            Color(ColorOnPrimary),
+        ),
+        Rule(ClsSecondary,
+            Background(ColorMuted),
+            Color(ColorOnSurface),
+        ),
+        Rule(ClsDanger,
+            Background(ColorError),
+            Color(ColorOnSurface),
+        ),
+        Rule(ClsBtn.Hover(),
+            Opacity(0.9),
+        ),
+    )
 }
 
-.ts-btn:hover {
-    opacity: 1;
-    transform: scale(1.12);
-    background: var(--color-secondary);
-    color: var(--color-on-secondary);
+func (b *Button) RenderHTML() string { /* unchanged */ }
+func (b *Button) RenderJS() string   { /* unchanged */ }
+func (b *Button) IconSvg() map[string]string { return nil }
+```
+
+And `button.go` (compiles for both wasm and !wasm) consumes the **same** class constant:
+
+```go
+package button
+
+import (
+    "github.com/tinywasm/css"
+    "github.com/tinywasm/dom"
+)
+
+func (b *Button) Render() dom.Node {
+    return dom.Button(dom.Classes(css.ClsBtn, css.ClsPrimary), b.Label)
 }
 ```
 
----
+## Per-component migration steps
 
-## Checklist de implementación
+Repeat for each of the 7 components:
 
-**Prerequisito:** `tinywasm/dom` → `dom/docs/PLAN.md` completado y publicado.
+1. Audit the existing `.css` file. List every selector, every declaration, every token reference, every magic value.
+2. Identify selectors → choose Go names following the pattern `Cls<Variant>` (`ClsPrimary`, `ClsHeader`, `ClsBody`, `ClsFooter`, etc.). Declare them as exported `css.Class` constants.
+3. Replace each token reference `var(--space-4, 1rem)` with the matching token (`Space4`).
+4. Replace each magic value with the closest scale token. If a value has no token (e.g. `.4rem` for ad-hoc padding), either:
+   - round to the nearest `Space*` token, or
+   - emit `Rem(0.4)` — flagged in the PR description as a candidate for token addition if it recurs.
+5. Translate selectors to DSL form. Pseudo-classes via `Class.Hover()` / `Class.Focus()` / `Class.Disabled()`. Anything else (attribute selectors like `button[name*="btn"]`) goes through `Selector("button[name*=\"btn\"]")`.
+6. `@keyframes` → `Keyframes("name", At("0%", ...decls), At("100%", ...decls))` using the typed builders from `tinywasm/css` (see `tinywasm/css/docs/PLAN.md` for the API addition that this plan depends on). Token references inside frame declarations behave like any other DSL rule — renaming the token breaks the build. Data-URI background images → `BackgroundImage(Str("url(...)"))` (raw string is fine for SVG payloads).
+7. Add `SSRInstance()`.
+8. Update any `.go` file in the component that emitted class names as string literals to instead reference `css.Cls<...>` via `dom.Class()` / `dom.Classes()`.
+9. Delete the `.css` file.
+10. Remove the `//go:embed` directive and the `var css string` declaration.
 
-- [ ] `button/button.css` — aplicar tabla de cambios
-- [ ] `card/card.css` — aplicar tabla de cambios
-- [ ] `modal/modal.css` — aplicar tabla de cambios
-- [ ] `nav/nav.css` — aplicar tabla de cambios
-- [ ] `selectsearch/selectsearch.css` — aplicar tabla de cambios
-- [ ] `table/table.css` — aplicar tabla de cambios
-- [ ] `themeswitch/themeswitch.css` — aplicar tabla + eliminar bloques `[data-theme]`
-- [ ] Ejecutar `gotest` en cada componente con demo browser para validar visualmente
-- [ ] `gopush 'feat(components)!: migrate CSS tokens to v2 (Material/Bootstrap convention)'`
+## Special cases
+
+- **`themeswitch`**: emits CSS that targets `[data-theme="dark"]` / `[data-theme="light"]` outside of any class scope. Use `Selector("[data-theme=\"dark\"]")` and `Selector("[data-theme=\"light\"]")` with `Bind()`-style declarations (the same primitive used by `tinywasm/css/ssr.go` for OS dark mode).
+- **`button`**: contains (a) `@keyframes pulse-url` referencing `ColorSecondary` — migrated via `Keyframes("pulse-url", At(...)...)` from `tinywasm/css`; depends on the keyframes API addition tracked in `tinywasm/css/docs/PLAN.md`. (b) Base64-encoded SVG data URIs for icon backgrounds — legitimate raw payloads, wrap them with `BackgroundImage(Str(...))`. Consider migrating them to the `IconSvg()` channel instead, since assetmin already has icon plumbing; out of scope for this PR.
+- **`modal` / `nav` / `table` / `selectsearch`**: audit needed first. If any contain `@container` or CSS layers, those features must first be added to `tinywasm/css` (as typed constructors or via `Raw()` as a temporary escape hatch) — they are not introduced inside the component packages.
+
+## Files removed
+
+- `components/button/button.css`
+- `components/card/card.css`
+- `components/modal/modal.css`
+- `components/nav/nav.css`
+- `components/selectsearch/selectsearch.css`
+- `components/table/table.css`
+- `components/themeswitch/themeswitch.css`
+- All `//go:embed *.css` directives in each `ssr.go`.
+
+## Files modified
+
+- 7 `ssr.go` files — rewritten as DSL.
+- Each component's main `.go` file — class-name string literals replaced by `css.Cls<...>` references via `dom.Class*()` adapters.
+- `components/docs/CREATION.md` — replace the "embed your CSS" instructions with the DSL pattern (link to `tinywasm/css/README.md` and `tinywasm/css/docs/PLAN.md` for API reference).
+- `components/docs/CATALOG.md` — update any code samples.
+
+## Steps (order)
+
+1. Wait for `tinywasm/css` (keyframes addition — `Keyframes()`/`At()`/`KeyframeStep`), `tinywasm/dom`, and `tinywasm/assetmin` plans to land. They provide, respectively: the keyframes builders required by `button`; the `RenderCSS() *css.Stylesheet` contract; and the `SSRInstance()` invoke convention. The core DSL and token catalog from the original `tinywasm/css` plan are already published.
+2. Migrate `card` first — smallest CSS, sanity-check the DSL coverage.
+3. Migrate `button` — largest, most token-heavy, exercises pseudo-classes + `@keyframes` + attribute selectors + data-URI backgrounds.
+4. Migrate the remaining five in any order.
+5. Run `go test ./...` per component; ensure rendered `RenderCSS().String()` is visually equivalent to the legacy `.css` (golden diff acceptable for whitespace).
+6. Update `components/docs/CREATION.md` and `CATALOG.md`.
+
+## Acceptance
+
+- No `.css` file under `components/`.
+- No `//go:embed` directive in any component's `ssr.go`.
+- Every component implements `RenderCSS() *css.Stylesheet`.
+- Every component exposes `SSRInstance()` per the assetmin convention.
+- For every class used by a component, exactly one `css.Class` constant declares its name. No string literal class names in HTML emission paths.
+- Visual regression of a demo page (`components/docs` examples) against current output is zero or whitespace-only.
+
+## Out of scope
+
+- Restructuring component packages.
+- Adding new components or variants.
+- Replacing data-URI SVG backgrounds with the icon system (separate cleanup PR).
