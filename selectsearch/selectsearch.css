@@ -6,7 +6,7 @@
 .ss-header {
     background: var(--color-primary, #00ADD8);
     color: var(--color-on-primary, #0D1117);
-    padding: var(--mag-pri) calc(var(--mag-pri) * 2);
+    padding: var(--space-2) var(--space-4);
     cursor: pointer;
     border-radius: 0.4em;
     display: flex;
@@ -29,7 +29,7 @@
     width: 100%;
     border: 0.2em solid var(--color-muted, #8B949E);
     border-radius: 0.4em 0.4em 0 0;
-    padding: var(--mag-pri);
+    padding: var(--space-2);
     font-size: 1rem;
     box-sizing: border-box;
     background: var(--color-background, #0D1117);
@@ -45,7 +45,7 @@
 }
 
 .ss-option {
-    padding: var(--mag-pri) calc(var(--mag-pri) * 2);
+    padding: var(--space-2) var(--space-4);
     border-bottom: 1px solid var(--color-muted, #8B949E);
     cursor: pointer;
     display: flex;
@@ -65,7 +65,7 @@
     font-size: 0.8em;
     background: var(--color-surface, #161B22);
     border-radius: 0.3em;
-    padding: var(--mag-sec) calc(var(--mag-sec) * 2);
+    padding: var(--space-1) var(--space-2);
     color: var(--color-on-surface, #E6EDF3);
 }
 

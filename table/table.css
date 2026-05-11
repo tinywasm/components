@@ -2,7 +2,7 @@
     width: 100%;
     border-collapse: collapse;
     text-align: left;
-    margin-bottom: var(--mag-pri, 0.5rem);
+    margin-bottom: var(--space-2);
     color: var(--color-on-surface, #E6EDF3);
 }
 

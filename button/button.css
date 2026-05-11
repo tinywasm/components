@@ -57,7 +57,7 @@
         height: 100%;
         background: var(--color-surface, #161B22);
         justify-content: space-between;
-        margin-left: var(--mag-cua);
+        margin-left: var(--space-1);
         padding: .1em;
         border-radius: 0em 0em .4em .4em;
     }
@@ -96,14 +96,14 @@
     .btn-login {
         box-shadow: .1em .1em .2em var(--color-surface, #161B22);
         height: 2.5rem;
-        border-radius: var(--mag-sec);
+        border-radius: var(--radius-sm);
         padding: .3em;
     }
 
     .btn-url,
     .btn-url-disable,
     .btn-selected {
-        margin-top: var(--mag-pri);
+        margin-top: var(--space-2);
     }
 
     .btn-url-disable {
@@ -132,10 +132,10 @@
     .btn-url-pulse {
         box-shadow: .1rem .1rem .2rem var(--color-surface, #161B22);
         height: 2.5rem;
-        border-radius: var(--mag-sec);
+        border-radius: var(--radius-sm);
         padding: .3em;
         background: var(--color-muted, #8B949E);
-        margin-top: var(--mag-sec);
+        margin-top: var(--space-1);
         animation: pulse-url 2s infinite;
     }
 
