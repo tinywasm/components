@@ -22,7 +22,6 @@ Seven components migrate in the same cycle:
 | `table`         | tbd |
 | `themeswitch`   | tbd |
 
-`layout/rightpanel` is covered by a sibling plan in `tinywasm/layout/docs/PLAN_typed_css.md`.
 
 ## Why big-bang
 
@@ -88,7 +87,7 @@ package button
 
 import (
     "github.com/tinywasm/css"
-    "github.com/tinywasm/tinywasm/dom"
+    "github.com/tinywasm/dom"
 )
 
 func (b *Button) Render() dom.Node {
@@ -107,7 +106,7 @@ Repeat for each of the 7 components:
    - round to the nearest `Space*` token, or
    - emit `Rem(0.4)` — flagged in the PR description as a candidate for token addition if it recurs.
 5. Translate selectors to DSL form. Pseudo-classes via `Class.Hover()` / `Class.Focus()` / `Class.Disabled()`. Anything else (attribute selectors like `button[name*="btn"]`) goes through `Selector("button[name*=\"btn\"]")`.
-6. `@keyframes` → `Keyframes("pulse-url", ...)`. Data-URI background images → `BackgroundImage(Str("url(...)"))` (raw string is fine for SVG payloads).
+6. `@keyframes` → `Keyframes("name", At("0%", ...decls), At("100%", ...decls))` using the typed builders from `tinywasm/css` (see `tinywasm/css/docs/PLAN.md` for the API addition that this plan depends on). Token references inside frame declarations behave like any other DSL rule — renaming the token breaks the build. Data-URI background images → `BackgroundImage(Str("url(...)"))` (raw string is fine for SVG payloads).
 7. Add `SSRInstance()`.
 8. Update any `.go` file in the component that emitted class names as string literals to instead reference `css.Cls<...>` via `dom.Class()` / `dom.Classes()`.
 9. Delete the `.css` file.
@@ -116,8 +115,8 @@ Repeat for each of the 7 components:
 ## Special cases
 
 - **`themeswitch`**: emits CSS that targets `[data-theme="dark"]` / `[data-theme="light"]` outside of any class scope. Use `Selector("[data-theme=\"dark\"]")` and `Selector("[data-theme=\"light\"]")` with `Bind()`-style declarations (the same primitive used by `tinywasm/css/ssr.go` for OS dark mode).
-- **`button`**: contains base64-encoded SVG data URIs for icon backgrounds. These are legitimate raw payloads — wrap them with `BackgroundImage(Str(...))`. Consider migrating them to the `IconSvg()` channel instead, since assetmin already has icon plumbing; out of scope for this PR.
-- **`modal` / `nav` / `table` / `selectsearch`**: audit needed first. If any contain `@container` or CSS layers, those features land in the DSL as part of the component's migration.
+- **`button`**: contains (a) `@keyframes pulse-url` referencing `ColorSecondary` — migrated via `Keyframes("pulse-url", At(...)...)` from `tinywasm/css`; depends on the keyframes API addition tracked in `tinywasm/css/docs/PLAN.md`. (b) Base64-encoded SVG data URIs for icon backgrounds — legitimate raw payloads, wrap them with `BackgroundImage(Str(...))`. Consider migrating them to the `IconSvg()` channel instead, since assetmin already has icon plumbing; out of scope for this PR.
+- **`modal` / `nav` / `table` / `selectsearch`**: audit needed first. If any contain `@container` or CSS layers, those features must first be added to `tinywasm/css` (as typed constructors or via `Raw()` as a temporary escape hatch) — they are not introduced inside the component packages.
 
 ## Files removed
 
@@ -134,12 +133,12 @@ Repeat for each of the 7 components:
 
 - 7 `ssr.go` files — rewritten as DSL.
 - Each component's main `.go` file — class-name string literals replaced by `css.Cls<...>` references via `dom.Class*()` adapters.
-- `components/docs/CREATION.md` — replace the "embed your CSS" instructions with the DSL pattern (link to `tinywasm/css/docs/PLAN_typed_css.md` for API reference until the README of `tinywasm/css` is updated).
+- `components/docs/CREATION.md` — replace the "embed your CSS" instructions with the DSL pattern (link to `tinywasm/css/README.md` and `tinywasm/css/docs/PLAN.md` for API reference).
 - `components/docs/CATALOG.md` — update any code samples.
 
 ## Steps (order)
 
-1. Wait for `tinywasm/css` and `tinywasm/dom` plans to land — they provide the API surface this plan consumes.
+1. Wait for `tinywasm/css` (keyframes addition — `Keyframes()`/`At()`/`KeyframeStep`), `tinywasm/dom`, and `tinywasm/assetmin` plans to land. They provide, respectively: the keyframes builders required by `button`; the `RenderCSS() *css.Stylesheet` contract; and the `SSRInstance()` invoke convention. The core DSL and token catalog from the original `tinywasm/css` plan are already published.
 2. Migrate `card` first — smallest CSS, sanity-check the DSL coverage.
 3. Migrate `button` — largest, most token-heavy, exercises pseudo-classes + `@keyframes` + attribute selectors + data-URI backgrounds.
 4. Migrate the remaining five in any order.
