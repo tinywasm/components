@@ -26,9 +26,9 @@ To enable the default theme, inject `dom.ThemeCSS` into your page `<head>` once 
 
 ```go
 import (
-    "github.com/tinywasm/components/button"
-    "github.com/tinywasm/components/card"
-    "github.com/tinywasm/dom"
+    "github.com/tinywasm/components/actionbutton"
+    "github.com/tinywasm/components/contentcard"
+    . "github.com/tinywasm/dom"
 )
 ```
 
@@ -37,16 +37,16 @@ import (
 ```go
 func main() {
     // Create a button
-    btn := &button.Button{
+    btn := &actionbutton.ActionButton{
         Text: "Click Me",
         Variant: "primary",
-        OnClick: func(e dom.Event) {
+        OnClick: func(e Event) {
             println("Button clicked!")
         },
     }
 
     // Render to the DOM
-    dom.Append("app", btn)
+    Append("app", btn)
 }
 ```
 
@@ -54,12 +54,12 @@ func main() {
 
 See [Component Catalog](docs/CATALOG.md) for full documentation.
 
--   **Button**: Primary/secondary actions with variants.
--   **Card**: Content container with header/body/footer.
--   **Input**: Text input with validation and labels.
--   **Nav**: Navigation menu with icon support.
--   **Modal**: Dialog overlays.
--   **Table**: Data tables.
+-   **ActionButton**: Primary/secondary actions with variants.
+-   **ContentCard**: Content container with header/body/footer.
+-   **DataTable**: Data tables with headers and rows.
+-   **NavBar**: Navigation menu with icon support.
+-   **Dialog**: Modal dialog overlays.
+-   **ThemeToggle**: Theme switcher (light/dark/auto).
 
 ## Forms
 
@@ -67,7 +67,7 @@ Forms are NOT part of `tinywasm/components`. Use `github.com/tinywasm/form` dire
 
 ## Development
 
-See [Component Creation Guide](docs/CREATION.md) to learn how to build your own components.
+See [Component Skill Guide](docs/SKILL.md) to learn how to build your own components.
 
 ### Prerequisites
 

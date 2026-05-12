@@ -14,7 +14,7 @@ package main
 
 import (
 	"github.com/tinywasm/components/selectsearch" // https://pkg.go.dev/github.com/tinywasm/components/selectsearch
-	"github.com/tinywasm/components/themeswitch"
+	"github.com/tinywasm/components/themetoggle"
 	. "github.com/tinywasm/dom" // https://pkg.go.dev/github.com/tinywasm/dom
 )
 
@@ -54,7 +54,7 @@ func (a *App) Render() *Element {
 }
 
 func main() {
-	ts := &themeswitch.ThemeSwitch{}
+	ts := &themetoggle.ThemeToggle{}
 	Render("app", &App{})
 	Append("body", ts)
 

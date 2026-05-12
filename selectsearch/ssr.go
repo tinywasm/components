@@ -2,19 +2,89 @@
 
 package selectsearch
 
-import _ "embed"
+import . "github.com/tinywasm/css"
 
-//go:embed selectsearch.css
-var css string
+func SSRInstance() *SelectSearch { return &SelectSearch{} }
 
-func (c *SelectSearch) RenderCSS() string {
-	return css
+func (c *SelectSearch) RenderCSS() *Stylesheet {
+	return New(
+		Rule(ClsSsToggle, Display(None)),
+		Rule(ClsSsDropdown, Display(None)),
+		Rule(Selector("."+string(ClsSsToggle)+":checked ~ ."+string(ClsSsDropdown)), Display(Block)),
+		Rule(ClsSsHeader,
+			Background(ColorPrimary),
+			Color(ColorOnPrimary),
+			Padding(Space2, Space4),
+			Cursor(Pointer),
+			BorderRadius(Em(0.4)),
+			Display(Flex_),
+			JustifyContent(Str("space-between")),
+			AlignItems(Center),
+		),
+		Rule(ClsSsIcon,
+			Width(Em(1)),
+			Height(Em(1)),
+			RuleContent(Decl{Prop: "fill", Val: "currentColor"}),
+			Transition(Str("transform 0.2s")),
+		),
+		Rule(Selector("."+string(ClsSsToggle)+":checked ~ ."+string(ClsSsHeader)+" ."+string(ClsSsIcon)),
+			Transform(Str("rotate(180deg)")),
+		),
+		Rule(ClsSsSearch,
+			Width(Pct(100)),
+			Border(Em(0.2), Str("solid"), ColorMuted),
+			BorderRadius(Em(0.4), Em(0.4), Zero, Zero),
+			Padding(Space2),
+			FontSize(Rem(1)),
+			BoxSizing(Str("border-box")),
+			Background(ColorBackground),
+			Color(ColorOnSurface),
+		),
+		Rule(Selector("."+string(ClsSsSearch)+":focus"), Outline(None)),
+		Rule(ClsSsOptions,
+			RuleContent(Decl{Prop: "max-height", Val: "240px"}),
+			RuleContent(Decl{Prop: "overflow-y", Val: "auto"}),
+			Background(ColorSurface),
+		),
+		Rule(ClsSsOption,
+			Padding(Space2, Space4),
+			RuleContent(Decl{Prop: "border-bottom", Val: "1px solid " + ColorMuted.Var()}),
+			Cursor(Pointer),
+			Display(Flex_),
+			JustifyContent(Str("space-between")),
+			AlignItems(Center),
+			Color(ColorOnSurface),
+		),
+		Rule(ClsSsOption.Hover(),
+			Background(ColorHover),
+			Color(ColorOnSurface),
+		),
+		Rule(Selector("."+string(ClsSsOption)+":hover ."+string(ClsSsDesc)),
+			Background(Str("transparent")),
+			Color(Str("inherit")),
+		),
+		Rule(Selector("."+string(ClsSsLabel)+", ."+string(ClsSsDesc)),
+			PointerEvents(None),
+		),
+		Rule(ClsSsDesc,
+			FontSize(Em(0.8)),
+			Background(ColorSurface),
+			BorderRadius(Em(0.3)),
+			Padding(Space1, Space2),
+			Color(ColorOnSurface),
+		),
+		Rule(Selector("."+string(ClsSsOptions)+"::-webkit-scrollbar"),
+			Width(Em(0.4)),
+			Background(None),
+		),
+		Rule(Selector("."+string(ClsSsOptions)+"::-webkit-scrollbar-thumb"),
+			Background(ColorPrimary),
+		),
+	)
 }
 
 func (c *SelectSearch) IconSvg() map[string]string {
 	return map[string]string{
-		// Arrow down icon for the dropdown header
-		// viewBox 0 0 16 16 (default)
 		"ss-arrow-down": `<path fill="currentColor" d="M1.5 4.5l6.5 7 6.5-7H1.5z"/>`,
 	}
 }

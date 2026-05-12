@@ -1,0 +1,71 @@
+//go:build !wasm
+
+package dialog
+
+import . "github.com/tinywasm/css"
+
+func SSRInstance() *DialogWidget { return &DialogWidget{} }
+
+func (m *DialogWidget) RenderCSS() *Stylesheet {
+	return New(
+		Rule(clsModal,
+			Position(Str("fixed")),
+			Top(Zero),
+			Left(Zero),
+			Width(Pct(100)),
+			Height(Pct(100)),
+			ZIndex(ZModal),
+			Display(Flex_),
+			JustifyContent(Center),
+			AlignItems(Center),
+		),
+		Rule(Selector("."+string(clsModal)+"."+string(clsModalHidden)),
+			Display(None),
+		),
+		Rule(clsModalBackdrop,
+			Position(Str("absolute")),
+			Top(Zero),
+			Left(Zero),
+			Width(Pct(100)),
+			Height(Pct(100)),
+			RuleContent(Decl{Prop: "background-color", Val: "color-mix(in srgb, " + ColorSurface.Var() + ", transparent 40%)"}),
+			ZIndex(Str("1")),
+		),
+		Rule(clsModalContent,
+			BackgroundColor(ColorBackground),
+			Color(ColorOnSurface),
+			BorderRadius(RadiusMd),
+			BoxShadow(Str("0 4px 6px -1px rgba(0, 0, 0, 0.3)")),
+			ZIndex(Str("2")),
+			RuleContent(Decl{Prop: "min-width", Val: "300px"}),
+			RuleContent(Decl{Prop: "max-width", Val: "90%"}),
+		),
+		Rule(clsModalHeader,
+			Display(Flex_),
+			JustifyContent(Str("space-between")),
+			AlignItems(Center),
+			Padding(Space2),
+			RuleContent(Decl{Prop: "border-bottom", Val: "1px solid " + ColorMuted.Var()}),
+		),
+		Rule(Selector("."+string(clsModalHeader)+" h2"),
+			Margin(Zero),
+			FontSize(Rem(1.25)),
+		),
+		Rule(clsModalClose,
+			Background(None),
+			Border(None),
+			FontSize(Rem(1.5)),
+			Cursor(Pointer),
+			Padding(Zero),
+			LineHeight(Str("1")),
+			Color(ColorOnSurface),
+		),
+		Rule(clsModalBody,
+			Padding(Space2),
+		),
+	)
+}
+
+func (m *DialogWidget) IconSvg() map[string]string {
+	return nil
+}
