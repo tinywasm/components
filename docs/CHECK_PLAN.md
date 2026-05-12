@@ -1,6 +1,6 @@
 # PLAN — Typed CSS migration for tinywasm/components
 
-## Goal
+## Goal.
 
 Migrate every component in `tinywasm/components/` to the typed CSS DSL. After this plan:
 - No component contains a `.css` file.
