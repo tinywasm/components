@@ -1,6 +1,11 @@
-# Component Creation Guide (TinyWasm Components)
+---
+name: component-creation
+description: Standard for creating reusable, efficient, WebAssembly-ready UI components with strict naming, styling, and event handling conventions.
+---
 
-This guide establishes the standard for creating reusable components in `tinywasm/components`.
+# SKILL: tinywasm/components
+
+A catalog of reusable, efficient, and WebAssembly-ready UI components. Each component encapsulates styling, rendering, and event handling with a consistent API.
 
 ## Naming Convention
 
@@ -61,53 +66,68 @@ Available token groups (from `tinywasm/css/tokens.go`):
 
 ## 1. Main File (`mycomponent.go`)
 
-Contains the struct definition, exported `css.Class` constants, `Render()` (shared SSR + WASM), and `OnMount()` (WASM only — no build tag; TinyGo eliminates dead code).
+Contains the struct definition, private `css.Class` constants, `Render()` (shared SSR + WASM), and `OnMount()` (WASM only — no build tag; TinyGo eliminates dead code).
+
+### Imports — use dot notation for clean code
+
+**Always import `tinywasm/css` and `tinywasm/dom` with dot notation (`.`)** to make CSS DSL and DOM builders directly readable.
+
+```go
+import (
+    . "github.com/tinywasm/css"  // Dot import: Class, ColorPrimary, Space4, etc.
+    . "github.com/tinywasm/dom"  // Dot import: Div, Button, Element, Event, etc.
+)
+```
+
+This makes the code read as intent (e.g., `Div(clsRoot, ...)`) rather than noise (e.g., `dom.Div(css.Class(...), ...)`).
 
 ### Embedding Rule — CRITICAL for TinyGo/WASM
 
-**Always embed `dom.Element` as a VALUE, never as a pointer.**
+**Always embed `Element` as a VALUE, never as a pointer.**
 
 ```go
 // ✅ CORRECT — value embed, zero GC overhead, no nil risk
 type MyComponent struct {
-    dom.Element
+    Element
     Title string
 }
 
 // ❌ WRONG — pointer embed causes 2 heap allocations, requires nil-guard,
 //            risks nil panic in WASM, wastes GC cycles in TinyGo
 type MyComponent struct {
-    *dom.Element
+    *Element
 }
 ```
 
-### Class constants
+### Class constants — PRIVATE
 
-Declare exported `css.Class` constants at package scope. Both `mycomponent.go` (HTML side) and `ssr.go` (CSS side) reference the same constant — a rename is a compile error, not a silent drift.
+Declare **PRIVATE** (lowercase) `css.Class` constants at package scope. These are internal implementation details; the component's public API is its struct fields and methods, not CSS internals.
+
+Both `mycomponent.go` (HTML side) and `ssr.go` (CSS side) reference the same constant — a rename is a compile error, not a silent drift.
 
 ```go
 package mycomponent
 
 import (
-    "github.com/tinywasm/css"
-    "github.com/tinywasm/dom"
+    . "github.com/tinywasm/css"
+    . "github.com/tinywasm/dom"
 )
 
 var (
-    ClsRoot  css.Class = "mycomponent"
-    ClsTitle css.Class = "mycomponent-title"
-    ClsBody  css.Class = "mycomponent-body"
+    clsRoot  Class = "mycomponent"
+    clsTitle Class = "mycomponent-title"
+    clsBody  Class = "mycomponent-body"
 )
 
 type MyComponent struct {
-    dom.Element
+    Element
     Title string
 }
 
-func (c *MyComponent) Render() *dom.Element {
-    return dom.Div(dom.Class(ClsRoot),
-        dom.H2(dom.Class(ClsTitle), c.Title),
-        dom.Div(dom.Class(ClsBody)),
+func (c *MyComponent) Render() *Element {
+    return Div(clsRoot.AsAttr(),
+        H2(clsTitle.AsAttr(), c.Title),
+        Div(clsBody.AsAttr()),
     )
 }
 
@@ -115,8 +135,8 @@ func (c *MyComponent) Render() *dom.Element {
 // TinyGo eliminates this as dead code on SSR builds — no build tag needed.
 func (c *MyComponent) OnMount() {
     id := c.GetID()
-    if el, ok := dom.Get(id); ok {
-        el.On("click", func(e dom.Event) {
+    if el, ok := Get(id); ok {
+        el.On("click", func(e Event) {
             // handle click
         })
     }
@@ -131,10 +151,10 @@ func (c *MyComponent) OnMount() {
 
 `ssr.go` is the **single** SSR file. It contains:
 - `SSRInstance()` — required by `assetmin`'s compile-and-invoke extractor.
-- `RenderCSS()` — returns `*css.Stylesheet` built with the typed DSL.
+- `RenderCSS()` — returns `*Stylesheet` built with the typed DSL (use dot import).
 - `IconSvg()` — if the component uses icons (see section 3).
 
-No `.css` embed. No `//go:embed`. No `var css string`.
+No `.css` embed. No `//go:embed`. No `var css string`. No `//go:embed *.css`.
 
 ```go
 //go:build !wasm
@@ -148,7 +168,7 @@ func SSRInstance() *MyComponent { return &MyComponent{} }
 
 func (c *MyComponent) RenderCSS() *Stylesheet {
     return New(
-        Rule(ClsRoot,
+        Rule(clsRoot,
             Display(Flex_),
             FlexDirection(Column),
             Gap(Space4),
@@ -156,19 +176,23 @@ func (c *MyComponent) RenderCSS() *Stylesheet {
             Background(ColorSurface),
             BorderRadius(RadiusMd),
         ),
-        Rule(ClsTitle,
+        Rule(clsTitle,
             FontSize(TextLg),
             FontWeight(FontWeightBold),
             Color(ColorOnSurface),
         ),
-        Rule(ClsRoot.Hover(),
+        Rule(clsRoot.Hover(),
             BoxShadow(ShadowMd),
         ),
     )
 }
 ```
 
-`RenderCSS()` ships **component-scoped** CSS. `assetmin` invokes `SSRInstance()` at build time, calls `.RenderCSS().String()`, and routes the result to the `middle` slot of `<head>`.
+**Key patterns:**
+- Use dot import (`. "github.com/tinywasm/css"`) for clean DSL syntax
+- Reference the **same private class constants** declared in `mycomponent.go` (e.g., `clsRoot`, not `ClsRoot`)
+- Use `.AsAttr()` method on classes to convert them to DOM attributes
+- `RenderCSS()` ships **component-scoped** CSS. `assetmin` invokes `SSRInstance()` at build time, calls `.RenderCSS().String()`, and routes the result to the `middle` slot of `<head>`
 
 Do **not** declare a `RootCSS()` function in a component package. `RootCSS()` is reserved for the app or `tinywasm/dom` (single-override rule — third-party `RootCSS()` is silently ignored by `assetmin` with a warning).
 

@@ -3,7 +3,6 @@
 package main
 
 import (
-	"github.com/tinywasm/components/themeswitch"
 	. "github.com/tinywasm/dom"
 )
 
@@ -19,8 +18,7 @@ func (a *App) Render() *Element {
 }
 
 func main() {
-	ts := &themeswitch.ThemeSwitch{}
+	// ThemeToggle is initialized internally
 	Render("app", &App{})
-	Append("body", ts)
 	select {}
 }

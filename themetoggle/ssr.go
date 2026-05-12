@@ -1,12 +1,12 @@
 //go:build !wasm
 
-package themeswitch
+package themetoggle
 
 import . "github.com/tinywasm/css"
 
-func SSRInstance() *ThemeSwitch { return &ThemeSwitch{} }
+func SSRInstance() *ThemeToggle { return &ThemeToggle{} }
 
-func (t *ThemeSwitch) RenderCSS() *Stylesheet {
+func (t *ThemeToggle) RenderCSS() *Stylesheet {
 	return New(
 		Rule(Selector("[data-theme=\"light\"]"),
 			Bind(ColorBackground, ColorBackgroundLight),
@@ -22,7 +22,7 @@ func (t *ThemeSwitch) RenderCSS() *Stylesheet {
 			Bind(ColorMuted, ColorMutedDark),
 			Bind(ColorHover, ColorHoverDark),
 		),
-		Rule(ClsTsBtn,
+		Rule(clsTsBtn,
 			Position(Str("fixed")),
 			Top(Rem(1)),
 			Right(Rem(1)),
@@ -43,7 +43,7 @@ func (t *ThemeSwitch) RenderCSS() *Stylesheet {
 			Opacity(0.85),
 			Transition(Str("opacity 0.2s, transform 0.2s")),
 		),
-		Rule(ClsTsBtn.Hover(),
+		Rule(clsTsBtn.Hover(),
 			Opacity(1),
 			Transform(Str("scale(1.12)")),
 			Background(ColorSecondary),
@@ -52,6 +52,6 @@ func (t *ThemeSwitch) RenderCSS() *Stylesheet {
 	)
 }
 
-func (t *ThemeSwitch) IconSvg() map[string]string {
+func (t *ThemeToggle) IconSvg() map[string]string {
 	return nil
 }

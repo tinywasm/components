@@ -12,55 +12,49 @@ Components do not define colors — they inherit from the theme.
 
 ## Overview
 
-All components follow the [Component Creation Guide](./CREATION.md).
+All components follow the [Component Creation Guide](./SKILL.md).
 
 ---
 
-## 1. [Button](../button/README.md)
-Versatile button component with variant support.
-[Detailed Documentation →](../button/README.md)
+## [ActionButton](../actionbutton/README.md)
+Versatile button component with variant support (primary, secondary, danger).
+[Detailed Documentation →](../actionbutton/README.md)
 
 ---
 
-## 2. [Card](../card/README.md)
+## [ContentCard](../contentcard/README.md)
 Container with header, body, and footer sections.
-[Detailed Documentation →](../card/README.md)
+[Detailed Documentation →](../contentcard/README.md)
 
 ---
 
-## 3. [Input](../input/README.md)
-Text input with label and validation support.
-[Detailed Documentation →](../input/README.md)
-
----
-
-## 4. [Nav](../nav/README.md)
+## [NavBar](../navbar/README.md)
 Navigation menu with support for icons.
-[Detailed Documentation →](../nav/README.md)
+[Detailed Documentation →](../navbar/README.md)
 
 ---
 
-## 5. [Modal](../modal/README.md)
-Dialog overlay with backdrop and close button.
-[Detailed Documentation →](../modal/README.md)
+## [Dialog](../dialog/README.md)
+Modal dialog overlay with backdrop and close button.
+[Detailed Documentation →](../dialog/README.md)
 
 ---
 
-## 6. [Table](../table/README.md)
-Data table for structured information.
-[Detailed Documentation →](../table/README.md)
+## [DataTable](../datatable/README.md)
+Data table for structured information with headers and rows.
+[Detailed Documentation →](../datatable/README.md)
 
 ---
 
-## 7. [SelectSearch](../selectsearch/README.md)
+## [SelectSearch](../selectsearch/README.md)
 Searchable dropdown with static options, live filtering, and optional DB search callback.
 [Detailed Documentation →](../selectsearch/README.md)
 
 ---
 
-## 8. [ThemeSwitch](../themeswitch/README.md)
+## [ThemeToggle](../themetoggle/README.md)
 Floating button that cycles between `auto → dark → light` theme modes. Persists preference in `localStorage`. Owns the `[data-theme]` CSS overrides — include its CSS in `<head>` via `RenderCSS()`.
-[Detailed Documentation →](../themeswitch/README.md)
+[Detailed Documentation →](../themetoggle/README.md)
 
 ---
 

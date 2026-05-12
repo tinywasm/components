@@ -1,13 +1,14 @@
-package nav
+package navbar
 
 import (
-	"strings"
 	"testing"
+
+	. "github.com/tinywasm/fmt"
 )
 
 func TestNav_Render(t *testing.T) {
-	n := &Nav{
-		Items: []NavItem{
+	n := &NavBar{
+		Items: []NavBarItem{
 			{Label: "Home", Route: "home"},
 			{Label: "Users", Route: "users", Icon: "user-icon"},
 		},
@@ -15,34 +16,34 @@ func TestNav_Render(t *testing.T) {
 
 	html := n.Render().RenderHTML()
 
-	if !strings.HasPrefix(html, "<nav") {
+	if !HasPrefix(html, "<nav") {
 		t.Error("expected nav tag")
 	}
-	if !strings.Contains(html, "class='nav'") {
+	if !Contains(html, "class='nav'") {
 		t.Error("expected nav class")
 	}
 
-	if !strings.Contains(html, "class='nav-list'") {
+	if !Contains(html, "class='nav-list'") {
 		t.Error("expected nav-list")
 	}
 
 	// Check items
-	if !strings.Contains(html, "href='#home'") {
+	if !Contains(html, "href='#home'") {
 		t.Error("expected home link")
 	}
-	if !strings.Contains(html, "Home") {
+	if !Contains(html, "Home") {
 		t.Error("expected Home label")
 	}
 
-	if !strings.Contains(html, "href='#users'") {
+	if !Contains(html, "href='#users'") {
 		t.Error("expected users link")
 	}
-	if !strings.Contains(html, "Users") {
+	if !Contains(html, "Users") {
 		t.Error("expected Users label")
 	}
 
 	// Check icon
-	if !strings.Contains(html, "href='#user-icon'") {
+	if !Contains(html, "href='#user-icon'") {
 		t.Error("expected user icon symbol")
 	}
 }

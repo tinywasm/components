@@ -1,14 +1,14 @@
 //go:build !wasm
 
-package modal
+package dialog
 
 import . "github.com/tinywasm/css"
 
-func SSRInstance() *Modal { return &Modal{} }
+func SSRInstance() *DialogWidget { return &DialogWidget{} }
 
-func (m *Modal) RenderCSS() *Stylesheet {
+func (m *DialogWidget) RenderCSS() *Stylesheet {
 	return New(
-		Rule(ClsModal,
+		Rule(clsModal,
 			Position(Str("fixed")),
 			Top(Zero),
 			Left(Zero),
@@ -19,39 +19,39 @@ func (m *Modal) RenderCSS() *Stylesheet {
 			JustifyContent(Center),
 			AlignItems(Center),
 		),
-		Rule(Selector("."+string(ClsModal)+"."+string(ClsModalHidden)),
+		Rule(Selector("."+string(clsModal)+"."+string(clsModalHidden)),
 			Display(None),
 		),
-		Rule(ClsModalBackdrop,
+		Rule(clsModalBackdrop,
 			Position(Str("absolute")),
 			Top(Zero),
 			Left(Zero),
 			Width(Pct(100)),
 			Height(Pct(100)),
-			RuleContent(Decl{"background-color", "color-mix(in srgb, " + ColorSurface.Var() + ", transparent 40%)"}),
+			RuleContent(Decl{Prop: "background-color", Val: "color-mix(in srgb, " + ColorSurface.Var() + ", transparent 40%)"}),
 			ZIndex(Str("1")),
 		),
-		Rule(ClsModalContent,
+		Rule(clsModalContent,
 			BackgroundColor(ColorBackground),
 			Color(ColorOnSurface),
 			BorderRadius(RadiusMd),
 			BoxShadow(Str("0 4px 6px -1px rgba(0, 0, 0, 0.3)")),
 			ZIndex(Str("2")),
-			RuleContent(Decl{"min-width", "300px"}),
-			RuleContent(Decl{"max-width", "90%"}),
+			RuleContent(Decl{Prop: "min-width", Val: "300px"}),
+			RuleContent(Decl{Prop: "max-width", Val: "90%"}),
 		),
-		Rule(ClsModalHeader,
+		Rule(clsModalHeader,
 			Display(Flex_),
 			JustifyContent(Str("space-between")),
 			AlignItems(Center),
 			Padding(Space2),
-			RuleContent(Decl{"border-bottom", "1px solid " + ColorMuted.Var()}),
+			RuleContent(Decl{Prop: "border-bottom", Val: "1px solid " + ColorMuted.Var()}),
 		),
-		Rule(Selector("."+string(ClsModalHeader)+" h2"),
+		Rule(Selector("."+string(clsModalHeader)+" h2"),
 			Margin(Zero),
 			FontSize(Rem(1.25)),
 		),
-		Rule(ClsModalClose,
+		Rule(clsModalClose,
 			Background(None),
 			Border(None),
 			FontSize(Rem(1.5)),
@@ -60,12 +60,12 @@ func (m *Modal) RenderCSS() *Stylesheet {
 			LineHeight(Str("1")),
 			Color(ColorOnSurface),
 		),
-		Rule(ClsModalBody,
+		Rule(clsModalBody,
 			Padding(Space2),
 		),
 	)
 }
 
-func (m *Modal) IconSvg() map[string]string {
+func (m *DialogWidget) IconSvg() map[string]string {
 	return nil
 }

@@ -1,4 +1,4 @@
-package button
+package actionbutton
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestButton_Render(t *testing.T) {
-	btn := &Button{
+	btn := &ActionButton{
 		Text:    "Click",
 		Variant: "primary",
 	}

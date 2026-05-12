@@ -1,13 +1,13 @@
 //go:build wasm
 
-package themeswitch
+package themetoggle
 
 import "github.com/tinywasm/dom"
 
 // OnMount restaura el tema guardado en localStorage al montarse en el DOM.
 // Si el storage no está disponible o la entrada está corrupta, sale limpiamente
 // sin modificar el tema (modo auto por defecto).
-func (t *ThemeSwitch) OnMount() {
+func (t *ThemeToggle) OnMount() {
 	if !dom.LocalStorageAvailable() {
 		return
 	}
@@ -23,7 +23,7 @@ func (t *ThemeSwitch) OnMount() {
 	dom.SetDocumentAttr("data-theme", string(theme))
 }
 
-func (t *ThemeSwitch) onClick(dom.Event) {
+func (t *ThemeToggle) onClick(dom.Event) {
 	current := Theme(dom.GetDocumentAttr("data-theme"))
 	next := cycle(current)
 	dom.SetDocumentAttr("data-theme", string(next)) // "" elimina el atributo para ThemeAuto

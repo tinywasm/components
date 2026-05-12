@@ -1,6 +1,6 @@
 //go:build !wasm
 
-package themeswitch
+package themetoggle
 
 import (
 	"testing"
@@ -61,7 +61,7 @@ func TestIcon_AllThemes_NonEmpty(t *testing.T) {
 }
 
 func TestRenderCSS_NotEmpty(t *testing.T) {
-	ts := &ThemeSwitch{}
+	ts := &ThemeToggle{}
 	css := ts.RenderCSS()
 	if css.String() == "" {
 		t.Error("RenderCSS() returned empty string")

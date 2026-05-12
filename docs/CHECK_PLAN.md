@@ -86,13 +86,21 @@ And `button.go` (compiles for both wasm and !wasm) consumes the **same** class c
 package button
 
 import (
-    "github.com/tinywasm/css"
-    "github.com/tinywasm/dom"
+    . "github.com/tinywasm/css"
+    . "github.com/tinywasm/dom"
 )
 
-func (b *Button) Render() dom.Node {
-    return dom.Button(dom.Classes(css.ClsBtn, css.ClsPrimary), b.Label)
+func (b *Button) Render() Element {
+    return Button(ClsBtn.AsAttr(), b.Label)
 }
+```
+
+For multiple classes, declare a combined constant:
+```go
+var ClsBtnPrimary Class = "btn btn-primary"
+
+// Then use:
+Button(ClsBtnPrimary.AsAttr(), b.Label)
 ```
 
 ## Per-component migration steps
@@ -108,7 +116,7 @@ Repeat for each of the 7 components:
 5. Translate selectors to DSL form. Pseudo-classes via `Class.Hover()` / `Class.Focus()` / `Class.Disabled()`. Anything else (attribute selectors like `button[name*="btn"]`) goes through `Selector("button[name*=\"btn\"]")`.
 6. `@keyframes` → `Keyframes("name", At("0%", ...decls), At("100%", ...decls))` using the typed builders from `tinywasm/css` (see `tinywasm/css/docs/PLAN.md` for the API addition that this plan depends on). Token references inside frame declarations behave like any other DSL rule — renaming the token breaks the build. Data-URI background images → `BackgroundImage(Str("url(...)"))` (raw string is fine for SVG payloads).
 7. Add `SSRInstance()`.
-8. Update any `.go` file in the component that emitted class names as string literals to instead reference `css.Cls<...>` via `dom.Class()` / `dom.Classes()`.
+8. Update any `.go` file in the component that emitted class names as string literals to instead reference `css.Cls<...>` via `.AsAttr()` method (e.g., `ClsBtn.AsAttr()` instead of `dom.Class(ClsBtn)`). For multiple classes, concatenate them as a single `Class` constant with space-separated names.
 9. Delete the `.css` file.
 10. Remove the `//go:embed` directive and the `var css string` declaration.
 

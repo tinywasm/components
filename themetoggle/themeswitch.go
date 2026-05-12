@@ -1,12 +1,12 @@
-package themeswitch
+package themetoggle
 
 import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/dom"
+	. "github.com/tinywasm/css"
+	. "github.com/tinywasm/dom"
 )
 
 var (
-	ClsTsBtn css.Class = "ts-btn"
+	clsTsBtn Class = "ts-btn"
 )
 
 // storageKey identifica la entrada de localStorage del componente.
@@ -18,24 +18,24 @@ const storageKey = "tinywasm-themeswitch"
 type Theme string
 
 const (
-	ThemeAuto  Theme = ""      // no data-theme attribute → OS preference
+	ThemeAuto  Theme = "" // no data-theme attribute → OS preference
 	ThemeDark  Theme = "dark"
 	ThemeLight Theme = "light"
 )
 
-// ThemeSwitch es un botón flotante que cicla entre los 3 modos de tema.
+// ThemeToggle es un botón flotante que cicla entre los 3 modos de tema.
 // Restaura automáticamente el tema guardado en localStorage al montarse.
 //
-//   ts := &themeswitch.ThemeSwitch{}
-//   dom.Append("body", ts)
-type ThemeSwitch struct {
-	dom.Element
+//	ts := &themetoggle.ThemeToggle{}
+//	Append("body", ts)
+type ThemeToggle struct {
+	Element
 }
 
-func (t *ThemeSwitch) Render() *dom.Element {
-	current := Theme(dom.GetDocumentAttr("data-theme"))
-	return dom.Button(icon(current)).
-		Add(dom.Class(ClsTsBtn)).
+func (t *ThemeToggle) Render() *Element {
+	current := Theme(GetDocumentAttr("data-theme"))
+	return Button(icon(current)).
+		Add(clsTsBtn.AsAttr()).
 		Attr("title", label(current)).
 		Attr("aria-label", label(current)).
 		On("click", t.onClick) // implementado por build tag

@@ -1,14 +1,14 @@
-package card
+package contentcard
 
 import (
-	"strings"
 	"testing"
 
-	"github.com/tinywasm/dom"
+	. "github.com/tinywasm/dom"
+	. "github.com/tinywasm/fmt"
 )
 
 func TestCard_Render(t *testing.T) {
-	c := &Card{
+	c := &ContentCard{
 		Header: &simpleComponent{html: "Header"},
 		Body:   &simpleComponent{html: "Body"},
 		Footer: &simpleComponent{html: "Footer"},
@@ -16,32 +16,32 @@ func TestCard_Render(t *testing.T) {
 
 	html := c.Render().RenderHTML()
 
-	if !strings.HasPrefix(html, "<div") {
+	if !HasPrefix(html, "<div") {
 		t.Error("expected div tag")
 	}
 
-	if !strings.Contains(html, "class='card'") {
+	if !Contains(html, "class='card'") {
 		t.Error("expected card class")
 	}
 
-	if !strings.Contains(html, "class='card-header'") {
+	if !Contains(html, "class='card-header'") {
 		t.Error("expected card-header")
 	}
-	if !strings.Contains(html, "Header") {
+	if !Contains(html, "Header") {
 		t.Error("expected Header content")
 	}
 
-	if !strings.Contains(html, "class='card-body'") {
+	if !Contains(html, "class='card-body'") {
 		t.Error("expected card-body")
 	}
-	if !strings.Contains(html, "Body") {
+	if !Contains(html, "Body") {
 		t.Error("expected Body content")
 	}
 
-	if !strings.Contains(html, "class='card-footer'") {
+	if !Contains(html, "class='card-footer'") {
 		t.Error("expected card-footer")
 	}
-	if !strings.Contains(html, "Footer") {
+	if !Contains(html, "Footer") {
 		t.Error("expected Footer content")
 	}
 }
@@ -53,4 +53,4 @@ type simpleComponent struct {
 func (s *simpleComponent) RenderHTML() string        { return s.html }
 func (s *simpleComponent) GetID() string             { return "" }
 func (s *simpleComponent) SetID(id string)           {}
-func (s *simpleComponent) Children() []dom.Component { return nil }
+func (s *simpleComponent) Children() []Component { return nil }

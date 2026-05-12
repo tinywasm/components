@@ -1,6 +1,6 @@
 //go:build wasm
 
-package themeswitch
+package themetoggle
 
 import (
 	"testing"
@@ -15,7 +15,7 @@ func setUp() {
 
 func TestThemeSwitch_OnMount_NoSavedValue_StaysAuto(t *testing.T) {
 	setUp()
-	ts := &ThemeSwitch{}
+	ts := &ThemeToggle{}
 	ts.OnMount()
 
 	got := dom.GetDocumentAttr("data-theme")
@@ -28,7 +28,7 @@ func TestThemeSwitch_OnMount_RestoresDark(t *testing.T) {
 	setUp()
 	dom.LocalStorageSet(storageKey, "dark")
 
-	ts := &ThemeSwitch{}
+	ts := &ThemeToggle{}
 	ts.OnMount()
 
 	got := dom.GetDocumentAttr("data-theme")
@@ -41,7 +41,7 @@ func TestThemeSwitch_OnMount_InvalidValue_Cleans(t *testing.T) {
 	setUp()
 	dom.LocalStorageSet(storageKey, "xyz")
 
-	ts := &ThemeSwitch{}
+	ts := &ThemeToggle{}
 	ts.OnMount()
 
 	got := dom.GetDocumentAttr("data-theme")
@@ -60,7 +60,7 @@ func TestThemeSwitch_OnMount_InvalidValue_Cleans(t *testing.T) {
 
 func TestThemeSwitch_Click_CyclesAndPersists(t *testing.T) {
 	setUp()
-	ts := &ThemeSwitch{}
+	ts := &ThemeToggle{}
 	ts.OnMount()
 
 	// Auto ("") -> click -> Dark

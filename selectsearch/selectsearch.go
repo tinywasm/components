@@ -50,7 +50,7 @@ func (c *SelectSearch) Render() *dom.Element {
 		headerText = "Select..."
 	}
 
-	toggle := dom.Input("checkbox").Add(dom.Class(ClsSsToggle))
+	toggle := dom.Input("checkbox").Add(ClsSsToggle.AsAttr())
 	if c.isOpen {
 		toggle.Attr("checked", "")
 	}
@@ -60,13 +60,13 @@ func (c *SelectSearch) Render() *dom.Element {
 	})
 
 	// For(toggle) auto-generates toggle's ID and sets for= — no manual string needed
-	header := dom.Label().Add(dom.Class(ClsSsHeader)).
+	header := dom.Label().Add(ClsSsHeader.AsAttr()).
 		For(toggle).
 		Text(headerText).
-		Add(dom.Svg(dom.Use().Attr("href", "#ss-arrow-down")).Add(dom.Class(ClsSsIcon)))
+		Add(dom.Svg(dom.Use().Attr("href", "#ss-arrow-down")).Add(ClsSsIcon.AsAttr()))
 
 	searchInput := dom.Input("search").
-		Add(dom.Class(ClsSsSearch)).
+		Add(ClsSsSearch.AsAttr()).
 		Attr("placeholder", "Search...").
 		Attr("value", c.filterTerm)
 
@@ -100,7 +100,7 @@ func (c *SelectSearch) Render() *dom.Element {
 		c.Update()
 	})
 
-	optList := dom.Div().Add(dom.Class(ClsSsOptions))
+	optList := dom.Div().Add(ClsSsOptions.AsAttr())
 
 	for _, opt := range c.Options {
 		if c.filterTerm != "" && !fmt.Matches(opt.Label, c.filterTerm) && !fmt.Matches(opt.Description, c.filterTerm) {
@@ -108,8 +108,8 @@ func (c *SelectSearch) Render() *dom.Element {
 		}
 
 		o := opt // capture loop variable for the closure
-		item := dom.Div().Add(dom.Class(ClsSsOption)).
-			Add(dom.Span().Add(dom.Class(ClsSsLabel)).Text(opt.Label))
+		item := dom.Div().Add(ClsSsOption.AsAttr()).
+			Add(dom.Span().Add(ClsSsLabel.AsAttr()).Text(opt.Label))
 
 		item.On("click", func(e dom.Event) {
 			c.selectedLabel = o.Label
@@ -122,16 +122,16 @@ func (c *SelectSearch) Render() *dom.Element {
 		})
 
 		if opt.Description != "" {
-			item.Add(dom.Span().Add(dom.Class(ClsSsDesc)).Text(opt.Description))
+			item.Add(dom.Span().Add(ClsSsDesc.AsAttr()).Text(opt.Description))
 		}
 		optList.Add(item)
 	}
 
-	dropdown := dom.Div().Add(dom.Class(ClsSsDropdown)).
+	dropdown := dom.Div().Add(ClsSsDropdown.AsAttr()).
 		Add(searchInput).
 		Add(optList)
 
-	return dom.Div().Add(dom.Class(ClsSsBox)).
+	return dom.Div().Add(ClsSsBox.AsAttr()).
 		Add(toggle).
 		Add(header).
 		Add(dropdown)
