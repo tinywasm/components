@@ -1,7 +1,18 @@
 package modal
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/dom"
+)
+
+var (
+	ClsModal         css.Class = "modal"
+	ClsModalHidden   css.Class = "hidden"
+	ClsModalBackdrop css.Class = "modal-backdrop"
+	ClsModalContent  css.Class = "modal-content"
+	ClsModalHeader   css.Class = "modal-header"
+	ClsModalClose    css.Class = "modal-close"
+	ClsModalBody     css.Class = "modal-body"
 )
 
 type Modal struct {
@@ -12,14 +23,18 @@ type Modal struct {
 }
 
 func (m *Modal) Render() *dom.Element {
-	class := "modal"
+	if m.Element == nil {
+		m.Element = &dom.Element{}
+	}
+
+	modal := dom.Div().Add(dom.Class(ClsModal))
 	if !m.Visible {
-		class += " hidden"
+		modal.Add(dom.Class(ClsModalHidden))
 	}
 
 	// Create backdrop
 	backdrop := dom.Div().
-		Class("modal-backdrop")
+		Add(dom.Class(ClsModalBackdrop))
 
 	backdrop.On("click", func(e dom.Event) {
 		m.Close(e)
@@ -28,28 +43,23 @@ func (m *Modal) Render() *dom.Element {
 	// Create close button
 	closeBtn := dom.Button().
 		Text("×").
-		Class("modal-close")
+		Add(dom.Class(ClsModalClose))
 
 	closeBtn.On("click", func(e dom.Event) {
 		m.Close(e)
 	})
 
-	modalContent := dom.Div().Class("modal-content").
+	modalContent := dom.Div().Add(dom.Class(ClsModalContent)).
 		Add(
-			dom.Div().Class("modal-header").
+			dom.Div().Add(dom.Class(ClsModalHeader)).
 				Add(dom.H2().Text(m.Title)).
 				Add(closeBtn),
 		).
 		Add(
-			dom.Div().Class("modal-body").Add(m.Content),
+			dom.Div().Add(dom.Class(ClsModalBody)).Add(m.Content),
 		)
 
-	if m.Element == nil {
-		m.Element = &dom.Element{}
-	}
-
-	return dom.Div().
-		Class(class).
+	return modal.
 		Add(backdrop).
 		Add(modalContent)
 }

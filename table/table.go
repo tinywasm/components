@@ -1,7 +1,12 @@
 package table
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/dom"
+)
+
+var (
+	ClsTable css.Class = "table"
 )
 
 type Table struct {
@@ -15,8 +20,7 @@ func (t *Table) Render() *dom.Element {
 		t.Element = &dom.Element{}
 	}
 
-	table := dom.Table().
-		Class("table")
+	table := dom.Table().Add(dom.Class(ClsTable))
 
 	// Header
 	thead := dom.Thead()

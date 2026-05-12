@@ -63,7 +63,7 @@ func TestIcon_AllThemes_NonEmpty(t *testing.T) {
 func TestRenderCSS_NotEmpty(t *testing.T) {
 	ts := &ThemeSwitch{}
 	css := ts.RenderCSS()
-	if css == "" {
+	if css.String() == "" {
 		t.Error("RenderCSS() returned empty string")
 	}
 }

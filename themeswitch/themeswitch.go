@@ -1,6 +1,13 @@
 package themeswitch
 
-import "github.com/tinywasm/dom"
+import (
+	"github.com/tinywasm/css"
+	"github.com/tinywasm/dom"
+)
+
+var (
+	ClsTsBtn css.Class = "ts-btn"
+)
 
 // storageKey identifica la entrada de localStorage del componente.
 const storageKey = "tinywasm-themeswitch"
@@ -28,7 +35,7 @@ type ThemeSwitch struct {
 func (t *ThemeSwitch) Render() *dom.Element {
 	current := Theme(dom.GetDocumentAttr("data-theme"))
 	return dom.Button(icon(current)).
-		Class("ts-btn").
+		Add(dom.Class(ClsTsBtn)).
 		Attr("title", label(current)).
 		Attr("aria-label", label(current)).
 		On("click", t.onClick) // implementado por build tag

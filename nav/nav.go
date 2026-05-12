@@ -1,7 +1,16 @@
 package nav
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/dom"
+)
+
+var (
+	ClsNav     css.Class = "nav"
+	ClsNavList css.Class = "nav-list"
+	ClsNavItem css.Class = "nav-item"
+	ClsIcon    css.Class = "icon"
+	ClsActive  css.Class = "active"
 )
 
 type Nav struct {
@@ -20,17 +29,16 @@ func (n *Nav) Render() *dom.Element {
 		n.Element = &dom.Element{}
 	}
 
-	nav := dom.Nav().
-		Class("nav")
+	nav := dom.Nav(dom.Class(ClsNav))
 
-	ul := dom.Ul().Class("nav-list")
+	ul := dom.Ul(dom.Class(ClsNavList))
 	currentHash := dom.GetHash()
 
 	for _, item := range n.Items {
 		isActive := currentHash == "#"+item.Route
-		li := dom.Li().Class("nav-item")
+		li := dom.Li().Add(dom.Class(ClsNavItem))
 		if isActive {
-			li.Class("active")
+			li.Add(dom.Class(ClsActive))
 		}
 
 		link := NavLink(item.Label, "#"+item.Route, item.Icon)
@@ -54,7 +62,7 @@ func NavLink(text, hash, icon string) *dom.Element {
 	if icon != "" {
 		// Add icon using SVG sprite
 		link.Add(
-			dom.Svg().Class("icon").Add(
+			dom.Svg(dom.Class(ClsIcon)).Add(
 				dom.Use().Attr("href", "#"+icon),
 			),
 		)

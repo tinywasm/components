@@ -1,7 +1,15 @@
 package card
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/dom"
+)
+
+var (
+	ClsCard       css.Class = "card"
+	ClsCardHeader css.Class = "card-header"
+	ClsCardBody   css.Class = "card-body"
+	ClsCardFooter css.Class = "card-footer"
 )
 
 type Card struct {
@@ -16,19 +24,18 @@ func (c *Card) Render() *dom.Element {
 		c.Element = &dom.Element{}
 	}
 
-	card := dom.Div().
-		Class("card")
+	card := dom.Div(dom.Class(ClsCard))
 
 	if c.Header != nil {
-		card.Add(dom.Div().Class("card-header").Add(c.Header))
+		card.Add(dom.Div(dom.Class(ClsCardHeader)).Add(c.Header))
 	}
 
 	if c.Body != nil {
-		card.Add(dom.Div().Class("card-body").Add(c.Body))
+		card.Add(dom.Div(dom.Class(ClsCardBody)).Add(c.Body))
 	}
 
 	if c.Footer != nil {
-		card.Add(dom.Div().Class("card-footer").Add(c.Footer))
+		card.Add(dom.Div(dom.Class(ClsCardFooter)).Add(c.Footer))
 	}
 
 	return card
