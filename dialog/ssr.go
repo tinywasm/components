@@ -7,7 +7,7 @@ import . "github.com/tinywasm/css"
 func SSRInstance() *DialogWidget { return &DialogWidget{} }
 
 func (m *DialogWidget) RenderCSS() *Stylesheet {
-	return New(
+	return NewStylesheet(
 		Rule(clsModal,
 			Position(Str("fixed")),
 			Top(Zero),

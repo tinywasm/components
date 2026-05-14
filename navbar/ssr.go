@@ -7,7 +7,7 @@ import . "github.com/tinywasm/css"
 func SSRInstance() *NavBar { return &NavBar{} }
 
 func (n *NavBar) RenderCSS() *Stylesheet {
-	return New(
+	return NewStylesheet(
 		Rule(clsNav,
 			BackgroundColor(ColorSurface),
 			Color(ColorOnSurface),

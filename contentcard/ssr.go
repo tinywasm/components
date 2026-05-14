@@ -7,7 +7,7 @@ import . "github.com/tinywasm/css"
 func SSRInstance() *ContentCard { return &ContentCard{} }
 
 func (c *ContentCard) RenderCSS() *Stylesheet {
-	return New(
+	return NewStylesheet(
 		Rule(clsCard,
 			Border(Px(1), Str("solid"), ColorMuted),
 			BackgroundColor(ColorBackground),

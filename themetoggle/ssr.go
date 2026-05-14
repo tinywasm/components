@@ -7,7 +7,7 @@ import . "github.com/tinywasm/css"
 func SSRInstance() *ThemeToggle { return &ThemeToggle{} }
 
 func (t *ThemeToggle) RenderCSS() *Stylesheet {
-	return New(
+	return NewStylesheet(
 		Rule(Selector("[data-theme=\"light\"]"),
 			Bind(ColorBackground, ColorBackgroundLight),
 			Bind(ColorSurface, ColorSurfaceLight),
