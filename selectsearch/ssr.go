@@ -7,7 +7,7 @@ import . "github.com/tinywasm/css"
 func SSRInstance() *SelectSearch { return &SelectSearch{} }
 
 func (c *SelectSearch) RenderCSS() *Stylesheet {
-	return New(
+	return NewStylesheet(
 		Rule(ClsSsToggle, Display(None)),
 		Rule(ClsSsDropdown, Display(None)),
 		Rule(Selector("."+string(ClsSsToggle)+":checked ~ ."+string(ClsSsDropdown)), Display(Block)),

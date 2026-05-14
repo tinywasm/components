@@ -7,7 +7,7 @@ import . "github.com/tinywasm/css"
 func SSRInstance() *DataTable { return &DataTable{} }
 
 func (t *DataTable) RenderCSS() *Stylesheet {
-	return New(
+	return NewStylesheet(
 		Rule(clsTable,
 			Width(Pct(100)),
 			RuleContent(Decl{Prop: "border-collapse", Val: "collapse"}),

@@ -7,7 +7,7 @@ import . "github.com/tinywasm/css"
 func SSRInstance() *ActionButton { return &ActionButton{} }
 
 func (b *ActionButton) RenderCSS() *Stylesheet {
-	return New(
+	return NewStylesheet(
 		Rule(clsBtnUrlUp,
 			RuleContent(Decl{Prop: "margin-bottom", Val: "auto"}),
 		),
