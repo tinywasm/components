@@ -4,8 +4,6 @@ package actionbutton
 
 import . "github.com/tinywasm/css"
 
-func SSRInstance() *ActionButton { return &ActionButton{} }
-
 func (b *ActionButton) RenderCSS() *Stylesheet {
 	return NewStylesheet(
 		Rule(clsBtnUrlUp,
@@ -153,8 +151,4 @@ func (b *ActionButton) RenderCSS() *Stylesheet {
 			Opacity(0.9),
 		),
 	)
-}
-
-func (b *ActionButton) IconSvg() map[string]string {
-	return nil
 }

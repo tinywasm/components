@@ -4,8 +4,6 @@ package datatable
 
 import . "github.com/tinywasm/css"
 
-func SSRInstance() *DataTable { return &DataTable{} }
-
 func (t *DataTable) RenderCSS() *Stylesheet {
 	return NewStylesheet(
 		Rule(clsTable,
@@ -27,8 +25,4 @@ func (t *DataTable) RenderCSS() *Stylesheet {
 			BackgroundColor(ColorHover),
 		),
 	)
-}
-
-func (t *DataTable) IconSvg() map[string]string {
-	return nil
 }

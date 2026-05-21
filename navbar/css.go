@@ -4,8 +4,6 @@ package navbar
 
 import . "github.com/tinywasm/css"
 
-func SSRInstance() *NavBar { return &NavBar{} }
-
 func (n *NavBar) RenderCSS() *Stylesheet {
 	return NewStylesheet(
 		Rule(clsNav,
@@ -37,8 +35,4 @@ func (n *NavBar) RenderCSS() *Stylesheet {
 			RuleContent(Decl{Prop: "fill", Val: "currentColor"}),
 		),
 	)
-}
-
-func (n *NavBar) IconSvg() map[string]string {
-	return nil
 }

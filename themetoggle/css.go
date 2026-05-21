@@ -4,8 +4,6 @@ package themetoggle
 
 import . "github.com/tinywasm/css"
 
-func SSRInstance() *ThemeToggle { return &ThemeToggle{} }
-
 func (t *ThemeToggle) RenderCSS() *Stylesheet {
 	return NewStylesheet(
 		Rule(Selector("[data-theme=\"light\"]"),
@@ -50,8 +48,4 @@ func (t *ThemeToggle) RenderCSS() *Stylesheet {
 			Color(ColorOnSecondary),
 		),
 	)
-}
-
-func (t *ThemeToggle) IconSvg() map[string]string {
-	return nil
 }
