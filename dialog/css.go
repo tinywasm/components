@@ -4,8 +4,6 @@ package dialog
 
 import . "github.com/tinywasm/css"
 
-func SSRInstance() *DialogWidget { return &DialogWidget{} }
-
 func (m *DialogWidget) RenderCSS() *Stylesheet {
 	return NewStylesheet(
 		Rule(clsModal,
@@ -64,8 +62,4 @@ func (m *DialogWidget) RenderCSS() *Stylesheet {
 			Padding(Space2),
 		),
 	)
-}
-
-func (m *DialogWidget) IconSvg() map[string]string {
-	return nil
 }

@@ -4,8 +4,6 @@ package contentcard
 
 import . "github.com/tinywasm/css"
 
-func SSRInstance() *ContentCard { return &ContentCard{} }
-
 func (c *ContentCard) RenderCSS() *Stylesheet {
 	return NewStylesheet(
 		Rule(clsCard,
@@ -36,8 +34,4 @@ func (c *ContentCard) RenderCSS() *Stylesheet {
 			Color(ColorOnSurface),
 		),
 	)
-}
-
-func (c *ContentCard) IconSvg() map[string]string {
-	return nil
 }

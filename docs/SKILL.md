@@ -22,18 +22,19 @@ This applies to both the Go struct name (`ThemeSwitch`) and the folder/package n
 
 ## File Structure
 
-Each component resides in its own folder within `tinywasm/components`. There are **no `.css` files** — styles are expressed as Go code in `ssr.go`.
+Each component resides in its own folder within `tinywasm/components`. There are **no `.css` files** — styles are expressed as Go code in backend-only files (`css.go`, `svg.go`, etc.).
 
 ```
 tinywasm/components/
 └── mycomponent/
     ├── mycomponent.go   # Struct, Render(), OnMount() — shared WASM + SSR
-    ├── ssr.go           # !wasm only: RenderCSS(), SSRInstance(), IconSvg()
+    ├── css.go           # !wasm only: RenderCSS()
+    ├── svg.go           # !wasm only: IconSvg()
     └── mycomponent_test.go
 ```
 
 > There is NO `front.go` and NO `.css` file. WASM interactivity lives in `mycomponent.go`
-> via `OnMount()`. CSS lives in `ssr.go` as a typed Go DSL — never as an embedded file.
+> via `OnMount()`. CSS lives in `css.go` as a typed Go DSL — never as an embedded file.
 
 ---
 
@@ -103,7 +104,7 @@ type MyComponent struct {
 
 Declare **PRIVATE** (lowercase) `css.Class` constants at package scope. These are internal implementation details; the component's public API is its struct fields and methods, not CSS internals.
 
-Both `mycomponent.go` (HTML side) and `ssr.go` (CSS side) reference the same constant — a rename is a compile error, not a silent drift.
+Both `mycomponent.go` (HTML side) and `css.go` (CSS side) reference the same constant — a rename is a compile error, not a silent drift.
 
 ```go
 package mycomponent
@@ -145,26 +146,25 @@ func (c *MyComponent) OnMount() {
 
 ---
 
-## 2. Backend File (`ssr.go`)
+## 2. Backend Files (`css.go`, `svg.go`, `js.go`, `html.go`)
 
-**CRITICAL:** This file MUST have the `//go:build !wasm` build tag.
+**CRITICAL:** These files MUST have the `//go:build !wasm` build tag.
 
-`ssr.go` is the **single** SSR file. It contains:
-- `SSRInstance()` — required by `assetmin`'s compile-and-invoke extractor.
-- `RenderCSS()` — returns `*Stylesheet` built with the typed DSL (use dot import).
-- `IconSvg()` — if the component uses icons (see section 3).
+Assets are split into separate files by type for better organization and discovery by `assetmin`:
+- `css.go`: Contains `RenderCSS() *Stylesheet` (required for styling).
+- `svg.go`: Contains `IconSvg() map[string]string` (optional).
+- `js.go`: Contains `RenderJS() []*js.Script` (optional).
+- `html.go`: Contains `RenderHTML() *Element` (optional, for custom SSR templates).
 
 No `.css` embed. No `//go:embed`. No `var css string`. No `//go:embed *.css`.
 
+**`css.go` Example:**
 ```go
 //go:build !wasm
 
 package mycomponent
 
 import . "github.com/tinywasm/css"
-
-// SSRInstance is required by assetmin's compile-and-invoke extractor.
-func SSRInstance() *MyComponent { return &MyComponent{} }
 
 func (c *MyComponent) RenderCSS() *Stylesheet {
     return New(
@@ -192,7 +192,7 @@ func (c *MyComponent) RenderCSS() *Stylesheet {
 - Use dot import (`. "github.com/tinywasm/css"`) for clean DSL syntax
 - Reference the **same private class constants** declared in `mycomponent.go` (e.g., `clsRoot`, not `ClsRoot`)
 - Use `.AsAttr()` method on classes to convert them to DOM attributes
-- `RenderCSS()` ships **component-scoped** CSS. `assetmin` invokes `SSRInstance()` at build time, calls `.RenderCSS().String()`, and routes the result to the `middle` slot of `<head>`
+- `RenderCSS()` ships **component-scoped** CSS. `assetmin` discovers the component at build time, calls `.RenderCSS().String()`, and routes the result to the `middle` slot of `<head>`
 
 Do **not** declare a `RootCSS()` function in a component package. `RootCSS()` is reserved for the app or `tinywasm/dom` (single-override rule — third-party `RootCSS()` is silently ignored by `assetmin` with a warning).
 
@@ -202,14 +202,14 @@ Do **not** declare a `RootCSS()` function in a component package. `RootCSS()` is
 
 The framework injects the SVG sprite **directly into `<body>`** at server time. There is no public `/assets/icons.svg` URL — the sprite lives only in memory and inline in the HTML.
 
-Pipeline: **`IconSvg()` in `ssr.go`** → sprite built in memory → **injected inline in HTML** → `<svg><use href="#id">` in `Render()` resolves with zero network requests.
+Pipeline: **`IconSvg()` in `svg.go`** → sprite built in memory → **injected inline in HTML** → `<svg><use href="#id">` in `Render()` resolves with zero network requests.
 
-> **MANDATORY:** `IconSvg()` MUST be in `ssr.go` (`//go:build !wasm`).
+> **MANDATORY:** `IconSvg()` MUST be in `svg.go` (`//go:build !wasm`).
 > SVG strings are dead code on WASM — never define icons in the main file.
 
 > **MANDATORY:** All paths and shapes MUST include `fill="currentColor"` (or `stroke="currentColor"`) so CSS can control icon color via `fill` or `color` on any ancestor.
 
-**`ssr.go` — register the icon:**
+**`svg.go` — register the icon:**
 ```go
 func (c *MyComponent) IconSvg() map[string]string {
     return map[string]string{
@@ -226,7 +226,7 @@ func (c *MyComponent) IconSvg() map[string]string {
 dom.Svg(dom.Use().Attr("href", "#my-icon-id")).Class("my-icon")
 ```
 
-**Icon styles in `ssr.go` `RenderCSS()`:**
+**Icon styles in `css.go` `RenderCSS()`:**
 ```go
 var ClsIcon css.Class = "my-icon"
 
@@ -279,7 +279,7 @@ func TestMyComponent_Render(t *testing.T) {
 }
 
 func TestMyComponent_CSS(t *testing.T) {
-    inst := SSRInstance()
+    inst := &MyComponent{}
     sheet := inst.RenderCSS()
     if sheet == nil {
         t.Fatal("RenderCSS returned nil")
@@ -298,11 +298,11 @@ func TestMyComponent_CSS(t *testing.T) {
 Components are consumed by `tinywasm/assetmin` via the **compile-and-invoke** pipeline:
 
 1. `assetmin` discovers all component modules in the project.
-2. It generates a single combined `main.go` that imports every discovered component and calls `SSRInstance()` on each.
+2. It generates a single combined `main.go` that imports every discovered component.
 3. It compiles and runs that `main.go` **once** (one `go run` for all components combined), captures the aggregated JSON output, and routes each component's assets into the bundle.
 
 This means:
-- `SSRInstance()` in every component's `ssr.go` is **required** — assetmin cannot extract assets without it.
+- `assetmin` automatically infers the receiver type from the `Render*` methods; the boilerplate `SSRInstance()` is **not** required.
 - A compile error in any component fails the whole extraction run. The compiler error is surfaced verbatim so the developer sees it as a normal `go build` failure.
 - Extraction is cached by content hash of all component Go files. In steady state (no file changes) it costs ~0 ms.
 

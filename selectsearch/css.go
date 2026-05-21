@@ -4,8 +4,6 @@ package selectsearch
 
 import . "github.com/tinywasm/css"
 
-func SSRInstance() *SelectSearch { return &SelectSearch{} }
-
 func (c *SelectSearch) RenderCSS() *Stylesheet {
 	return NewStylesheet(
 		Rule(ClsSsToggle, Display(None)),
@@ -81,10 +79,4 @@ func (c *SelectSearch) RenderCSS() *Stylesheet {
 			Background(ColorPrimary),
 		),
 	)
-}
-
-func (c *SelectSearch) IconSvg() map[string]string {
-	return map[string]string{
-		"ss-arrow-down": `<path fill="currentColor" d="M1.5 4.5l6.5 7 6.5-7H1.5z"/>`,
-	}
 }
