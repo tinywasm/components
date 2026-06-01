@@ -14,7 +14,7 @@ func TestModal_Render(t *testing.T) {
 		Visible: true,
 	}
 
-	html := m.Render().RenderHTML()
+	html := m.Render().String()
 
 	// Check main container
 	if !Contains(html, "class='modal'") {
@@ -43,7 +43,7 @@ func TestModal_Render(t *testing.T) {
 
 	// Test hidden
 	m.Visible = false
-	htmlHidden := m.Render().RenderHTML()
+	htmlHidden := m.Render().String()
 	if !Contains(htmlHidden, "class='modal hidden'") {
 		t.Error("expected hidden class when Visible=false")
 	}
@@ -53,7 +53,7 @@ type simpleComponent struct {
 	html string
 }
 
-func (s *simpleComponent) RenderHTML() string        { return s.html }
+func (s *simpleComponent) String() string            { return s.html }
 func (s *simpleComponent) GetID() string             { return "" }
 func (s *simpleComponent) SetID(id string)           {}
 func (s *simpleComponent) Children() []Component { return nil }

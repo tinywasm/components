@@ -3,6 +3,7 @@ package dialog
 import (
 	. "github.com/tinywasm/css"
 	. "github.com/tinywasm/dom"
+	. "github.com/tinywasm/html"
 )
 
 var (

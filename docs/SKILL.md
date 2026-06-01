@@ -9,7 +9,7 @@ A catalog of reusable, efficient, and WebAssembly-ready UI components. Each comp
 
 ## Naming Convention
 
-Component names **must be composed of at least two words** — single-word names are reserved for primitive builder functions in `tinywasm/dom` (e.g. `Div`, `Button`, `Input`).
+Component names **must be composed of at least two words** — single-word names are reserved for primitive builder functions in `tinywasm/html` (e.g. `Div`, `Button`, `Input`).
 
 ```
 ✅ ThemeSwitch   NavBar   DataTable   UserCard   SearchBox
@@ -28,8 +28,9 @@ Each component resides in its own folder within `tinywasm/components`. There are
 tinywasm/components/
 └── mycomponent/
     ├── mycomponent.go   # Struct, Render(), OnMount() — shared WASM + SSR
-    ├── css.go           # !wasm only: RenderCSS()
-    ├── svg.go           # !wasm only: IconSvg()
+    ├── css.go           # !wasm only: RenderCSS() *css.Stylesheet
+    ├── svg.go           # !wasm only: IconSvg() *svg.Sprite (optional)
+    ├── html.go          # !wasm only: RenderHTML() string (optional)
     └── mycomponent_test.go
 ```
 
@@ -48,7 +49,7 @@ CSS is written using the `tinywasm/css` typed DSL. All design decisions referenc
 - **Exported `css.Class` constants** declare every class name. The same constant is used by both the HTML emission side and the CSS emission side of the component.
 - **Class name prefix** — follow `<component>-*` convention (e.g. `"mycomponent-header"`).
 - A component **must not** declare a `:root {}` block via `css.Root(...)`. That is reserved for the app or `tinywasm/dom`. Use only `Rule()` and `Selector()`.
-- Do NOT style form elements — use `tinywasm/form`.
+- Do NOT style form elements — use `github.com/tinywasm/form`.
 
 Available token groups (from `tinywasm/css/tokens.go`):
 
@@ -69,18 +70,20 @@ Available token groups (from `tinywasm/css/tokens.go`):
 
 Contains the struct definition, private `css.Class` constants, `Render()` (shared SSR + WASM), and `OnMount()` (WASM only — no build tag; TinyGo eliminates dead code).
 
-### Imports — use dot notation for clean code
+### Imports
 
-**Always import `tinywasm/css` and `tinywasm/dom` with dot notation (`.`)** to make CSS DSL and DOM builders directly readable.
+**Import `tinywasm/css`, `tinywasm/html` and `tinywasm/dom` with dot notation (`.`)** to make CSS DSL, HTML and DOM builders directly readable. For `tinywasm/svg`, prefer a named import to avoid collisions.
 
 ```go
 import (
-    . "github.com/tinywasm/css"  // Dot import: Class, ColorPrimary, Space4, etc.
-    . "github.com/tinywasm/dom"  // Dot import: Div, Button, Element, Event, etc.
+    . "github.com/tinywasm/css"   // Class, Rule, Token, etc.
+    . "github.com/tinywasm/html"  // Div, Span, H1, Nav, Button...
+    . "github.com/tinywasm/dom"   // Event, Component, Reference, Render, Append
+    "github.com/tinywasm/svg"     // named import for icons
 )
 ```
 
-This makes the code read as intent (e.g., `Div(clsRoot, ...)`) rather than noise (e.g., `dom.Div(css.Class(...), ...)`).
+This makes the code read as intent (e.g., `Div(clsRoot, ...)`) rather than noise.
 
 ### Embedding Rule — CRITICAL for TinyGo/WASM
 
@@ -100,11 +103,9 @@ type MyComponent struct {
 }
 ```
 
-### Class constants — PRIVATE
+### Class constants
 
-Declare **PRIVATE** (lowercase) `css.Class` constants at package scope. These are internal implementation details; the component's public API is its struct fields and methods, not CSS internals.
-
-Both `mycomponent.go` (HTML side) and `css.go` (CSS side) reference the same constant — a rename is a compile error, not a silent drift.
+Declare `css.Class` constants at package scope. Exported constants (starting with uppercase) are preferred if they need to be accessible from other packages (e.g., tests or parent components).
 
 ```go
 package mycomponent
@@ -112,12 +113,13 @@ package mycomponent
 import (
     . "github.com/tinywasm/css"
     . "github.com/tinywasm/dom"
+    . "github.com/tinywasm/html"
 )
 
 var (
-    clsRoot  Class = "mycomponent"
-    clsTitle Class = "mycomponent-title"
-    clsBody  Class = "mycomponent-body"
+    ClsRoot  Class = "mycomponent"
+    ClsTitle Class = "mycomponent-title"
+    ClsBody  Class = "mycomponent-body"
 )
 
 type MyComponent struct {
@@ -126,9 +128,9 @@ type MyComponent struct {
 }
 
 func (c *MyComponent) Render() *Element {
-    return Div(clsRoot.AsAttr(),
-        H2(clsTitle.AsAttr(), c.Title),
-        Div(clsBody.AsAttr()),
+    return Div(ClsRoot.AsAttr(),
+        H2(ClsTitle.AsAttr(), c.Title),
+        Div(ClsBody.AsAttr()),
     )
 }
 
@@ -151,106 +153,51 @@ func (c *MyComponent) OnMount() {
 **CRITICAL:** These files MUST have the `//go:build !wasm` build tag.
 
 Assets are split into separate files by type for better organization and discovery by `assetmin`:
-- `css.go`: Contains `RenderCSS() *Stylesheet` (required for styling).
-- `svg.go`: Contains `IconSvg() map[string]string` (optional).
+- `css.go`: Contains `RenderCSS() *css.Stylesheet` (required for styling).
+- `svg.go`: Contains `IconSvg() *svg.Sprite` (optional).
 - `js.go`: Contains `RenderJS() []*js.Script` (optional).
-- `html.go`: Contains `RenderHTML() *Element` (optional, for custom SSR templates).
+- `html.go`: Contains `RenderHTML() string` (optional, for custom SSR templates).
 
-No `.css` embed. No `//go:embed`. No `var css string`. No `//go:embed *.css`.
-
-**`css.go` Example:**
-```go
-//go:build !wasm
-
-package mycomponent
-
-import . "github.com/tinywasm/css"
-
-func (c *MyComponent) RenderCSS() *Stylesheet {
-    return New(
-        Rule(clsRoot,
-            Display(Flex_),
-            FlexDirection(Column),
-            Gap(Space4),
-            Padding(Space6),
-            Background(ColorSurface),
-            BorderRadius(RadiusMd),
-        ),
-        Rule(clsTitle,
-            FontSize(TextLg),
-            FontWeight(FontWeightBold),
-            Color(ColorOnSurface),
-        ),
-        Rule(clsRoot.Hover(),
-            BoxShadow(ShadowMd),
-        ),
-    )
-}
-```
-
-**Key patterns:**
-- Use dot import (`. "github.com/tinywasm/css"`) for clean DSL syntax
-- Reference the **same private class constants** declared in `mycomponent.go` (e.g., `clsRoot`, not `ClsRoot`)
-- Use `.AsAttr()` method on classes to convert them to DOM attributes
-- `RenderCSS()` ships **component-scoped** CSS. `assetmin` discovers the component at build time, calls `.RenderCSS().String()`, and routes the result to the `middle` slot of `<head>`
-
-Do **not** declare a `RootCSS()` function in a component package. `RootCSS()` is reserved for the app or `tinywasm/dom` (single-override rule — third-party `RootCSS()` is silently ignored by `assetmin` with a warning).
+No `.css` embed. No `//go:embed`. No `var css string`.
 
 ---
 
-## 3. Icon Management (`IconSvgProvider`)
+## 3. Icon Management (`svg.go`)
 
-The framework injects the SVG sprite **directly into `<body>`** at server time. There is no public `/assets/icons.svg` URL — the sprite lives only in memory and inline in the HTML.
+The framework injects the SVG sprite **directly into `<body>`** at server time.
 
 Pipeline: **`IconSvg()` in `svg.go`** → sprite built in memory → **injected inline in HTML** → `<svg><use href="#id">` in `Render()` resolves with zero network requests.
 
-> **MANDATORY:** `IconSvg()` MUST be in `svg.go` (`//go:build !wasm`).
+> **MANDATORY:** `IconSvg()` MUST be in `svg.go` (`//go:build !wasm`) and return `*svg.Sprite`.
 > SVG strings are dead code on WASM — never define icons in the main file.
 
 > **MANDATORY:** All paths and shapes MUST include `fill="currentColor"` (or `stroke="currentColor"`) so CSS can control icon color via `fill` or `color` on any ancestor.
 
 **`svg.go` — register the icon:**
 ```go
-func (c *MyComponent) IconSvg() map[string]string {
-    return map[string]string{
-        // Do NOT include the wrapping <svg> tag — the system adds it.
-        // Only internal content: paths, circles, etc.
-        // Default viewBox is "0 0 16 16". Include viewBox="..." to override.
-        "my-icon-id": `<path fill="currentColor" d="..." />`,
-    }
+//go:build !wasm
+import "github.com/tinywasm/svg"
+
+func (c *MyComponent) IconSvg() *svg.Sprite {
+    return svg.New().
+        Add("my-icon-id", `<path fill="currentColor" d="..." />`)
 }
 ```
 
 **`mycomponent.go` `Render()` — reference the icon:**
 ```go
-dom.Svg(dom.Use().Attr("href", "#my-icon-id")).Class("my-icon")
-```
+import "github.com/tinywasm/svg"
 
-**Icon styles in `css.go` `RenderCSS()`:**
-```go
-var ClsIcon css.Class = "my-icon"
-
-// inside RenderCSS():
-Rule(ClsIcon,
-    Width(Rem(1)),
-    Height(Rem(1)),
-    Fill(CurrentColor),
-    Transition("transform", DurationFast),
-),
+svg.Icon("my-icon-id", "my-icon-class")
+// → <svg aria-hidden='true' class='my-icon-class'><use href='#my-icon-id'></svg>
 ```
 
 ---
 
 ## 4. Tests
 
-All tests run through `gotest` — the tinywasm test runner. Do **not** use raw `go test`.
+All tests run through `gotest` — the tinywasm test runner.
 
-Install once:
-```bash
-go install github.com/tinywasm/devflow/cmd/gotest@latest
-```
-
-Run tests:
 ```bash
 gotest
 ```
@@ -262,31 +209,15 @@ package mycomponent
 
 import (
     "testing"
-
     . "github.com/tinywasm/fmt"
 )
 
 func TestMyComponent_Render(t *testing.T) {
     c := &MyComponent{Title: "Hello"}
-    html := c.Render().RenderHTML()
+    html := c.Render().String() // Use .String() to get the HTML representation
 
     if !Contains(html, string(ClsRoot)) {
         t.Error("expected root class")
-    }
-    if !Contains(html, "Hello") {
-        t.Error("expected title text")
-    }
-}
-
-func TestMyComponent_CSS(t *testing.T) {
-    inst := &MyComponent{}
-    sheet := inst.RenderCSS()
-    if sheet == nil {
-        t.Fatal("RenderCSS returned nil")
-    }
-    css := sheet.String()
-    if !Contains(css, string(ClsRoot)) {
-        t.Error("expected root class in CSS output")
     }
 }
 ```
@@ -295,18 +226,6 @@ func TestMyComponent_CSS(t *testing.T) {
 
 ## Integration
 
-Components are consumed by `tinywasm/assetmin` via the **compile-and-invoke** pipeline:
-
-1. `assetmin` discovers all component modules in the project.
-2. It generates a single combined `main.go` that imports every discovered component.
-3. It compiles and runs that `main.go` **once** (one `go run` for all components combined), captures the aggregated JSON output, and routes each component's assets into the bundle.
-
-This means:
-- `assetmin` automatically infers the receiver type from the `Render*` methods; the boilerplate `SSRInstance()` is **not** required.
-- A compile error in any component fails the whole extraction run. The compiler error is surfaced verbatim so the developer sees it as a normal `go build` failure.
-- Extraction is cached by content hash of all component Go files. In steady state (no file changes) it costs ~0 ms.
-
-**Slot routing:**
-- Component `RenderCSS()` → `middle` slot (loaded after the document `:root`).
-- App's `RootCSS()` (or `dom`'s default) → `open` slot.
-- Root project's `RenderCSS()` → `close` slot (last word, can override anything).
+Components are consumed by `tinywasm/assetmin` via the **compile-and-invoke** pipeline.
+- `assetmin` automatically infers the receiver type from the `Render*` methods.
+- Extraction is cached by content hash of all component Go files.
