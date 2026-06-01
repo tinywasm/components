@@ -16,6 +16,7 @@ import (
 	"github.com/tinywasm/components/selectsearch" // https://pkg.go.dev/github.com/tinywasm/components/selectsearch
 	"github.com/tinywasm/components/themetoggle"
 	. "github.com/tinywasm/dom" // https://pkg.go.dev/github.com/tinywasm/dom
+	. "github.com/tinywasm/html"
 )
 
 type App struct {
@@ -28,7 +29,7 @@ func (a *App) Render() *Element {
 	// ss lives in App state so its ID and listeners survive re-renders.
 	if len(a.ss.Options) == 0 {
 		a.ss.Placeholder = "Choose a fruit..."
-		a.ss.Options = []selectsearch.Option{
+		a.ss.Options = []selectsearch.SsOption{
 			{ID: "1", Label: "Apple 2", Description: "fruit"},
 			{ID: "2", Label: "Banana", Description: "fruit"},
 			{ID: "3", Label: "Cherry", Description: "fruit"},
