@@ -1,37 +1,39 @@
 package selectsearch
 
 import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/dom"
+	. "github.com/tinywasm/css"
+	. "github.com/tinywasm/dom"
 	"github.com/tinywasm/fmt"
+	. "github.com/tinywasm/html"
+	"github.com/tinywasm/svg"
 )
 
 var (
-	ClsSsBox      css.Class = "ss-box"
-	ClsSsToggle   css.Class = "ss-toggle"
-	ClsSsDropdown css.Class = "ss-dropdown"
-	ClsSsHeader   css.Class = "ss-header"
-	ClsSsIcon     css.Class = "ss-icon"
-	ClsSsSearch   css.Class = "ss-search"
-	ClsSsOptions  css.Class = "ss-options"
-	ClsSsOption   css.Class = "ss-option"
-	ClsSsLabel    css.Class = "ss-label"
-	ClsSsDesc     css.Class = "ss-desc"
+	ClsSsBox      Class = "ss-box"
+	ClsSsToggle   Class = "ss-toggle"
+	ClsSsDropdown Class = "ss-dropdown"
+	ClsSsHeader   Class = "ss-header"
+	ClsSsIcon     Class = "ss-icon"
+	ClsSsSearch   Class = "ss-search"
+	ClsSsOptions  Class = "ss-options"
+	ClsSsOption   Class = "ss-option"
+	ClsSsLabel    Class = "ss-label"
+	ClsSsDesc     Class = "ss-desc"
 )
 
-// Option represents a selectable item.
-type Option struct {
+// SsOption represents a selectable item.
+type SsOption struct {
 	ID          string // unique identifier, returned in OnSelect
 	Label       string // visible text
 	Description string // optional badge shown on the right
 }
 
 type SelectSearch struct {
-	dom.Element                              // value embed — NEVER pointer (TinyGo heap constraint)
-	Placeholder string                       // text shown when nothing is selected
-	Options     []Option                     // initial static options
-	OnSelect    func(id, description string) // called when user picks an option
-	OnSearch    func(term string) []Option   // called when ALL local options are filtered out
+	Element                                    // value embed — NEVER pointer (TinyGo heap constraint)
+	Placeholder string                         // text shown when nothing is selected
+	Options     []SsOption                     // initial static options
+	OnSelect    func(id, description string)   // called when user picks an option
+	OnSearch    func(term string) []SsOption   // called when ALL local options are filtered out
 
 	// Internal state
 	selectedLabel string
@@ -40,8 +42,7 @@ type SelectSearch struct {
 	searchID      string // stable across re-renders for auto-focus in OnMount
 }
 
-
-func (c *SelectSearch) Render() *dom.Element {
+func (c *SelectSearch) Render() *Element {
 	headerText := c.Placeholder
 	if c.selectedLabel != "" {
 		headerText = c.selectedLabel
@@ -50,22 +51,22 @@ func (c *SelectSearch) Render() *dom.Element {
 		headerText = "Select..."
 	}
 
-	toggle := dom.Input("checkbox").Add(ClsSsToggle.AsAttr())
+	toggle := Input("checkbox").Add(ClsSsToggle.AsAttr())
 	if c.isOpen {
 		toggle.Attr("checked", "")
 	}
-	toggle.On("change", func(e dom.Event) {
+	toggle.On("change", func(e Event) {
 		c.isOpen = e.TargetChecked()
 		c.Update()
 	})
 
 	// For(toggle) auto-generates toggle's ID and sets for= — no manual string needed
-	header := dom.Label().Add(ClsSsHeader.AsAttr()).
+	header := Label().Add(ClsSsHeader.AsAttr()).
 		For(toggle).
 		Text(headerText).
-		Add(dom.Svg(dom.Use().Attr("href", "#ss-arrow-down")).Add(ClsSsIcon.AsAttr()))
+		Add(svg.Svg(svg.Use().Attr("href", "#ss-arrow-down")).Add(ClsSsIcon.AsAttr()))
 
-	searchInput := dom.Input("search").
+	searchInput := Input("search").
 		Add(ClsSsSearch.AsAttr()).
 		Attr("placeholder", "Search...").
 		Attr("value", c.filterTerm)
@@ -77,7 +78,7 @@ func (c *SelectSearch) Render() *dom.Element {
 		searchInput.ID(c.searchID)
 	}
 
-	searchInput.On("input", func(e dom.Event) {
+	searchInput.On("input", func(e Event) {
 		term := e.TargetValue()
 		c.filterTerm = term
 		c.isOpen = true
@@ -100,7 +101,7 @@ func (c *SelectSearch) Render() *dom.Element {
 		c.Update()
 	})
 
-	optList := dom.Div().Add(ClsSsOptions.AsAttr())
+	optList := Div().Add(ClsSsOptions.AsAttr())
 
 	for _, opt := range c.Options {
 		if c.filterTerm != "" && !fmt.Matches(opt.Label, c.filterTerm) && !fmt.Matches(opt.Description, c.filterTerm) {
@@ -108,10 +109,10 @@ func (c *SelectSearch) Render() *dom.Element {
 		}
 
 		o := opt // capture loop variable for the closure
-		item := dom.Div().Add(ClsSsOption.AsAttr()).
-			Add(dom.Span().Add(ClsSsLabel.AsAttr()).Text(opt.Label))
+		item := Div().Add(ClsSsOption.AsAttr()).
+			Add(Span().Add(ClsSsLabel.AsAttr()).Text(opt.Label))
 
-		item.On("click", func(e dom.Event) {
+		item.On("click", func(e Event) {
 			c.selectedLabel = o.Label
 			c.isOpen = false
 			c.filterTerm = ""
@@ -122,16 +123,16 @@ func (c *SelectSearch) Render() *dom.Element {
 		})
 
 		if opt.Description != "" {
-			item.Add(dom.Span().Add(ClsSsDesc.AsAttr()).Text(opt.Description))
+			item.Add(Span().Add(ClsSsDesc.AsAttr()).Text(opt.Description))
 		}
 		optList.Add(item)
 	}
 
-	dropdown := dom.Div().Add(ClsSsDropdown.AsAttr()).
+	dropdown := Div().Add(ClsSsDropdown.AsAttr()).
 		Add(searchInput).
 		Add(optList)
 
-	return dom.Div().Add(ClsSsBox.AsAttr()).
+	return Div().Add(ClsSsBox.AsAttr()).
 		Add(toggle).
 		Add(header).
 		Add(dropdown)
@@ -140,7 +141,7 @@ func (c *SelectSearch) Render() *dom.Element {
 // No build tag needed — TinyGo eliminates this as dead code in SSR builds.
 func (c *SelectSearch) OnMount() {
 	if c.isOpen && c.searchID != "" {
-		if el, ok := dom.Get(c.searchID); ok {
+		if el, ok := Get(c.searchID); ok {
 			el.Focus()
 		}
 	}

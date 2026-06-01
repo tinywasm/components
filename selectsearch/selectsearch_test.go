@@ -9,13 +9,13 @@ import (
 func TestSelectSearch_Render(t *testing.T) {
 	c := &SelectSearch{
 		Placeholder: "Choose category",
-		Options: []Option{
+		Options: []SsOption{
 			{ID: "1", Label: "Automobiles", Description: "auto"},
 			{ID: "2", Label: "Film & Animation", Description: "anime"},
 		},
 	}
 
-	html := c.Render().RenderHTML()
+	html := c.Render().String()
 
 	if !fmt.Contains(html, "ss-box") {
 		t.Error("expected ss-box class")
@@ -42,7 +42,7 @@ func TestSelectSearch_SelectedValue(t *testing.T) {
 		Placeholder:   "Choose category",
 		selectedLabel: "Automobiles",
 	}
-	html := c.Render().RenderHTML()
+	html := c.Render().String()
 	if !fmt.Contains(html, "Automobiles") {
 		t.Error("expected selected label")
 	}
@@ -54,12 +54,12 @@ func TestSelectSearch_SelectedValue(t *testing.T) {
 func TestSelectSearch_Filtering(t *testing.T) {
 	c := &SelectSearch{
 		filterTerm: "Film",
-		Options: []Option{
+		Options: []SsOption{
 			{ID: "1", Label: "Automobiles"},
 			{ID: "2", Label: "Film & Animation"},
 		},
 	}
-	html := c.Render().RenderHTML()
+	html := c.Render().String()
 	if fmt.Contains(html, "Automobiles") {
 		t.Error("expected Automobiles to be filtered out")
 	}
@@ -73,11 +73,11 @@ func TestSelectSearch_Filtering(t *testing.T) {
 func TestSelectSearch_OpenState_RendersChecked(t *testing.T) {
 	c := &SelectSearch{
 		isOpen: true,
-		Options: []Option{
+		Options: []SsOption{
 			{ID: "1", Label: "Apple"},
 		},
 	}
-	html := c.Render().RenderHTML()
+	html := c.Render().String()
 	if !fmt.Contains(html, "checked") {
 		t.Error("expected 'checked' attribute on toggle when isOpen=true — dropdown will close on re-render without it")
 	}
@@ -86,11 +86,11 @@ func TestSelectSearch_OpenState_RendersChecked(t *testing.T) {
 func TestSelectSearch_ClosedState_NoChecked(t *testing.T) {
 	c := &SelectSearch{
 		isOpen: false,
-		Options: []Option{
+		Options: []SsOption{
 			{ID: "1", Label: "Apple"},
 		},
 	}
-	html := c.Render().RenderHTML()
+	html := c.Render().String()
 	if fmt.Contains(html, "checked") {
 		t.Error("expected no 'checked' attribute on toggle when isOpen=false")
 	}
@@ -101,12 +101,12 @@ func TestSelectSearch_OpenWithFilter_RendersCheckedAndFiltered(t *testing.T) {
 	c := &SelectSearch{
 		isOpen:     true,
 		filterTerm: "Mango",
-		Options: []Option{
+		Options: []SsOption{
 			{ID: "1", Label: "Apple"},
 			{ID: "2", Label: "Mango"},
 		},
 	}
-	html := c.Render().RenderHTML()
+	html := c.Render().String()
 	if !fmt.Contains(html, "checked") {
 		t.Error("expected 'checked' when isOpen=true with active filter")
 	}
@@ -145,9 +145,9 @@ func TestSelectSearch_SearchInput_ValueMatchesFilterTerm(t *testing.T) {
 			c := &SelectSearch{
 				isOpen:     true,
 				filterTerm: tt.filterTerm,
-				Options:    []Option{{ID: "1", Label: "Apple"}},
+				Options:    []SsOption{{ID: "1", Label: "Apple"}},
 			}
-			html := c.Render().RenderHTML()
+			html := c.Render().String()
 			if tt.wantValue == "" {
 				return
 			}
@@ -165,7 +165,7 @@ func TestSelectSearch_AfterSelection_RendersUnchecked(t *testing.T) {
 		isOpen:        false,
 		selectedLabel: "Apple",
 	}
-	html := c.Render().RenderHTML()
+	html := c.Render().String()
 	if fmt.Contains(html, "checked") {
 		t.Error("expected no 'checked' attribute after selection — dropdown must be closed")
 	}

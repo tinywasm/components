@@ -11,7 +11,7 @@ func TestButton_Render(t *testing.T) {
 		Variant: "primary",
 	}
 
-	html := btn.Render().RenderHTML()
+	html := btn.Render().String()
 
 	if !strings.HasPrefix(html, "<button") {
 		t.Error("expected button tag, got: " + html)

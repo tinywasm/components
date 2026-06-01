@@ -15,7 +15,7 @@ func TestTable_Render(t *testing.T) {
 		},
 	}
 
-	html := tbl.Render().RenderHTML()
+	html := tbl.Render().String()
 
 	if !HasPrefix(html, "<table") {
 		t.Error("expected table tag")

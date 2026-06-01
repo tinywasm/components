@@ -14,7 +14,7 @@ func TestCard_Render(t *testing.T) {
 		Footer: &simpleComponent{html: "Footer"},
 	}
 
-	html := c.Render().RenderHTML()
+	html := c.Render().String()
 
 	if !HasPrefix(html, "<div") {
 		t.Error("expected div tag")
@@ -50,7 +50,7 @@ type simpleComponent struct {
 	html string
 }
 
-func (s *simpleComponent) RenderHTML() string        { return s.html }
+func (s *simpleComponent) String() string            { return s.html }
 func (s *simpleComponent) GetID() string             { return "" }
 func (s *simpleComponent) SetID(id string)           {}
 func (s *simpleComponent) Children() []Component { return nil }

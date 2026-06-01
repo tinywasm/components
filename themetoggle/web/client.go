@@ -4,6 +4,7 @@ package main
 
 import (
 	. "github.com/tinywasm/dom"
+	. "github.com/tinywasm/html"
 )
 
 type App struct {
