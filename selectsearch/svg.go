@@ -4,7 +4,7 @@ import "github.com/tinywasm/svg"
 
 var (
 	arrowDown = svg.Define("ss-arrow-down", "0 0 16 16",
-		svg.Raw(`<path fill="currentColor" d="M1.5 4.5l6.5 7 6.5-7H1.5z"/>`),
+		svg.Path("M1.5 4.5l6.5 7 6.5-7H1.5z"),
 	)
 )
 
