@@ -1,6 +1,6 @@
 ---
 name: component-creation
-description: Standard for creating reusable, efficient, WebAssembly-ready UI components with strict naming, styling, and event handling conventions.
+description: Standard for creating reusable, efficient, WebAssembly-ready UI components. ONE construction pattern — Render() + optional Init(ctx); reactive state via typed signals (no generics); no OnMount/Update.
 ---
 
 # SKILL: tinywasm/components
@@ -27,15 +27,16 @@ Each component resides in its own folder within `tinywasm/components`. There are
 ```
 tinywasm/components/
 └── mycomponent/
-    ├── mycomponent.go   # Struct, Render(), OnMount() — shared WASM + SSR
+    ├── mycomponent.go   # Struct, Render() + optional Init(ctx) — shared WASM + SSR
     ├── css.go           # !wasm only: RenderCSS() *css.Stylesheet
     ├── svg.go           # !wasm only: IconSvg() *svg.Sprite (optional)
     ├── html.go          # !wasm only: RenderHTML() string (optional)
     └── mycomponent_test.go
 ```
 
-> There is NO `front.go` and NO `.css` file. WASM interactivity lives in `mycomponent.go`
-> via `OnMount()`. CSS lives in `css.go` as a typed Go DSL — never as an embedded file.
+> There is NO `front.go` and NO `.css` file. Interactivity is declared **inside `Render()`** with
+> `.On(...)` handlers that mutate **typed signals** — there is NO `OnMount`/`OnUpdate`/`OnUnmount`
+> and NO manual `Update()`. CSS lives in `css.go` as a typed Go DSL — never as an embedded file.
 
 ---
 
@@ -46,7 +47,8 @@ CSS is written using the `tinywasm/css` typed DSL. All design decisions referenc
 - **No `.css` files.** No `//go:embed`. CSS is Go code.
 - **Use token constants** — `ColorPrimary`, `Space4`, `RadiusMd`, etc. (see `tinywasm/css/tokens.go`).
 - **Never hardcode values** — `Rem(0.5)` is acceptable only when no scale token matches; flag it in the PR as a candidate for tokenization.
-- **Exported `css.Class` constants** declare every class name. The same constant is used by both the HTML emission side and the CSS emission side of the component.
+- **`css.Class` constants** declare every class name, shared by the HTML and CSS emission sides. Keep
+  them **unexported** unless another package genuinely needs them (minimal public surface).
 - **Class name prefix** — follow `<component>-*` convention (e.g. `"mycomponent-header"`).
 - A component **must not** declare a `:root {}` block via `css.Root(...)`. That is reserved for the app or `tinywasm/dom`. Use only `Rule()` and `Selector()`.
 - Do NOT style form elements — use `github.com/tinywasm/form`.
@@ -68,7 +70,8 @@ Available token groups (from `tinywasm/css/tokens.go`):
 
 ## 1. Main File (`mycomponent.go`)
 
-Contains the struct definition, private `css.Class` constants, `Render()` (shared SSR + WASM), and `OnMount()` (WASM only — no build tag; TinyGo eliminates dead code).
+Contains the struct definition, private `css.Class` constants, `Render()` (shared SSR + WASM), and an
+optional `Init(ctx Ctx)` (one-time setup). **No `OnMount`/`OnUpdate`/`OnUnmount`, no `Update()`.**
 
 ### Imports
 
@@ -105,7 +108,8 @@ type MyComponent struct {
 
 ### Class constants
 
-Declare `css.Class` constants at package scope. Exported constants (starting with uppercase) are preferred if they need to be accessible from other packages (e.g., tests or parent components).
+Declare `css.Class` constants at package scope. **Keep them unexported** unless another package
+genuinely needs them — export only what a component *user* types (minimal public surface).
 
 ```go
 package mycomponent
@@ -117,34 +121,80 @@ import (
 )
 
 var (
-    ClsRoot  Class = "mycomponent"
-    ClsTitle Class = "mycomponent-title"
-    ClsBody  Class = "mycomponent-body"
+    clsRoot  Class = "mycomponent"
+    clsTitle Class = "mycomponent-title"
+    clsBody  Class = "mycomponent-body"
 )
 
 type MyComponent struct {
-    Element
-    Title string
+    Element                 // value-embed, never *Element
+    Title string            // static config: a plain field is fine
+    open  *SignalBool       // DYNAMIC UI state lives in a typed signal, never a plain field
+}
+
+// Init runs ONCE before the first render (optional). Create/seed signals here — and load storage,
+// fetch, or subscribe. Setting a signal (even from a goroutine) patches the bound DOM directly.
+func (c *MyComponent) Init(_ Ctx) {
+    c.open = NewBool(false)
 }
 
 func (c *MyComponent) Render() *Element {
-    return Div(ClsRoot.AsAttr(),
-        H2(ClsTitle.AsAttr(), c.Title),
-        Div(ClsBody.AsAttr()),
+    return Div(clsRoot.AsAttr(),
+        H2(clsTitle.AsAttr(), c.Title),
+        // Events are declared HERE. The handler only mutates the signal — the DOM patches itself.
+        Button("Toggle").On("click", func(Event) { c.open.Toggle() }),
+        // Reactive structure: Show mounts/unmounts the body when `open` flips.
+        Show(c.open, func() *Element { return Div(clsBody.AsAttr(), "content") }),
     )
 }
-
-// OnMount wires events after the component is injected into the DOM.
-// TinyGo eliminates this as dead code on SSR builds — no build tag needed.
-func (c *MyComponent) OnMount() {
-    id := c.GetID()
-    if el, ok := Get(id); ok {
-        el.On("click", func(e Event) {
-            // handle click
-        })
-    }
-}
 ```
+
+There is no `OnMount`, no `dom.Get(id)`, no `Update()`. You **cannot** forget to refresh — changing a
+signal IS the refresh, and it patches only the bound node (no whole-element re-render, no Virtual DOM).
+
+---
+
+## 1b. State & Reactivity — the ONE way
+
+UI state lives in **typed signals** (the DOM boundary is `string`/`bool`, so signals are concrete —
+**never generics / `Signal[T]`**, matching the ecosystem's `tinywasm/fmt` codec rule "cero any, cero map"):
+
+| Signal | Create | Use for |
+|---|---|---|
+| `*SignalString` | `NewString("")` | text, attribute values, two-way input |
+| `*SignalBool` | `NewBool(false)` | class/attr toggles, `Show` conditions |
+| `*SignalNodes` | `NewNodes(...)` | lists of rendered rows (`*Element`) |
+
+Read/write with `Get()` / `Set(v)`; `*SignalBool` also has `Toggle()`.
+
+**Bind a signal to one DOM location** (the binding patches only that spot):
+
+```go
+el.BindText(sig)                       // textContent tracks the signal
+el.BindAttr("title", sig)              // attribute value
+el.BindClass("active", boolSig)        // toggle a class
+el.BindAttrBool("disabled", boolSig)   // boolean attribute (disabled/checked/hidden)
+in.Bind(strSig)                        // two-way <input>/<textarea> (cursor + IME safe)
+in.Autofocus()                         // focus this node when it first appears
+Show(boolSig, render)                  // mount/unmount a subtree
+ul.BindChildren(nodesSig)              // keyed list; build []*Element in a loop, each .Key(id)
+```
+
+**Computed values — pass a function, no dependency list.** The framework detects which signals the
+function reads (auto-tracking) and re-runs it when they change:
+
+```go
+btn.BindTextFunc(func() string { if c.open.Get() { return "Hide" }; return "Show" })
+row.BindClassFunc("error", func() bool { return c.msg.Get() != "" })
+// also: BindAttrFunc, BindAttrBoolFunc. For a NAMED computed shared across binds: DeriveString(fn).
+```
+
+You never assemble a deps list — reading a signal inside the closure is enough. That makes computed
+UI **impossible to get stale**.
+
+**Async / one-time setup** goes in `Init(ctx Ctx)`; setting a signal from a goroutine patches the DOM.
+Register teardown with `ctx.OnCleanup(fn)`. `Init` is the only optional hook — and you never name its
+interface, you just write the method.
 
 ---
 
@@ -196,11 +246,17 @@ svg.Icon("my-icon-id", "my-icon-class")
 
 ## 4. Tests
 
-All tests run through `gotest` — the tinywasm test runner.
+All tests run through `gotest` — the tinywasm test runner (WASM tests run against a real DOM).
+External agents install it first:
 
 ```bash
+go install github.com/tinywasm/devflow/cmd/gotest@latest
 gotest
 ```
+
+Use `gotest`, never `go test`. Stdlib assertions only (no testify). Dual WASM/stdlib via build tags
+sharing one runner. Cover the **frequent use cases**: load-on-init (no flash), two-way input
+(IME/cursor safe), derived value, conditional `Show`, keyed list, and any no-recursion regression.
 
 Test files: `mycomponent_test.go` in the package root (`package mycomponent`).
 
@@ -214,9 +270,10 @@ import (
 
 func TestMyComponent_Render(t *testing.T) {
     c := &MyComponent{Title: "Hello"}
-    html := c.Render().String() // Use .String() to get the HTML representation
+    c.Init(nil)                 // seed signals (the engine calls Init once before the first render)
+    html := c.Render().String() // .String() yields the static HTML (SSR parity)
 
-    if !Contains(html, string(ClsRoot)) {
+    if !Contains(html, string(clsRoot)) {
         t.Error("expected root class")
     }
 }
