@@ -21,53 +21,38 @@ type DialogWidget struct {
 	Element
 	Title   string
 	Content Component
-	Visible bool
+	visible *SignalBool
+}
+
+func (m *DialogWidget) Init(_ Ctx) {
+	m.visible = NewBool(false)
 }
 
 func (m *DialogWidget) Render() *Element {
-	modal := Div().Add(clsModal.AsAttr())
-	if !m.Visible {
-		modal.Add(clsModalHidden.AsAttr())
-	}
-
-	// Create backdrop
-	backdrop := Div().
-		Add(clsModalBackdrop.AsAttr())
-
-	backdrop.On("click", func(e Event) {
-		m.Close(e)
-	})
-
 	// Create close button
 	closeBtn := Button().
 		Text("×").
-		Add(clsModalClose.AsAttr())
+		Set(clsModalClose.AsAttr()).
+		On("click", func(e Event) { m.visible.Set(false) })
 
-	closeBtn.On("click", func(e Event) {
-		m.Close(e)
-	})
-
-	modalContent := Div().Add(clsModalContent.AsAttr()).
-		Add(
-			Div().Add(clsModalHeader.AsAttr()).
-				Add(H2().Text(m.Title)).
-				Add(closeBtn),
+	modalContent := Div().Set(clsModalContent.AsAttr()).
+		Child(
+			Div().Set(clsModalHeader.AsAttr()).
+				Child(H2().Text(m.Title)).
+				Child(closeBtn),
 		).
-		Add(
-			Div().Add(clsModalBody.AsAttr()).Add(m.Content),
+		Child(
+			Div().Set(clsModalBody.AsAttr()).Child(m.Content),
 		)
 
-	return modal.
-		Add(backdrop).
-		Add(modalContent)
-}
-
-func (m *DialogWidget) Close(e Event) {
-	m.Visible = false
-	Update(m)
+	return Show(m.visible, func() *Element {
+		return Div().Set(clsModal.AsAttr()).
+			Child(Div().Set(clsModalBackdrop.AsAttr()).
+				On("click", func(e Event) { m.visible.Set(false) })).
+			Child(modalContent)
+	})
 }
 
 func (m *DialogWidget) Open() {
-	m.Visible = true
-	Update(m)
+	m.visible.Set(true)
 }

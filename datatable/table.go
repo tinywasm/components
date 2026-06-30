@@ -17,27 +17,27 @@ type DataTable struct {
 }
 
 func (t *DataTable) Render() *Element {
-	table := Table().Add(clsTable.AsAttr())
+	table := Table().Set(clsTable.AsAttr())
 
 	// Header
 	thead := Thead()
 	tr := Tr()
 	for _, header := range t.Headers {
-		tr.Add(Th().Text(header))
+		tr.Child(Th().Text(header))
 	}
-	thead.Add(tr)
-	table.Add(thead)
+	thead.Child(tr)
+	table.Child(thead)
 
 	// Body
 	tbody := Tbody()
 	for _, row := range t.Rows {
 		tr := Tr()
 		for _, cell := range row {
-			tr.Add(Td().Text(cell))
+			tr.Child(Td().Text(cell))
 		}
-		tbody.Add(tr)
+		tbody.Child(tr)
 	}
-	table.Add(tbody)
+	table.Child(tbody)
 
 	return table
 }

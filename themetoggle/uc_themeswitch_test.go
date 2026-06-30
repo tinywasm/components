@@ -13,81 +13,60 @@ func setUp() {
 	dom.SetDocumentAttr("data-theme", "")
 }
 
-func TestThemeSwitch_OnMount_NoSavedValue_StaysAuto(t *testing.T) {
+func TestThemeToggle_Init_NoSavedValue_StaysAuto(t *testing.T) {
 	setUp()
 	ts := &ThemeToggle{}
-	ts.OnMount()
+	ts.Init(nil)
 
 	got := dom.GetDocumentAttr("data-theme")
 	if got != "" {
 		t.Errorf("expected empty data-theme, got %q", got)
 	}
+	if ts.theme.Get() != "" {
+		t.Errorf("expected empty signal, got %q", ts.theme.Get())
+	}
 }
 
-func TestThemeSwitch_OnMount_RestoresDark(t *testing.T) {
+func TestThemeToggle_Init_RestoresDark(t *testing.T) {
 	setUp()
 	dom.LocalStorageSet(storageKey, "dark")
 
 	ts := &ThemeToggle{}
-	ts.OnMount()
+	ts.Init(nil)
 
 	got := dom.GetDocumentAttr("data-theme")
 	if got != "dark" {
 		t.Errorf("expected data-theme=dark, got %q", got)
 	}
+	if ts.theme.Get() != "dark" {
+		t.Errorf("expected signal=dark, got %q", ts.theme.Get())
+	}
 }
 
-func TestThemeSwitch_OnMount_InvalidValue_Cleans(t *testing.T) {
+func TestThemeToggle_Init_InvalidValue_StaysAuto(t *testing.T) {
 	setUp()
 	dom.LocalStorageSet(storageKey, "xyz")
 
 	ts := &ThemeToggle{}
-	ts.OnMount()
+	ts.Init(nil)
 
 	got := dom.GetDocumentAttr("data-theme")
 	if got != "" {
 		t.Errorf("expected empty data-theme after invalid value, got %q", got)
 	}
-
-	val, err := dom.LocalStorageGet(storageKey)
-	if err != nil {
-		t.Fatalf("LocalStorageGet failed: %v", err)
-	}
-	if val != "" {
-		t.Errorf("expected localStorage to be cleaned, but got %q", val)
+	if ts.theme.Get() != "" {
+		t.Errorf("expected empty signal, got %q", ts.theme.Get())
 	}
 }
 
-func TestThemeSwitch_Click_CyclesAndPersists(t *testing.T) {
+func TestThemeToggle_Render_Initial(t *testing.T) {
 	setUp()
 	ts := &ThemeToggle{}
-	ts.OnMount()
+	ts.Init(nil)
+	el := ts.Render()
 
-	// Auto ("") -> click -> Dark
-	ts.onClick(nil)
-	if got := dom.GetDocumentAttr("data-theme"); got != "dark" {
-		t.Errorf("expected dark after 1st click, got %q", got)
-	}
-	if val, _ := dom.LocalStorageGet(storageKey); val != "dark" {
-		t.Errorf("expected dark in localStorage, got %q", val)
-	}
-
-	// Dark -> click -> Light
-	ts.onClick(nil)
-	if got := dom.GetDocumentAttr("data-theme"); got != "light" {
-		t.Errorf("expected light after 2nd click, got %q", got)
-	}
-	if val, _ := dom.LocalStorageGet(storageKey); val != "light" {
-		t.Errorf("expected light in localStorage, got %q", val)
-	}
-
-	// Light -> click -> Auto
-	ts.onClick(nil)
-	if got := dom.GetDocumentAttr("data-theme"); got != "" {
-		t.Errorf("expected auto after 3rd click, got %q", got)
-	}
-	val, _ := dom.LocalStorageGet(storageKey)
-	if val != "" {
-		t.Errorf("expected empty localStorage after cycling to auto, got %q", val)
+	// icon for auto is ◑
+	if el.GetText() != icon(ThemeAuto) {
+		t.Errorf("expected icon %s, got %s", icon(ThemeAuto), el.GetText())
 	}
 }

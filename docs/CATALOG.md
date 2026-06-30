@@ -47,13 +47,13 @@ Data table for structured information with headers and rows.
 ---
 
 ## [SelectSearch](../selectsearch/README.md)
-Searchable dropdown with static options, live filtering, and optional DB search callback.
+Signal-driven searchable dropdown with static options, live filtering, and optional DB search callback. Uses `BindChildren` for efficient list updates and `Show` for the dropdown.
 [Detailed Documentation →](../selectsearch/README.md)
 
 ---
 
 ## [ThemeToggle](../themetoggle/README.md)
-Floating button that cycles between `auto → dark → light` theme modes. Persists preference in `localStorage`. Owns the `[data-theme]` CSS overrides — include its CSS in `<head>` via `RenderCSS()`.
+Signal-driven floating button that cycles between `auto → dark → light` theme modes. Persists preference in `localStorage` via `Init`. Uses derived signals for labels and icon updates.
 [Detailed Documentation →](../themetoggle/README.md)
 
 ---

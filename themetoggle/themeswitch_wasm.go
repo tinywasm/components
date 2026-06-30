@@ -2,36 +2,27 @@
 
 package themetoggle
 
-import "github.com/tinywasm/dom"
+import . "github.com/tinywasm/dom"
 
-// OnMount restaura el tema guardado en localStorage al montarse en el DOM.
-// Si el storage no está disponible o la entrada está corrupta, sale limpiamente
-// sin modificar el tema (modo auto por defecto).
-func (t *ThemeToggle) OnMount() {
-	if !dom.LocalStorageAvailable() {
-		return
+func (t *ThemeToggle) Init(_ Ctx) {
+	t.theme = NewString("") // ThemeAuto
+	if LocalStorageAvailable() {
+		if s, err := LocalStorageGet(storageKey); err == nil && valid(Theme(s)) {
+			t.theme.Set(s)                             // value ready before first paint → correct icon, no flash
+			SetDocumentAttr("data-theme", string(s)) // apply stored theme
+		}
 	}
-	saved, err := dom.LocalStorageGet(storageKey)
-	if err != nil || saved == "" {
-		return
-	}
-	theme := Theme(saved)
-	if !valid(theme) {
-		dom.LocalStorageDel(storageKey) // best-effort cleanup, error ignorado
-		return
-	}
-	dom.SetDocumentAttr("data-theme", string(theme))
 }
 
-func (t *ThemeToggle) onClick(dom.Event) {
-	current := Theme(dom.GetDocumentAttr("data-theme"))
-	next := cycle(current)
-	dom.SetDocumentAttr("data-theme", string(next)) // "" elimina el atributo para ThemeAuto
-	// Persistencia best-effort: el tema se aplica aunque el storage falle.
-	if next == ThemeAuto {
-		dom.LocalStorageDel(storageKey) // error ignorado — tema ya aplicado
-	} else {
-		dom.LocalStorageSet(storageKey, string(next)) // error ignorado — tema ya aplicado
+func (t *ThemeToggle) onClick() {
+	next := cycle(Theme(t.theme.Get()))
+	SetDocumentAttr("data-theme", string(next)) // applies the theme
+	if LocalStorageAvailable() {
+		if next == ThemeAuto {
+			LocalStorageDel(storageKey)
+		} else {
+			LocalStorageSet(storageKey, string(next))
+		}
 	}
-	t.Update()
+	t.theme.Set(string(next)) // patches icon + labels surgically
 }

@@ -31,15 +31,21 @@ const (
 //	Append("body", ts)
 type ThemeToggle struct {
 	Element
+	theme *SignalString // "", "dark", "light"
 }
 
 func (t *ThemeToggle) Render() *Element {
-	current := Theme(GetDocumentAttr("data-theme"))
-	return Button(icon(current)).
-		Add(clsTsBtn.AsAttr()).
-		Attr("title", label(current)).
-		Attr("aria-label", label(current)).
-		On("click", t.onClick) // implementado por build tag
+	// labelSig is used twice (title + aria-label) → a named shared computed. Auto-tracked: no deps list.
+	labelSig := DeriveString(func() string { return label(Theme(t.theme.Get())) })
+
+	return Button().
+		BindTextFunc(func() string { return icon(Theme(t.theme.Get())) }). // computed icon, auto-tracked
+		BindAttr("title", labelSig).
+		BindAttr("aria-label", labelSig).
+		Set(clsTsBtn.AsAttr()).
+		On("click", func(Event) {
+			t.onClick()
+		})
 }
 
 // cycle define el orden de los 3 estados. Switch (no map) — TinyGo.

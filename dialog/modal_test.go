@@ -11,17 +11,15 @@ func TestModal_Render(t *testing.T) {
 	m := &DialogWidget{
 		Title:   "My Modal",
 		Content: &simpleComponent{html: "<p>Content</p>"},
-		Visible: true,
 	}
+	m.Init(nil)
+	m.visible.Set(true)
 
 	html := m.Render().String()
 
 	// Check main container
 	if !Contains(html, "class='modal'") {
 		t.Error("expected modal class")
-	}
-	if Contains(html, "hidden") {
-		t.Error("should not be hidden when Visible=true")
 	}
 
 	// Check internal structure
@@ -42,10 +40,14 @@ func TestModal_Render(t *testing.T) {
 	}
 
 	// Test hidden
-	m.Visible = false
+	m.visible.Set(false)
 	htmlHidden := m.Render().String()
-	if !Contains(htmlHidden, "class='modal hidden'") {
-		t.Error("expected hidden class when Visible=false")
+	// Show returns a placeholder node when the condition is false
+	if htmlHidden == "" {
+		t.Error("expected placeholder node string when not visible (Show condition), not empty string")
+	}
+	if Contains(htmlHidden, "modal") {
+		t.Error("should not contain modal when Visible=false")
 	}
 }
 

@@ -1,24 +1,24 @@
-# ThemeSwitch
+# ThemeToggle
 
-Componente visual para alternar el tema de la aplicación (light / dark / auto).
+Signal-driven component to toggle the application theme (light / dark / auto).
 
-## Características
+## Features
 
-- 3 estados: `auto` (preferencia del OS), `dark` y `light`.
-- Persistencia automática en `localStorage`.
-- Botón flotante fijo en la esquina superior derecha.
-- Diseñado para pruebas de desarrollo de componentes en diferentes temas.
+- 3 states: `auto` (OS preference), `dark`, and `light`.
+- Automatic persistence in `localStorage` via `Init`.
+- Fixed floating button.
+- Signal-driven: updates icon and labels surgically without re-rendering the whole button.
 
-## Uso
+## Usage
 
 ```go
 import (
-	"github.com/tinywasm/components/themeswitch"
+	"github.com/tinywasm/components/themetoggle"
 	"github.com/tinywasm/dom"
 )
 
 func main() {
-	ts := &themeswitch.ThemeSwitch{}
+	ts := &themetoggle.ThemeToggle{}
 	dom.Append("body", ts)
 	select {}
 }
