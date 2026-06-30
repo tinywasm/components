@@ -67,43 +67,43 @@ func (c *SelectSearch) Render() *Element {
 			c.isOpen.Set(e.TargetChecked())
 		})
 
-	// For(toggle) auto-generates toggle's ID and sets for= — no manual string needed
+	// BindText sets textContent which would erase child elements.
+	// Wrap header text in a Span so the SVG icon survives as a sibling.
 	header := Label().Set(ClsSsHeader.AsAttr()).
 		For(toggle).
-		BindText(headerTextSig).
-		Child(svg.Svg().Child(svg.Use().Attr("href", "#ss-arrow-down")).Set(ClsSsIcon.AsAttr()))
+		Child(
+			Span().BindText(headerTextSig),
+			svg.Svg().Child(svg.Use().Attr("href", "#ss-arrow-down")).Set(ClsSsIcon.AsAttr()),
+		)
 
 	searchInput := Input("search").
 		Set(ClsSsSearch.AsAttr()).
+		ID("ss-search").
 		Attr("placeholder", "Search...").
-		Bind(c.query).
-		Autofocus()
+		Autofocus().
+		On("input", func(e Event) {
+			term := e.TargetValue()
+			c.query.Set(term)
 
-	// Rebuild rows when query changes
-	DeriveString(func() string {
-		term := c.query.Get()
-		c.isOpen.Set(true)
-
-		allHidden := true
-		for _, opt := range c.Options {
-			if term == "" || fmt.Matches(opt.Label, term) || fmt.Matches(opt.Description, term) {
-				allHidden = false
-				break
+			if term != "" {
+				allHidden := true
+				for _, opt := range c.Options {
+					if fmt.Matches(opt.Label, term) || fmt.Matches(opt.Description, term) {
+						allHidden = false
+						break
+					}
+				}
+				if allHidden && c.OnSearch != nil {
+					if newOpts := c.OnSearch(term); len(newOpts) > 0 {
+						c.Options = append(c.Options, newOpts...)
+					}
+				}
 			}
-		}
 
-		if allHidden && c.OnSearch != nil {
-			newOptions := c.OnSearch(term)
-			if len(newOptions) > 0 {
-				c.Options = append(c.Options, newOptions...)
-			}
-		}
+			c.rows.Set(c.buildRows(term))
+		})
 
-		c.rows.Set(c.buildRows(term))
-		return term
-	})
-
-	optList := Div().Set(ClsSsOptions.AsAttr()).
+	optList := Div().Set(ClsSsOptions.AsAttr()).ID("ss-options").
 		BindChildren(c.rows)
 
 	dropdown := Show(c.isOpen, func() *Element {
@@ -128,11 +128,13 @@ func (c *SelectSearch) buildRows(term string) []*Element {
 		o := opt // capture loop variable
 		item := Div().Set(ClsSsOption.AsAttr()).
 			Key(opt.ID).
+			ID("ss-opt-" + opt.ID). // required for wirePendingEvents to attach the click handler
 			Child(Span().Set(ClsSsLabel.AsAttr()).Text(opt.Label)).
 			On("click", func(e Event) {
 				c.selectedLabel.Set(o.Label)
 				c.isOpen.Set(false)
 				c.query.Set("")
+				c.rows.Set(c.buildRows(""))
 				if c.OnSelect != nil {
 					c.OnSelect(o.ID, o.Description)
 				}

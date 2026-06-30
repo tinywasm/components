@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/tinywasm/dom"
+	"github.com/tinywasm/fmt"
 )
 
 func setUp() {
@@ -66,7 +67,8 @@ func TestThemeToggle_Render_Initial(t *testing.T) {
 	el := ts.Render()
 
 	// icon for auto is ◑
-	if el.GetText() != icon(ThemeAuto) {
-		t.Errorf("expected icon %s, got %s", icon(ThemeAuto), el.GetText())
+	got := el.String()
+	if !fmt.Contains(got, icon(ThemeAuto)) {
+		t.Errorf("expected icon %s in rendered element, got %s", icon(ThemeAuto), got)
 	}
 }

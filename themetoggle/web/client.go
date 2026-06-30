@@ -12,9 +12,9 @@ type App struct {
 }
 
 func (a *App) Render() *Element {
-	return Div(
-		H1("ThemeSwitch Demo"),
-		P("Use the button in the top right corner to cycle through themes."),
+	return Div().Child(
+		H1().Text("ThemeSwitch Demo"),
+		P().Text("Use the button in the top right corner to cycle through themes."),
 	)
 }
 
