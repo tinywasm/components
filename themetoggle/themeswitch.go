@@ -14,12 +14,10 @@ var (
 const storageKey = "tinywasm-themeswitch"
 
 // Theme representa el estado de tema del componente.
-// ThemeAuto ("") = sin atributo data-theme → OS preference via @media.
-// Los valores "dark" y "light" se escriben literalmente en data-theme.
+// Solo hay dos estados: "dark" y "light", escritos literalmente en data-theme.
 type Theme string
 
 const (
-	ThemeAuto  Theme = "" // no data-theme attribute → OS preference
 	ThemeDark  Theme = "dark"
 	ThemeLight Theme = "light"
 )
@@ -48,42 +46,30 @@ func (t *ThemeToggle) Render() *Element {
 		})
 }
 
-// cycle define el orden de los 3 estados. Switch (no map) — TinyGo.
+// cycle alterna entre los 2 estados. Switch (no map) — TinyGo.
 func cycle(current Theme) Theme {
-	switch current {
-	case ThemeDark:
-		return ThemeLight
-	case ThemeLight:
-		return ThemeAuto
-	default: // ThemeAuto ("") o cualquier valor inesperado
+	if current == ThemeLight {
 		return ThemeDark
 	}
+	return ThemeLight
 }
 
 // icon retorna el símbolo visible del botón. Switch (no map) — TinyGo.
 func icon(theme Theme) string {
-	switch theme {
-	case ThemeDark:
-		return "🌙"
-	case ThemeLight:
+	if theme == ThemeLight {
 		return "☀"
-	default: // ThemeAuto ("")
-		return "◑"
 	}
+	return "🌙"
 }
 
 // label retorna el nombre del modo actual (usado como tooltip y aria-label).
 func label(theme Theme) string {
-	switch theme {
-	case ThemeDark:
-		return "dark"
-	case ThemeLight:
+	if theme == ThemeLight {
 		return "light"
-	default: // ThemeAuto ("")
-		return "auto"
 	}
+	return "dark"
 }
 
 func valid(t Theme) bool {
-	return t == ThemeAuto || t == ThemeDark || t == ThemeLight
+	return t == ThemeDark || t == ThemeLight
 }

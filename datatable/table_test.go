@@ -14,6 +14,7 @@ func TestTable_Render(t *testing.T) {
 			{"Bob", "25"},
 		},
 	}
+	tbl.Init(nil)
 
 	html := tbl.Render().String()
 

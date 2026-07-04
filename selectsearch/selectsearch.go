@@ -49,6 +49,14 @@ func (c *SelectSearch) Init(_ Ctx) {
 	c.rows = NewNodes(c.buildRows("")...)
 }
 
+// SetOptions replaces the option list — safe to call after Init/Render,
+// e.g. once options from an async source (fetch, MCP call) arrive.
+// Preserves the current search query filter, if any.
+func (c *SelectSearch) SetOptions(options []SsOption) {
+	c.Options = options
+	c.rows.Set(c.buildRows(c.query.Get()))
+}
+
 func (c *SelectSearch) Render() *Element {
 	headerTextSig := DeriveString(func() string {
 		sel := c.selectedLabel.Get()
@@ -128,7 +136,7 @@ func (c *SelectSearch) buildRows(term string) []*Element {
 		o := opt // capture loop variable
 		item := Div().Set(ClsSsOption.AsAttr()).
 			Key(opt.ID).
-			ID("ss-opt-" + opt.ID). // required for wirePendingEvents to attach the click handler
+			ID("ss-opt-"+opt.ID). // required for wirePendingEvents to attach the click handler
 			Child(Span().Set(ClsSsLabel.AsAttr()).Text(opt.Label)).
 			On("click", func(e Event) {
 				c.selectedLabel.Set(o.Label)
