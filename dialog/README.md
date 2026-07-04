@@ -1,34 +1,33 @@
-# Modal Component
+# DialogWidget
 
-Dialog overlay with backdrop and close button.
+Modal dialog overlay with backdrop and close button.
 
 ## Import
-`"github.com/tinywasm/components/modal"`
+`"github.com/tinywasm/components/dialog"`
 
 ## Usage
 
 ```go
-m := &modal.Modal{
+import (
+    "github.com/tinywasm/components/dialog"
+    . "github.com/tinywasm/html"
+)
+
+m := &dialog.DialogWidget{
     Title: "Confirm Action",
-    Content: dom.Tag("p").Text("Are you sure?").ToComponent(),
-    Visible: false,
+    Content: P("Are you sure?"),
 }
 
 // To open
 m.Open()
-
-// To close (programmatically)
-m.Close(dom.Event{})
 ```
 
 ## Properties
 - `Title` (string): Modal title.
 - `Content` (dom.Component): Modal body content.
-- `Visible` (bool): Initial visibility state.
 
 ## Methods
 - `Open()`: Shows the modal.
-- `Close(e dom.Event)`: Hides the modal.
 
 ---
 [Back to Catalog](../docs/CATALOG.md)

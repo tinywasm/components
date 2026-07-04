@@ -1,17 +1,22 @@
-# Card Component
+# ContentCard
 
 Container with header, body, and footer sections.
 
 ## Import
-`"github.com/tinywasm/components/card"`
+`"github.com/tinywasm/components/contentcard"`
 
 ## Usage
 
 ```go
-c := &card.Card{
-    Header: dom.Tag("h3").Text("Card Title").ToComponent(),
-    Body:   dom.Tag("p").Text("Content goes here...").ToComponent(),
-    Footer: dom.Tag("small").Text("Last updated: today").ToComponent(),
+import (
+    "github.com/tinywasm/components/contentcard"
+    . "github.com/tinywasm/html"
+)
+
+c := &contentcard.ContentCard{
+    Header: H3("Card Title"),
+    Body:   P("Content goes here..."),
+    Footer: Small("Last updated: today"),
 }
 ```
 
