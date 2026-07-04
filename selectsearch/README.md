@@ -1,14 +1,15 @@
 # SelectSearch
 
-Searchable dropdown with static options, live filtering, and optional DB search callback.
+Signal-driven searchable dropdown with static options, live filtering, and optional DB search callback.
 
 ## Features
 
-- CSS-first toggle (no JS needed for open/close)
-- Live search filtering
-- Badge descriptions for options
-- Callback for custom search (e.g., database)
-- Accessible via labels and semantic HTML
+- Signal-driven open/close state using `Show`.
+- Live search filtering with `BindChildren` for surgical list updates.
+- Badge descriptions for options.
+- Callback for custom search (e.g., database).
+- Two-way bound search input with `.Autofocus()`.
+- Accessible via labels and semantic HTML.
 
 ## Usage
 
@@ -17,7 +18,7 @@ import "github.com/tinywasm/components/selectsearch"
 
 ss := &selectsearch.SelectSearch{
     Placeholder: "Choose an option...",
-    Options: []selectsearch.Option{
+    Options: []selectsearch.SsOption{
         {ID: "1", Label: "Option 1", Description: "First option"},
         {ID: "2", Label: "Option 2", Description: "Second option"},
     },
@@ -32,11 +33,11 @@ ss := &selectsearch.SelectSearch{
 ### SelectSearch Struct
 
 - `Placeholder string`: Text shown when no option is selected.
-- `Options []Option`: Initial list of options.
+- `Options []SsOption`: Initial list of options.
 - `OnSelect func(id, description string)`: Callback triggered when an option is selected.
-- `OnSearch func(term string) []Option`: Callback triggered when all local options are filtered out.
+- `OnSearch func(term string) []SsOption`: Callback triggered when all local options are filtered out.
 
-### Option Struct
+### SsOption Struct
 
 - `ID string`: Unique identifier for the option.
 - `Label string`: Visible text for the option.

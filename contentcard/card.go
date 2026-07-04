@@ -21,18 +21,18 @@ type ContentCard struct {
 }
 
 func (c *ContentCard) Render() *Element {
-	card := Div(clsCard.AsAttr())
+	card := Div().Set(clsCard.AsAttr())
 
 	if c.Header != nil {
-		card.Add(Div(clsCardHeader.AsAttr()).Add(c.Header))
+		card.Child(Div().Set(clsCardHeader.AsAttr()).Child(c.Header))
 	}
 
 	if c.Body != nil {
-		card.Add(Div(clsCardBody.AsAttr()).Add(c.Body))
+		card.Child(Div().Set(clsCardBody.AsAttr()).Child(c.Body))
 	}
 
 	if c.Footer != nil {
-		card.Add(Div(clsCardFooter.AsAttr()).Add(c.Footer))
+		card.Child(Div().Set(clsCardFooter.AsAttr()).Child(c.Footer))
 	}
 
 	return card

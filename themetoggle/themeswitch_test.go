@@ -7,7 +7,7 @@ import (
 )
 
 func TestLabel_AllThemes_NonEmpty(t *testing.T) {
-	themes := []Theme{ThemeAuto, ThemeDark, ThemeLight, "invalid"}
+	themes := []Theme{ThemeDark, ThemeLight, "invalid"}
 	for _, theme := range themes {
 		l := label(theme)
 		if l == "" {
@@ -21,10 +21,9 @@ func TestCycle(t *testing.T) {
 		current Theme
 		next    Theme
 	}{
-		{ThemeAuto, ThemeDark},
 		{ThemeDark, ThemeLight},
-		{ThemeLight, ThemeAuto},
-		{"invalid", ThemeDark},
+		{ThemeLight, ThemeDark},
+		{"invalid", ThemeLight},
 	}
 
 	for _, tt := range tests {
@@ -36,14 +35,14 @@ func TestCycle(t *testing.T) {
 }
 
 func TestValid(t *testing.T) {
-	if !valid(ThemeAuto) {
-		t.Error("valid(ThemeAuto) should be true")
-	}
 	if !valid(ThemeDark) {
 		t.Error("valid(ThemeDark) should be true")
 	}
 	if !valid(ThemeLight) {
 		t.Error("valid(ThemeLight) should be true")
+	}
+	if valid("") {
+		t.Error("valid(\"\") should be false (no auto state)")
 	}
 	if valid("invalid") {
 		t.Error("valid(\"invalid\") should be false")
@@ -51,7 +50,7 @@ func TestValid(t *testing.T) {
 }
 
 func TestIcon_AllThemes_NonEmpty(t *testing.T) {
-	themes := []Theme{ThemeAuto, ThemeDark, ThemeLight, "invalid"}
+	themes := []Theme{ThemeDark, ThemeLight, "invalid"}
 	for _, theme := range themes {
 		i := icon(theme)
 		if i == "" {

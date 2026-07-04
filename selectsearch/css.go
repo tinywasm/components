@@ -7,8 +7,10 @@ import . "github.com/tinywasm/css"
 func (c *SelectSearch) RenderCSS() *Stylesheet {
 	return NewStylesheet(
 		Rule(ClsSsToggle, Display(None)),
-		Rule(ClsSsDropdown, Display(None)),
-		Rule(Selector("."+string(ClsSsToggle)+":checked ~ ."+string(ClsSsDropdown)), Display(Block)),
+		// Visibility of the dropdown is driven by Show(c.isOpen, ...) in selectsearch.go,
+		// which mounts/unmounts the subtree in JS. The dropdown is only present in the DOM
+		// when open, so no CSS :checked combinator is needed (and the old `~` sibling rule
+		// no longer matched once Show wrapped the dropdown in its own container).
 		Rule(ClsSsHeader,
 			Background(ColorPrimary),
 			Color(ColorOnPrimary),

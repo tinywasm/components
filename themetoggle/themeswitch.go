@@ -14,12 +14,10 @@ var (
 const storageKey = "tinywasm-themeswitch"
 
 // Theme representa el estado de tema del componente.
-// ThemeAuto ("") = sin atributo data-theme → OS preference via @media.
-// Los valores "dark" y "light" se escriben literalmente en data-theme.
+// Solo hay dos estados: "dark" y "light", escritos literalmente en data-theme.
 type Theme string
 
 const (
-	ThemeAuto  Theme = "" // no data-theme attribute → OS preference
 	ThemeDark  Theme = "dark"
 	ThemeLight Theme = "light"
 )
@@ -31,53 +29,47 @@ const (
 //	Append("body", ts)
 type ThemeToggle struct {
 	Element
+	theme *SignalString // "", "dark", "light"
 }
 
 func (t *ThemeToggle) Render() *Element {
-	current := Theme(GetDocumentAttr("data-theme"))
-	return Button(icon(current)).
-		Add(clsTsBtn.AsAttr()).
-		Attr("title", label(current)).
-		Attr("aria-label", label(current)).
-		On("click", t.onClick) // implementado por build tag
+	// labelSig is used twice (title + aria-label) → a named shared computed. Auto-tracked: no deps list.
+	labelSig := DeriveString(func() string { return label(Theme(t.theme.Get())) })
+
+	return Button().
+		BindTextFunc(func() string { return icon(Theme(t.theme.Get())) }). // computed icon, auto-tracked
+		BindAttr("title", labelSig).
+		BindAttr("aria-label", labelSig).
+		Set(clsTsBtn.AsAttr()).
+		On("click", func(Event) {
+			t.onClick()
+		})
 }
 
-// cycle define el orden de los 3 estados. Switch (no map) — TinyGo.
+// cycle alterna entre los 2 estados. Switch (no map) — TinyGo.
 func cycle(current Theme) Theme {
-	switch current {
-	case ThemeDark:
-		return ThemeLight
-	case ThemeLight:
-		return ThemeAuto
-	default: // ThemeAuto ("") o cualquier valor inesperado
+	if current == ThemeLight {
 		return ThemeDark
 	}
+	return ThemeLight
 }
 
 // icon retorna el símbolo visible del botón. Switch (no map) — TinyGo.
 func icon(theme Theme) string {
-	switch theme {
-	case ThemeDark:
-		return "🌙"
-	case ThemeLight:
+	if theme == ThemeLight {
 		return "☀"
-	default: // ThemeAuto ("")
-		return "◑"
 	}
+	return "🌙"
 }
 
 // label retorna el nombre del modo actual (usado como tooltip y aria-label).
 func label(theme Theme) string {
-	switch theme {
-	case ThemeDark:
-		return "dark"
-	case ThemeLight:
+	if theme == ThemeLight {
 		return "light"
-	default: // ThemeAuto ("")
-		return "auto"
 	}
+	return "dark"
 }
 
 func valid(t Theme) bool {
-	return t == ThemeAuto || t == ThemeDark || t == ThemeLight
+	return t == ThemeDark || t == ThemeLight
 }

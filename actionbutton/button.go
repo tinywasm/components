@@ -23,17 +23,13 @@ var (
 )
 
 type ActionButton struct {
-	*Element
+	Element
 	Text    string
 	Variant string // "primary", "secondary", "danger"
 	OnClick func(Event)
 }
 
 func (b *ActionButton) Render() *Element {
-	if b.Element == nil {
-		b.Element = &Element{}
-	}
-
 	var variantCls Class
 	switch b.Variant {
 	case "secondary":
@@ -44,7 +40,7 @@ func (b *ActionButton) Render() *Element {
 		variantCls = clsBtnPrimary
 	}
 
-	btn := Button(variantCls.AsAttr()).
+	btn := Button().Set(variantCls.AsAttr()).
 		Text(b.Text)
 
 	if b.OnClick != nil {

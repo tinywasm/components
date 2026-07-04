@@ -22,33 +22,34 @@ import (
 type App struct {
 	Element
 	ss       selectsearch.SelectSearch
-	selected string
+	selected *SignalString
+}
+
+func (a *App) Init(_ Ctx) {
+	a.selected = NewString("")
+	a.ss.Placeholder = "Choose a fruit..."
+	a.ss.Options = []selectsearch.SsOption{
+		{ID: "1", Label: "Apple", Description: "fruit"},
+		{ID: "2", Label: "Banana", Description: "fruit"},
+		{ID: "3", Label: "Cherry", Description: "fruit"},
+		{ID: "4", Label: "Mango", Description: "tropical"},
+		{ID: "5", Label: "Pineapple", Description: "tropical"},
+	}
+	a.ss.OnSelect = func(id, description string) {
+		a.selected.Set(id)
+	}
 }
 
 func (a *App) Render() *Element {
-	// ss lives in App state so its ID and listeners survive re-renders.
-	if len(a.ss.Options) == 0 {
-		a.ss.Placeholder = "Choose a fruit..."
-		a.ss.Options = []selectsearch.SsOption{
-			{ID: "1", Label: "Apple 2", Description: "fruit"},
-			{ID: "2", Label: "Banana", Description: "fruit"},
-			{ID: "3", Label: "Cherry", Description: "fruit"},
-			{ID: "4", Label: "Mango", Description: "tropical"},
-			{ID: "5", Label: "Pineapple", Description: "tropical"},
+	result := P().ID("app-result").BindTextFunc(func() string {
+		if id := a.selected.Get(); id != "" {
+			return "Selected ID: " + id
 		}
-		a.ss.OnSelect = func(id, description string) {
-			a.selected = id
-			a.Update()
-		}
-	}
+		return "Selected ID: —"
+	})
 
-	result := P("Selected ID: —")
-	if a.selected != "" {
-		result = P("Selected ID: ", a.selected)
-	}
-
-	return Div(
-		H1("SelectSearch"),
+	return Div().Child(
+		H1().Text("SelectSearch"),
 		&a.ss,
 		result,
 	)

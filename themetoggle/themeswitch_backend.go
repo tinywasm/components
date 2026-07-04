@@ -2,8 +2,10 @@
 
 package themetoggle
 
-import "github.com/tinywasm/dom"
+import . "github.com/tinywasm/dom"
 
-// En SSR no hay localStorage ni clicks. Stubs no-op para compilación correcta.
-func (t *ThemeToggle) OnMount()          {}
-func (t *ThemeToggle) onClick(dom.Event) {}
+func (t *ThemeToggle) Init(_ Ctx) {
+	t.theme = NewString(string(ThemeDark))
+}
+
+func (t *ThemeToggle) onClick() {}

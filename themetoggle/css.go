@@ -5,21 +5,10 @@ package themetoggle
 import . "github.com/tinywasm/css"
 
 func (t *ThemeToggle) RenderCSS() *Stylesheet {
+	// The [data-theme="light"|"dark"] palette overrides live in tinywasm/css's
+	// RenderCSS (always bundled), so the manual toggle works even if this
+	// component's own CSS isn't collected. Here we only style the button.
 	return NewStylesheet(
-		Rule(Selector("[data-theme=\"light\"]"),
-			Bind(ColorBackground, ColorBackgroundLight),
-			Bind(ColorSurface, ColorSurfaceLight),
-			Bind(ColorOnSurface, ColorOnSurfaceLight),
-			Bind(ColorMuted, ColorMutedLight),
-			Bind(ColorHover, ColorHoverLight),
-		),
-		Rule(Selector("[data-theme=\"dark\"]"),
-			Bind(ColorBackground, ColorBackgroundDark),
-			Bind(ColorSurface, ColorSurfaceDark),
-			Bind(ColorOnSurface, ColorOnSurfaceDark),
-			Bind(ColorMuted, ColorMutedDark),
-			Bind(ColorHover, ColorHoverDark),
-		),
 		Rule(clsTsBtn,
 			Position(Str("fixed")),
 			Top(Rem(1)),
