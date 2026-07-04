@@ -88,10 +88,12 @@ func (c *SelectSearch) Render() *Element {
 		Set(ClsSsSearch.AsAttr()).
 		ID("ss-search").
 		Attr("placeholder", "Search...").
+		Bind(c.query).
 		Autofocus().
 		On("input", func(e Event) {
 			term := e.TargetValue()
-			c.query.Set(term)
+			// query is already updated by Bind(c.query) in WASM,
+			// but we need to trigger the rows update.
 
 			if term != "" {
 				allHidden := true
@@ -111,7 +113,7 @@ func (c *SelectSearch) Render() *Element {
 			c.rows.Set(c.buildRows(term))
 		})
 
-	optList := Div().Set(ClsSsOptions.AsAttr()).ID("ss-options").
+	optList := Ul().Set(ClsSsOptions.AsAttr()).ID("ss-options").
 		BindChildren(c.rows)
 
 	dropdown := Show(c.isOpen, func() *Element {
@@ -134,7 +136,7 @@ func (c *SelectSearch) buildRows(term string) []*Element {
 		}
 
 		o := opt // capture loop variable
-		item := Div().Set(ClsSsOption.AsAttr()).
+		item := Li().Set(ClsSsOption.AsAttr()).
 			Key(opt.ID).
 			ID("ss-opt-"+opt.ID). // required for wirePendingEvents to attach the click handler
 			Child(Span().Set(ClsSsLabel.AsAttr()).Text(opt.Label)).
