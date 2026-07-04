@@ -1,14 +1,16 @@
-# Table Component
+# DataTable
 
-Data table.
+Data table for structured information.
 
 ## Import
-`"github.com/tinywasm/components/table"`
+`"github.com/tinywasm/components/datatable"`
 
 ## Usage
 
 ```go
-t := &table.Table{
+import "github.com/tinywasm/components/datatable"
+
+t := &datatable.DataTable{
     Headers: []string{"ID", "Name", "Role"},
     Rows: [][]string{
         {"1", "Alice", "Admin"},

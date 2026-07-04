@@ -1,14 +1,16 @@
-# Button Component
+# ActionButton
 
 Versatile button component with variant support.
 
 ## Import
-`"github.com/tinywasm/components/button"`
+`"github.com/tinywasm/components/actionbutton"`
 
 ## Usage
 
 ```go
-btn := &button.Button{
+import "github.com/tinywasm/components/actionbutton"
+
+btn := &actionbutton.ActionButton{
     Text: "Save Changes",
     Variant: "primary",
     OnClick: func(e dom.Event) {
@@ -21,11 +23,6 @@ btn := &button.Button{
 - `Text` (string): The button label.
 - `Variant` (string): Visual style (`primary`, `secondary`, `danger`).
 - `OnClick` (func(dom.Event)): Click handler.
-
-## CSS Variables
-- `--color-primary`
-- `--color-secondary`
-- `--color-error`
 
 ---
 [Back to Catalog](../docs/CATALOG.md)
