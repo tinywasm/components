@@ -204,7 +204,7 @@ interface, you just write the method.
 
 Assets are split into separate files by type for better organization and discovery by `assetmin`:
 - `css.go`: Contains `RenderCSS() *css.Stylesheet` (required for styling).
-- `svg.go`: Contains `IconSvg() *svg.Sprite` (optional).
+- `svg.go`: Contains `IconID() string` (if used in UIModule) and `IconSvg() *svg.Sprite` (required if icons present).
 - `js.go`: Contains `RenderJS() []*js.Script` (optional).
 - `html.go`: Contains `RenderHTML() string` (optional, for custom SSR templates).
 
@@ -216,30 +216,43 @@ No `.css` embed. No `//go:embed`. No `var css string`.
 
 The framework injects the SVG sprite **directly into `<body>`** at server time.
 
-Pipeline: **`IconSvg()` in `svg.go`** → sprite built in memory → **injected inline in HTML** → `<svg><use href="#id">` in `Render()` resolves with zero network requests.
+Pipeline: **`IconID()` + `IconSvg()` in `svg.go`** → sprite built in memory → **injected inline in HTML** → `<svg><use href="#id">` in `Render()` resolves with zero network requests.
 
-> **MANDATORY:** `IconSvg()` MUST be in `svg.go` (`//go:build !wasm`) and return `*svg.Sprite`.
-> SVG strings are dead code on WASM — never define icons in the main file.
+> **MANDATORY:** `svg.go` MUST have `//go:build !wasm` build tag.
+> **MANDATORY:** `IconID()` returns the icon ID as string; `IconSvg()` builds the sprite.
+> SVG definition code is dead code on WASM — never define icons outside `svg.go`.
 
 > **MANDATORY:** All paths and shapes MUST include `fill="currentColor"` (or `stroke="currentColor"`) so CSS can control icon color via `fill` or `color` on any ancestor.
 
-**`svg.go` — register the icon:**
+**`svg.go` — register the icon (backend only):**
 ```go
 //go:build !wasm
+
+package mycomponent
+
 import "github.com/tinywasm/svg"
 
-func (c *MyComponent) IconSvg() *svg.Sprite {
-    return svg.New().
-        Add("my-icon-id", `<path fill="currentColor" d="..." />`)
+func (m *MyComponent) IconID() string {
+	return "my-icon-id"
+}
+
+func (m *MyComponent) IconSvg() *svg.Sprite {
+	return svg.NewSprite(
+		svg.Define("my-icon-id", "0 0 16 16",
+			svg.Path(`M2 2h5v5H2zm7 0h5v5H9zm-7 7h5v5H2zm7 0h5v5H9z`),
+		),
+	)
 }
 ```
 
 **`mycomponent.go` `Render()` — reference the icon:**
 ```go
-import "github.com/tinywasm/svg"
-
-svg.Icon("my-icon-id", "my-icon-class")
-// → <svg aria-hidden='true' class='my-icon-class'><use href='#my-icon-id'></svg>
+func (c *MyComponent) Render() dom.Element {
+	// Use Icon() method from interfaced UIModule
+	// or manually reference the icon ID
+	return Svg().Attr("aria-hidden", "true").
+		Child(Use().Attr("href", "#"+c.IconID()))
+}
 ```
 
 ---
