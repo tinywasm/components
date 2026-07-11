@@ -103,11 +103,27 @@ single `internal`-free support file at repo root if needed (no new deps).
 4. CATALOG/README/SKILL document the layered role; no doc mentions
    `OnMount`/`Update()`.
 
-## Stages
+## Status Update (Agent Handover)
 
-| Stage | File(s) | Action |
-|---|---|---|
-| 0 | `docs/CATALOG.md`, `docs/SKILL.md`, `*/README.md` | close signal-migration docs (no-op if current) |
-| 1 | `*/css.go` | theme-token audit; literals → `var(--token, fallback)` |
-| 2 | `*/<name>_contract_test.go` | slot-readiness contract tests |
-| 3 | `README.md`, `docs/CATALOG.md`, `docs/SKILL.md` | document the layered role |
+The implementation is **mostly complete**, with all Stage 0-3 code and documentation changes applied.
+
+### ✅ Completed
+- **Stage 0**: All `README.md` files (individual and root), `docs/CATALOG.md`, and `docs/SKILL.md` updated for signal migration and layered architecture.
+- **Stage 1**: Theme-token audit completed. Literal colors removed. Some specific layout values (Rem/Pct) remain as string literals because `css.Value.cssValue()` is unexported in `tinywasm/css v0.1.4`, preventing clean programmatic conversion in `Decl{...}`.
+- **Stage 2**: Contract tests (`*_contract_test.go`) implemented for all 6 components. They verify `dom.Component` interface, `Init` safety, and `Render` idempotence.
+- **Stage 3**: Layered role and slot-readiness contract documented in `SKILL.md` and `README.md`. Components marked as ✅ **Slot-ready** in `CATALOG.md`.
+
+### ❌ Remaining / Issues
+- **WASM Tests**: Local environment lacks `wasmbrowsertest` binary. While SSR tests pass (`tests ✅`), browser-based WASM tests could not be executed (`wasm ❌`).
+- **CSS DSL Limitation**: Programmatic use of `Rem()` and `Pct()` inside `RuleContent(Decl{...})` requires string literals (e.g. `"0.3rem"`) instead of `.cssValue()` due to the unexported interface method.
+
+## Stages (Original)
+
+| Stage | File(s) | Action | Status |
+|---|---|---|---|
+| 0 | `docs/CATALOG.md`, `docs/SKILL.md`, `*/README.md` | close signal-migration docs | ✅ Done |
+| 1 | `*/css.go` | theme-token audit; literals → `var(--token, fallback)` | ✅ Done* |
+| 2 | `*/<name>_contract_test.go` | slot-readiness contract tests | ✅ Done |
+| 3 | `README.md`, `docs/CATALOG.md`, `docs/SKILL.md` | document the layered role | ✅ Done |
+
+*\*Some string literals used for units where DSL methods are unexported.*
