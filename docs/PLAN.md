@@ -1,132 +1,113 @@
-# tinywasm/components — Plan: Signal-Driven Components
+# tinywasm/components — Plan: slot-ready catalog for preconfigured layouts
 
-> **Master:** tinywasm/docs/PLAN.md · **Engine:** tinywasm/dom/docs/PLAN.md
-> **Module:** `github.com/tinywasm/components`
-> **Type:** Breaking-aligned migration. Removes the footgun that started this effort.
+> This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
+> Supersedes the previous signal-migration plan: verified executed in code
+> (no `OnMount`/`Update()` remains; `themetoggle` and `selectsearch` are
+> signal-driven). Stage 0 closes its pending documentation, then this plan
+> aligns the catalog with the new layered layout architecture.
 
----
+## Context (zero-context summary)
 
-## Prerequisites
+The ecosystem adopted a layered UI architecture (see
+`tinywasm/layout/docs/PLAN.md` and its consumer plan in
+`veltylabs/mjosefa-cms/docs/PLAN.md`):
 
-```bash
-# Canonical test runner (WASM tests run against a real DOM). Required: external agents have no global gotest.
-go install github.com/tinywasm/devflow/cmd/gotest@latest
-```
+- `tinywasm/components` — **raw reusable pieces** (this repo): buttons, cards,
+  dialogs, tables, selects. No layout knowledge.
+- `tinywasm/layout` — published layout skeletons (`platformd` shell,
+  `rightpanel`, new `crudview`). `crudview` is self-contained and does **not**
+  import this repo.
+- **The consumer's composition root** (e.g. `mjosefa-cms/config/layouts`)
+  preconfigures layouts once and injects components into their slots
+  (`Form`, `Detail`, `HeadControls`, `Aside`, `UserBlock`, …). Modules pick a
+  preconfigured layout; they never assemble components by hand.
 
-## Development Rules
+For that to work, every cataloged component must be **slot-ready** and
+**theme-driven**: drop it into any layout slot and it inherits the app's
+branding (set once via `RootCSS`) with zero per-component configuration. That
+is the contract this plan makes explicit, verified, and documented.
 
-- **Documentation First:** update the `components` skill / standards to teach the single contract
-  (`Render()` once + `Signal` bindings; optional `Init(ctx)`; no `Update`/`OnMount`) before code.
-- **WASM only:** reactive code in `//go:build wasm` files; keep backend stubs compiling.
-- **TinyGo idioms:** `switch` not `map`; embed `Element` by value.
-- **Tests:** `gotest` (never `go test`); stdlib only; dual WASM/stdlib. Publish with `gopush 'msg'`.
-- **Minimal public API:** export only what a component *user* types; unexport anything only this package uses (helpers, field models, single-use constants). State lives in unexported fields exposed via signals.
+**Dependency rule (final): `components` never imports `tinywasm/layout`.**
+The reverse (a high-level layout importing a component) is allowed but
+currently unused; assembly belongs to the consumer.
 
-## Signals API recap (from the dom engine — self-contained)
+**Ecosystem pillars:** minimal WASM binary, avoid allocations, zero consumer
+boilerplate, reusable architecture. `gotest` only (install:
+`go install github.com/tinywasm/devflow/cmd/gotest@latest`).
 
-```go
-s := dom.NewString("v"); s.Get(); s.Set("x")          // observable string cell; Set patches bound nodes
-b := dom.NewBool(false); b.Toggle()                   // observable bool cell (Toggle flips it)
-el.BindText(s); el.BindClass("on", b)                 // raw bindings (typed, no generics)
-el.BindAttr("title", s); el.BindAttrBool("disabled", b)
-el.BindTextFunc(func() string { ... })                // computed binding, AUTO-TRACKED (no deps list)
-in.Bind(s); in.Autofocus()                            // two-way input; focus-on-appear
-dom.Show(b, func() *Element { ... })                  // mount/unmount subtree
-ul.BindChildren(rows)                                 // rows := dom.NewNodes(...); keyed list, surgical rows
-// dom.DeriveString(func() string {...}) → named shared computed (auto-tracked); + DeriveBool
-```
+## Stage 0 — close the executed signal migration
 
-State the UI shows lives in a typed `Signal` (**no generics**). No `Update()`. `Init(ctx dom.Ctx)`
-runs once before render.
+The code work of the previous plan is done. Verify and finish its doc closure:
 
----
+- `docs/CATALOG.md` and `docs/SKILL.md` describe the signal-based API for
+  `themetoggle` and `selectsearch` (no `OnMount`/`Update` anywhere in docs).
+- Each component `README.md` shows `Signal`-based usage; root `README.md`
+  index is current.
+- If any of the above is already done, this stage is a no-op — do not churn.
 
-## Change 1 — `themetoggle`: `theme` signal + `Init`
+## Stage 1 — theme-token audit (branding must reach every component)
 
-The original bug was `Update()` in `OnMount` recursing. With signals it is structurally impossible.
+Apps brand via `RootCSS()` overriding the canonical CSS custom properties; a
+component with hardcoded colors silently escapes the brand (the Pa100T
+consumer sets accent `#3f88bf` / grays `#e9e9e9`/`#c2c1c1` as tokens).
 
-In themetoggle/themeswitch_wasm.go and `themeswitch.go`:
+- Audit every `css.go` in the catalog (`actionbutton`, `contentcard`,
+  `datatable`, `dialog`, `selectsearch`, `themetoggle`, `navbar` if present):
+  colors, radii, spacing come from the canonical theme tokens; literal color
+  values are only allowed as `var(--token, <fallback>)` fallbacks.
+- Acceptance is mechanical: `grep -rn "#[0-9a-fA-F]\{3,6\}" */css.go` returns
+  only token fallbacks inside `var(...)`.
 
-- Replace the implicit `data-theme`-as-state with an explicit signal on the struct:
+## Stage 2 — slot-readiness contract, enforced by tests
 
-```go
-type ThemeToggle struct {
-	dom.Element
-	theme *dom.SignalString // "", "dark", "light"
-}
+A component is slot-ready when a layout can hold it as `dom.Component` with no
+extra ceremony:
 
-func (t *ThemeToggle) Init(_ dom.Ctx) {
-	t.theme = dom.NewString("") // ThemeAuto
-	if dom.LocalStorageAvailable() {
-		if s, err := dom.LocalStorageGet(storageKey); err == nil && valid(Theme(s)) {
-			t.theme.Set(s) // value ready before first paint → correct icon, no flash
-		}
-	}
-}
+- Embeds `dom.Element` **by value** (never `*dom.Element`).
+- Implements `Render() *dom.Element`; optional `Init(ctx dom.Ctx)` runs once
+  (guarded); no other lifecycle.
+- All dynamic state in typed signals; configuration is exported struct fields
+  (data), not constructors with behavior — so a consumer's composition root
+  can preconfigure it declaratively.
 
-func (t *ThemeToggle) Render() *Element {
-	// labelSig is used twice (title + aria-label) → a named shared computed. Auto-tracked: no deps list.
-	labelSig := dom.DeriveString(func() string { return label(Theme(t.theme.Get())) })
-	return Button().
-		BindTextFunc(func() string { return icon(Theme(t.theme.Get())) }). // computed icon, auto-tracked
-		BindAttr("title", labelSig).BindAttr("aria-label", labelSig).
-		Set(clsTsBtn.AsAttr()).                                       // typed builder: Set(...fmt.KeyValue), no Add(...any)
-		On("click", func(Event) {
-			next := cycle(Theme(t.theme.Get()))
-			dom.SetDocumentAttr("data-theme", string(next))    // applies the theme
-			if next == ThemeAuto { dom.LocalStorageDel(storageKey) } else { dom.LocalStorageSet(storageKey, string(next)) }
-			t.theme.Set(string(next))                          // patches icon + labels surgically
-		})
-}
-```
+Add one compile-time + behavior contract test per package
+(`<name>_contract_test.go`): asserts interface satisfaction, double-`Init`
+safety, and `Render` idempotence (two calls, same shape). Shared helper in a
+single `internal`-free support file at repo root if needed (no new deps).
 
-- Delete `OnMount` and the `t.Update()` call. Keep `cycle`/`icon`/`label`/`valid` (switch-based).
+## Stage 3 — documentation of the layered role
 
-## Change 2 — `selectsearch`: signals + `Show` + `.Autofocus()`
+- `README.md` + `docs/CATALOG.md`: new section **"Where components fit"** with
+  the layer diagram (components → injected into layout slots → assembled once
+  in the consumer's composition root, e.g. `config/layouts`) and the two rules:
+  components never import `layout`; assembly never lives in modules.
+- `docs/SKILL.md`: add the slot-readiness contract (Stage 2 bullets) to the
+  component-creation standards, and the theme-token rule (Stage 1).
+- `docs/CATALOG.md`: mark each entry slot-ready once its contract test lands.
 
-In selectsearch/selectsearch.go:
+## Harness checklist (mandatory)
 
-- Move state to signals: `isOpen *SignalBool`, `query *SignalString`, `selected *SignalString`
-  (init in `Init`). Options can stay a field if static.
-- Delete all three `c.Update()` calls (lines 60, 101, 122) and `OnMount` (lines 142-148).
-- Wrap the dropdown in `Show(c.isOpen, …)`; mark the search input `.Bind(c.query).Autofocus()` so it
-  focuses when the dropdown mounts and keeps focus + IME while typing (node never replaced).
-- Handlers only `Set` signals: toggle → `c.isOpen.Set(true/false)`; item click → set `selected`,
-  `c.isOpen.Set(false)`, call `c.OnSelect`.
-- Render the filtered list with `ul.BindChildren(c.rows)`, where `c.rows *dom.SignalNodes` is rebuilt
-  (`c.rows.Set(buildRows(options, c.query.Get()))`) inside the input handler, so typing patches only
-  changed rows (keyed reconcile).
+- No stdlib in wasm-compiled code (`tinywasm/fmt`/`json`); no `any`/`map`/
+  generics in public APIs; `switch` over `map`.
+- Value embedding; typed signals; CSS/SVG only in `css.go`/`svg.go` (`!wasm`).
+- No repeated string literals in logic; class names are typed vars.
+- No public API breaks: existing consumers (`mjosefa-cms`, layout demo)
+  compile unmodified.
 
----
+## Acceptance criteria
 
-## Documentation (do FIRST)
+1. `gotest ./...` green (stdlib + browser suites).
+2. Token grep (Stage 1) clean; a consumer overriding accent/gray tokens
+   restyles every cataloged component (verified in the existing demo pages).
+3. Every cataloged component has a passing contract test (Stage 2).
+4. CATALOG/README/SKILL document the layered role; no doc mentions
+   `OnMount`/`Update()`.
 
-- **`devflow/skills/components/SKILL.md`**: replace any `OnMount`/`Update()` guidance with the single
-  contract (`Render()` once + typed signals; `Init(ctx)`; `BindChildren`/`Show`; `.Autofocus()`).
-  These two components are the **canonical examples** — reference them. After editing, run the
-  `llmskill` sync so Claude/Gemini copies update.
-- **`docs/CATALOG.md`** / **`docs/SKILL.md`**: update the themetoggle & selectsearch entries to the
-  signal-based API.
-- Each component's `README.md`/doc comment: show the `Signal`-based usage. Re-index `README.md`.
+## Stages
 
-## Tests — frequent use cases (`gotest`)
-
-Stdlib assertions only; dual WASM/stdlib. These cover the everyday component patterns and serve as
-living examples:
-
-- **stdlib:** `cycle`/`icon`/`label`/`valid`; `selectsearch` filter logic over `query`.
-- **wasm (real DOM):**
-  - **themetoggle — load-on-init + derived:** after `Init` with a saved theme, the first-rendered
-    button text == correct icon (no flash); click cycles, only the button's text/attrs patch (capture
-    node ref, assert identity); **regression: no recursion** (the original bug).
-  - **selectsearch — two-way input + conditional + list:** typing keeps focus/cursor (IME-safe);
-    `Show` mounts/unmounts the dropdown once; `BindChildren` patches only changed rows on filter.
-- **In-browser (tinywasm MCP):** themetoggle `data-theme` matches `.ts-btn` icon on load and cycles;
-  `browser_get_errors` shows **no** `Maximum call stack size exceeded`; selectsearch focus retained.
-
-## Done When
-
-- Neither component implements `OnMount`/`OnUpdate` nor calls `Update()`; state is in signals.
-- themetoggle icon correct on load and cycles; selectsearch focus + IME survive keystrokes.
-- **Docs:** `components` SKILL + CATALOG updated and synced (`llmskill`); READMEs re-indexed.
-  **Tests:** the use-case tests above pass under `gotest`.
+| Stage | File(s) | Action |
+|---|---|---|
+| 0 | `docs/CATALOG.md`, `docs/SKILL.md`, `*/README.md` | close signal-migration docs (no-op if current) |
+| 1 | `*/css.go` | theme-token audit; literals → `var(--token, fallback)` |
+| 2 | `*/<name>_contract_test.go` | slot-readiness contract tests |
+| 3 | `README.md`, `docs/CATALOG.md`, `docs/SKILL.md` | document the layered role |
