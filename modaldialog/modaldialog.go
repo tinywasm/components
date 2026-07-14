@@ -1,4 +1,4 @@
-package dialog
+package modaldialog
 
 import (
 	. "github.com/tinywasm/css"
@@ -16,19 +16,19 @@ var (
 	clsModalBody     Class = "modal-body"
 )
 
-// DialogWidget represents a modal dialog component.
-type DialogWidget struct {
+// ModalDialog represents a modal dialog component.
+type ModalDialog struct {
 	Element
 	Title   string
 	Content Component
 	visible *SignalBool
 }
 
-func (m *DialogWidget) Init(_ Ctx) {
+func (m *ModalDialog) Init(_ Ctx) {
 	m.visible = NewBool(false)
 }
 
-func (m *DialogWidget) Render() *Element {
+func (m *ModalDialog) Render() *Element {
 	// Create close button
 	closeBtn := Button().
 		Text("×").
@@ -53,6 +53,6 @@ func (m *DialogWidget) Render() *Element {
 	})
 }
 
-func (m *DialogWidget) Open() {
+func (m *ModalDialog) Open() {
 	m.visible.Set(true)
 }

@@ -1,19 +1,19 @@
-# DialogWidget
+# ModalDialog
 
 Modal dialog overlay with backdrop and close button.
 
 ## Import
-`"github.com/tinywasm/components/dialog"`
+`"github.com/tinywasm/components/modaldialog"`
 
 ## Usage
 
 ```go
 import (
-    "github.com/tinywasm/components/dialog"
+    "github.com/tinywasm/components/modaldialog"
     . "github.com/tinywasm/html"
 )
 
-m := &dialog.DialogWidget{
+m := &modaldialog.ModalDialog{
     Title: "Confirm Action",
     Content: P("Are you sure?"),
 }

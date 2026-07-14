@@ -1,10 +1,10 @@
 //go:build !wasm
 
-package dialog
+package modaldialog
 
 import . "github.com/tinywasm/css"
 
-func (m *DialogWidget) RenderCSS() *Stylesheet {
+func (m *ModalDialog) RenderCSS() *Stylesheet {
 	return NewStylesheet(
 		Rule(clsModal,
 			Position(Str("fixed")),

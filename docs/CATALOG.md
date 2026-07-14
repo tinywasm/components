@@ -10,49 +10,58 @@ All components consume CSS custom properties from `tinywasm/dom`'s `theme.css`.
 Inject `dom.ThemeCSS` into your page `<head>` once via the site builder.
 Components do not define colors — they inherit from the theme.
 
+## Where components fit
+
+`components` are raw reusable pieces with no layout knowledge. A layout
+skeleton in `tinywasm/layout` (`platformd`, `rightpanel`, `crudview`) exposes
+named slots; the consumer's composition root (e.g. `config/layouts`)
+preconfigures a layout once and injects these components into its slots.
+Modules never assemble components by hand, and this repo never imports
+`tinywasm/layout`. See the [root README](../README.md#where-components-fit)
+for the full diagram.
+
 ## Overview
 
-All components follow the [Component Creation Guide](./SKILL.md).
+All components follow the [Component Creation Guide](./SKILL.md). Every entry
+below is **slot-ready**: it satisfies `dom.Component`, has a passing
+`*_contract_test.go`, and is theme-driven (no hardcoded colors) per the
+Stage 1/2 contract in [SKILL.md](./SKILL.md).
 
 ---
 
-## [ActionButton](../actionbutton/README.md)
+## [ActionButton](../actionbutton/README.md) — ✅ Slot-ready
 Versatile button component with variant support (primary, secondary, danger).
 [Detailed Documentation →](../actionbutton/README.md)
 
 ---
 
-## [ContentCard](../contentcard/README.md)
+## [ContentCard](../contentcard/README.md) — ✅ Slot-ready
 Container with header, body, and footer sections.
 [Detailed Documentation →](../contentcard/README.md)
 
 ---
 
-## [NavBar](../navbar/README.md)
-Navigation menu with support for icons.
-[Detailed Documentation →](../navbar/README.md)
+## [ModalDialog](../modaldialog/README.md) — ✅ Slot-ready
+Centered modal overlay with backdrop and close button. Named for its specific
+style (centered/backdrop) so other dialog styles (e.g. a drawer or a confirm
+prompt) can be added later as their own two-word component.
+[Detailed Documentation →](../modaldialog/README.md)
 
 ---
 
-## [Dialog](../dialog/README.md)
-Modal dialog overlay with backdrop and close button.
-[Detailed Documentation →](../dialog/README.md)
-
----
-
-## [DataTable](../datatable/README.md)
+## [DataTable](../datatable/README.md) — ✅ Slot-ready
 Data table for structured information with headers and rows.
 [Detailed Documentation →](../datatable/README.md)
 
 ---
 
-## [SelectSearch](../selectsearch/README.md)
+## [SelectSearch](../selectsearch/README.md) — ✅ Slot-ready
 Signal-driven searchable dropdown with static options, live filtering, and optional DB search callback. Uses `BindChildren` for efficient list updates and `Show` for the dropdown.
 [Detailed Documentation →](../selectsearch/README.md)
 
 ---
 
-## [ThemeToggle](../themetoggle/README.md)
+## [ThemeToggle](../themetoggle/README.md) — ✅ Slot-ready
 Signal-driven floating button that cycles between `auto → dark → light` theme modes. Persists preference in `localStorage` via `Init`. Uses derived signals for labels and icon updates.
 [Detailed Documentation →](../themetoggle/README.md)
 

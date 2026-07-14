@@ -1,4 +1,4 @@
-package dialog
+package modaldialog
 
 import (
 	"testing"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestModal_Render(t *testing.T) {
-	m := &DialogWidget{
+	m := &ModalDialog{
 		Title:   "My Modal",
 		Content: &simpleComponent{html: "<p>Content</p>"},
 	}
