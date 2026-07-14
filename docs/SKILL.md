@@ -18,6 +18,12 @@ Component names **must be composed of at least two words** — single-word names
 
 This applies to both the Go struct name (`ThemeSwitch`) and the folder/package name (`themeswitch`). Two-word names make it immediately clear that something is a reusable component rather than a dom primitive or a stdlib type.
 
+**The second word must name the class/style, not just repeat the concept.** `Dialog` alone claims the
+whole concept for one implementation; if a consumer later wants a different style (a drawer instead of
+a centered modal, a segmented control instead of a click-to-cycle toggle), there's no free name left
+without a breaking rename. Name the specific style up front: `ModalDialog` (not `Dialog`), `ThemeToggle`
+(not `Toggle`), so multiple styles of the same concept can coexist (`ModalDialog`, `DrawerDialog`, …).
+
 ---
 
 ## File Structure
@@ -52,6 +58,11 @@ CSS is written using the `tinywasm/css` typed DSL. All design decisions referenc
 - **Class name prefix** — follow `<component>-*` convention (e.g. `"mycomponent-header"`).
 - A component **must not** declare a `:root {}` block via `css.Root(...)`. That is reserved for the app or `tinywasm/dom`. Use only `Rule()` and `Selector()`.
 - Do NOT style form elements — use `github.com/tinywasm/form`.
+
+**Theme-token rule (mandatory):** every color, radius, and spacing value must come from a canonical
+token, so an app can restyle every cataloged component by overriding tokens once via `RootCSS()`. A
+literal color is only allowed as the fallback inside `var(--token, <fallback>)`. Acceptance is
+mechanical: `grep -rn "#[0-9a-fA-F]\{3,6\}" */css.go` must return nothing outside a `var(...)` fallback.
 
 Available token groups (from `tinywasm/css/tokens.go`):
 
@@ -291,6 +302,29 @@ func TestMyComponent_Render(t *testing.T) {
     }
 }
 ```
+
+---
+
+## 5. Slot-Readiness Contract
+
+A component is **slot-ready** when a layout in `tinywasm/layout` (or any consumer's composition root)
+can hold it as `dom.Component`, in any slot, with zero per-component ceremony:
+
+- Embeds `dom.Element` **by value** (never `*dom.Element`).
+- Implements `Render() *dom.Element`; optional `Init(ctx dom.Ctx)` runs once (guarded — a second call
+  must not panic). No other lifecycle hook exists.
+- All dynamic state lives in typed signals; configuration is exported struct fields (data), not
+  constructor arguments — so a consumer's composition root can preconfigure it declaratively.
+
+Every component package must have a `<name>_contract_test.go` asserting:
+
+1. `var _ dom.Component = (*MyComponent)(nil)` — compile-time interface check.
+2. Calling `Init(nil)` twice does not panic.
+3. `Render()` called twice produces the same shape (normalize any auto-generated ids before comparing,
+   since bindings like `Show`/`BindChildren` may assign fresh ids per call).
+
+`tinywasm/components` never imports `tinywasm/layout` — assembly (which component goes in which slot)
+belongs to the consumer's composition root, not to this repo.
 
 ---
 

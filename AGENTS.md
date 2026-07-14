@@ -17,7 +17,7 @@ it can't catch becomes a `devMode` warning — never a silent failure.
 - **Docs are minimal "how" instructions, not long skills** — if a rule must be *remembered*, close it
   with types, not prose.
 
-(Ecosystem rationale: `tinywasm/docs/ARNES_DE_CONSTRUCCION.md`.)
+(Ecosystem rationale: `tinywasm/app/docs/CONSTRUCTION_HARNESS.md`.)
 
 ---
 
@@ -47,6 +47,27 @@ func (t *ThemeToggle) Render() *dom.Element {
 }
 ```
 
+## Component Naming — two words, and the second word must name the class
+
+A component's Go struct name **and** its folder/package name must be at least two words, and the
+combination must identify *which style/class* of the thing it is — never just the generic noun alone.
+
+```
+✅ ModalDialog (modaldialog/)   ThemeToggle (themetoggle/)   ActionButton (actionbutton/)
+❌ Dialog (dialog/)              Toggle (toggle/)              Button (button/)
+```
+
+**Why:** a bare generic name (`Dialog`, `Toggle`, `Button`) claims the whole concept for one specific
+implementation. If a consumer later needs a different style — a drawer instead of a centered modal, a
+segmented switch instead of a click-to-cycle toggle — there's no name left for it without a breaking
+rename. Naming the class up front (`ModalDialog`, `DrawerDialog`, `ThemeToggle`, `ThemeSegmented`)
+keeps every style addressable and coexisting side by side.
+
+This was violated once: the modal component originally shipped as package `dialog`, struct
+`DialogWidget` — a single-word package name for what is really one *style* of dialog. Renamed to
+`modaldialog`/`ModalDialog`. Do not repeat this: when creating a component, ask "what specific
+style/variant is this?" and put that in the name, not just the generic UI concept.
+
 ## No Generics
 
 Zero generic functions in this ecosystem (follow the `tinywasm/fmt` codec rule "cero any, cero map").
@@ -62,16 +83,58 @@ The DOM boundary is `string`/`bool`, so use concrete typed signals — never `Si
 ## Minimal Public Surface
 
 Export only what a component user types. **Unexport any symbol only this package uses** — e.g. theme
-constants (`ThemeDark`/`ThemeLight`/`ThemeAuto`), helpers like `cycle`/`icon`/`label`. Struct fields
-stay unexported; expose behavior through methods.
+constants (`TsThemeDark`/`TsThemeLight`), helpers like `toggle`/`icon`/`label`. Struct fields stay
+unexported; expose behavior through methods.
 
-## WASM / TinyGo
+## WASM / TinyGo — build tags belong to the consumer, not the library
+
+Every `.go` file YOU write is in exactly one of three states. **Every byte of
+an untagged file ships to the browser** — the WASM binary must stay minimal.
+Some ecosystem libraries (e.g. `tinywasm/svg`) never use `//go:build`
+internally and instead split backend-only code into a separate importable
+sub-package (`tinywasm/svg/sprite`) — YOU still choose whether to import that
+sub-package from a tagged or untagged file, and that choice is yours to get
+right; the library cannot enforce it for you.
+
+| Tag | Compiles into | What belongs there |
+|---|---|---|
+| *(none)* | WASM **and** backend | `Render()`, signals, typed name constants (icon names, CSS classes) |
+| `//go:build wasm` | WASM only | browser-only interaction (`web/client.go`, JS bridges) |
+| `//go:build !wasm` | backend/SSR only | CSS embeds (`css.go`), `IconSvg()` + SVG geometry (`svg.go`, imports `tinywasm/svg/sprite`), `RenderJS`, heavy HTML strings |
 
 - Lifecycle/reactive code goes in `//go:build wasm` files; provide `!wasm` stubs for any function
   called from tag-less code (e.g. inside `Render()`), returning no-ops / `""`.
 - **No Go stdlib** (`fmt`/`strings`/`errors`): use `github.com/tinywasm/fmt`. DOM only via
   `github.com/tinywasm/dom`, never `syscall/js`.
 - `switch`, not `map`. No `defer/recover` (a no-op in TinyGo WASM) — use O(1) guards.
+- `tinywasm/ssr` builds its extractor with the default backend toolchain, so `!wasm` files ARE
+  included in SSR extraction — tagging never breaks SSR.
+
+## SVG icons — name is shared, drawing is backend-only
+
+The icon's *name* is the only thing the WASM binary may carry; the geometry is
+extracted by `tinywasm/ssr` and injected inline into `<body>` by `assetmin`
+(no `/assets/icons.svg` URL — `href="#id"` resolves without a network request).
+
+- Declare the reference in the untagged component file:
+  `const iconX = svg.Icon("comp-x")` (prefix ids with the component name).
+  Import `github.com/tinywasm/svg` — safe from any untagged file.
+- Define the geometry in `svg.go` under `//go:build !wasm`:
+  `sprite.Define(iconX, "0 0 16 16", sprite.Path("..."))` (package
+  `github.com/tinywasm/svg/sprite`), returned by `IconSvg() *sprite.Sprite`.
+  Always `fill="currentColor"` (Path hardcodes it); color/size are controlled
+  from CSS at the use-site.
+- Render with `iconX.Render(string(ClsCompIcon))` — never a raw `"#id"` string,
+  never hand-built `<svg><use>` (the `svg.Svg()`/`svg.Use()` builders were removed).
+- **`github.com/tinywasm/svg/sprite` compiles fine for wasm too** (it's pure
+  Go, no build tag of its own) — forgetting `//go:build !wasm` on your
+  `svg.go` does NOT fail the build, it silently ships sprite geometry plus
+  the `tinywasm/json`/`tinywasm/model` serialization code to the browser.
+  This is caught only by the mandatory pre-publish check, never skip it:
+
+  ```bash
+  GOOS=js GOARCH=wasm go list -deps ./... | grep tinywasm/svg/sprite   # must be empty
+  ```
 
 ## Testing
 

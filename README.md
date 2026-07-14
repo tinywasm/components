@@ -130,9 +130,36 @@ See [Component Catalog](docs/CATALOG.md) for full documentation.
 -   **ActionButton**: Primary/secondary actions with variants.
 -   **ContentCard**: Content container with header/body/footer.
 -   **DataTable**: Data tables with headers and rows.
--   **NavBar**: Navigation menu with icon support.
--   **Dialog**: Modal dialog overlays.
--   **ThemeToggle**: Theme switcher (light/dark/auto).
+-   **ModalDialog**: Centered modal overlay with backdrop.
+-   **SelectSearch**: Searchable dropdown with live filtering.
+-   **ThemeToggle**: Theme switcher (dark/light).
+
+## Where components fit
+
+The ecosystem is layered:
+
+```
+tinywasm/components  →  raw reusable pieces (this repo). No layout knowledge.
+tinywasm/layout       →  published layout skeletons (platformd shell, rightpanel,
+                          crudview) with named slots (Form, Detail, HeadControls, …).
+consumer's composition root (e.g. config/layouts)
+                       →  preconfigures a layout once, injecting components into
+                          its slots. Modules pick a preconfigured layout; they
+                          never assemble components by hand.
+```
+
+Two rules keep this layering intact:
+
+- **`components` never imports `tinywasm/layout`.** The reverse (layout importing
+  a component) is allowed but assembly belongs to the consumer, not this repo.
+- **Assembly never lives in modules.** A module consumes a preconfigured layout;
+  it does not construct `ActionButton`/`DataTable`/etc. by hand inside a slot.
+
+Every cataloged component is **slot-ready**: it can be dropped into any layout
+slot as a `dom.Component` with zero per-component configuration, and it is
+**theme-driven**: it inherits branding from `RootCSS` with no hardcoded colors.
+See [docs/SKILL.md](docs/SKILL.md) for the slot-readiness contract and
+[docs/CATALOG.md](docs/CATALOG.md) for per-component status.
 
 ## Forms
 

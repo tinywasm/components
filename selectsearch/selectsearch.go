@@ -70,6 +70,7 @@ func (c *SelectSearch) Render() *Element {
 	})
 
 	toggle := Input("checkbox").Set(ClsSsToggle.AsAttr()).
+		ID("ss-toggle").
 		BindAttrBool("checked", c.isOpen).
 		On("change", func(e Event) {
 			c.isOpen.Set(e.TargetChecked())
@@ -78,7 +79,7 @@ func (c *SelectSearch) Render() *Element {
 	// BindText sets textContent which would erase child elements.
 	// Wrap header text in a Span so the SVG icon survives as a sibling.
 	header := Label().Set(ClsSsHeader.AsAttr()).
-		For(toggle).
+		Attr("for", "ss-toggle").
 		Child(
 			Span().BindText(headerTextSig),
 			svg.Svg().Child(svg.Use().Attr("href", "#ss-arrow-down")).Set(ClsSsIcon.AsAttr()),

@@ -14,17 +14,17 @@ func setUp() {
 	dom.SetDocumentAttr("data-theme", "")
 }
 
-func TestThemeToggle_Init_NoSavedValue_DefaultsAuto(t *testing.T) {
+func TestThemeToggle_Init_NoSavedValue_DefaultsLight(t *testing.T) {
 	setUp()
 	ts := &ThemeToggle{}
 	ts.Init(nil)
 
 	got := dom.GetDocumentAttr("data-theme")
-	if got != "" {
-		t.Errorf("expected data-theme=\"\" by default, got %q", got)
+	if got != "light" {
+		t.Errorf("expected data-theme=light by default, got %q", got)
 	}
-	if ts.theme.Get() != "" {
-		t.Errorf("expected signal=\"\" by default, got %q", ts.theme.Get())
+	if ts.theme.Get() != "light" {
+		t.Errorf("expected signal=light by default, got %q", ts.theme.Get())
 	}
 }
 
@@ -44,7 +44,7 @@ func TestThemeToggle_Init_RestoresLight(t *testing.T) {
 	}
 }
 
-func TestThemeToggle_Init_InvalidValue_DefaultsAuto(t *testing.T) {
+func TestThemeToggle_Init_InvalidValue_DefaultsLight(t *testing.T) {
 	setUp()
 	dom.LocalStorageSet(storageKey, "xyz")
 
@@ -52,11 +52,11 @@ func TestThemeToggle_Init_InvalidValue_DefaultsAuto(t *testing.T) {
 	ts.Init(nil)
 
 	got := dom.GetDocumentAttr("data-theme")
-	if got != "" {
-		t.Errorf("expected data-theme=\"\" after invalid value, got %q", got)
+	if got != "light" {
+		t.Errorf("expected data-theme=light after invalid value, got %q", got)
 	}
-	if ts.theme.Get() != "" {
-		t.Errorf("expected signal=\"\", got %q", ts.theme.Get())
+	if ts.theme.Get() != "light" {
+		t.Errorf("expected signal=light, got %q", ts.theme.Get())
 	}
 }
 
@@ -66,9 +66,9 @@ func TestThemeToggle_Render_Initial(t *testing.T) {
 	ts.Init(nil)
 	el := ts.Render()
 
-	// default theme is auto → icon is 🌓
+	// default theme is light → icon is ☀️
 	got := el.String()
-	if !fmt.Contains(got, icon(TsThemeAuto)) {
-		t.Errorf("expected icon %s in rendered element, got %s", icon(TsThemeAuto), got)
+	if !fmt.Contains(got, icon(TsThemeLight)) {
+		t.Errorf("expected icon %s in rendered element, got %s", icon(TsThemeLight), got)
 	}
 }

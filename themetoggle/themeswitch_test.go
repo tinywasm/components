@@ -7,7 +7,7 @@ import (
 )
 
 func TestLabel_AllThemes_NonEmpty(t *testing.T) {
-	themes := []TsTheme{TsThemeDark, TsThemeLight, TsThemeAuto, "invalid"}
+	themes := []TsTheme{TsThemeDark, TsThemeLight, "invalid"}
 	for _, theme := range themes {
 		l := label(theme)
 		if l == "" {
@@ -16,21 +16,20 @@ func TestLabel_AllThemes_NonEmpty(t *testing.T) {
 	}
 }
 
-func TestCycle(t *testing.T) {
+func TestToggle(t *testing.T) {
 	tests := []struct {
 		current TsTheme
 		next    TsTheme
 	}{
-		{TsThemeAuto, TsThemeDark},
 		{TsThemeDark, TsThemeLight},
-		{TsThemeLight, TsThemeAuto},
-		{"invalid", TsThemeAuto},
+		{TsThemeLight, TsThemeDark},
+		{"invalid", TsThemeDark},
 	}
 
 	for _, tt := range tests {
-		got := cycle(tt.current)
+		got := toggle(tt.current)
 		if got != tt.next {
-			t.Errorf("cycle(%q) = %q; want %q", tt.current, got, tt.next)
+			t.Errorf("toggle(%q) = %q; want %q", tt.current, got, tt.next)
 		}
 	}
 }
@@ -42,16 +41,13 @@ func TestValid(t *testing.T) {
 	if !valid(TsThemeLight) {
 		t.Error("valid(TsThemeLight) should be true")
 	}
-	if !valid(TsThemeAuto) {
-		t.Error("valid(TsThemeAuto) should be true")
-	}
 	if valid("invalid") {
 		t.Error("valid(\"invalid\") should be false")
 	}
 }
 
 func TestIcon_AllThemes_NonEmpty(t *testing.T) {
-	themes := []TsTheme{TsThemeDark, TsThemeLight, TsThemeAuto, "invalid"}
+	themes := []TsTheme{TsThemeDark, TsThemeLight, "invalid"}
 	for _, theme := range themes {
 		i := icon(theme)
 		if i == "" {
