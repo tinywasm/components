@@ -1,5 +1,6 @@
-# PLAN — `tinywasm/components`: SVG icon harness migration (selectsearch)
-
+---
+PLAN: "`tinywasm/components`: SVG icon harness migration (selectsearch)"
+---
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
 > Master plan: https://github.com/tinywasm/tinywasm/blob/main/docs/SVG_ICON_HARNESS_MASTER_PLAN.md
 > Repo rules: `AGENTS.md` at this repo's root — read it first (especially the
