@@ -21,6 +21,8 @@ var (
 	ClsSsDesc     Class = "ss-desc"
 )
 
+const iconArrowDown = svg.Icon("ss-arrow-down")
+
 // SsOption represents a selectable item.
 type SsOption struct {
 	ID          string // unique identifier, returned in OnSelect
@@ -82,7 +84,7 @@ func (c *SelectSearch) Render() *Element {
 		Attr("for", "ss-toggle").
 		Child(
 			Span().BindText(headerTextSig),
-			svg.Svg().Child(svg.Use().Attr("href", "#ss-arrow-down")).Set(ClsSsIcon.AsAttr()),
+			iconArrowDown.Render(string(ClsSsIcon)),
 		)
 
 	searchInput := Input("search").

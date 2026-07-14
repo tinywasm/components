@@ -7,5 +7,10 @@ require (
 	github.com/tinywasm/dom v0.11.2
 	github.com/tinywasm/fmt v0.25.3
 	github.com/tinywasm/html v0.0.6
-	github.com/tinywasm/svg v0.1.0
+	github.com/tinywasm/svg v0.1.3
+)
+
+require (
+	github.com/tinywasm/json v0.5.11 // indirect
+	github.com/tinywasm/model v0.0.8 // indirect
 )
