@@ -12,5 +12,5 @@ require (
 
 require (
 	github.com/tinywasm/json v0.5.11 // indirect
-	github.com/tinywasm/model v0.0.8 // indirect
+	github.com/tinywasm/model v0.0.16 // indirect
 )
