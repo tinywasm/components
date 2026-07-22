@@ -15,17 +15,23 @@ import (
 )
 
 var (
-	clsList     Class = "tl-list"
-	clsRow      Class = "tl-row"
-	clsRowOn    Class = "tl-row-on"
-	clsLabel    Class = "tl-label"
-	clsBadge    Class = "tl-badge"
-	clsMenu     Class = "tl-menu"
-	clsMenuBtn  Class = "tl-menu-btn"
-	clsMenuIcon Class = "tl-menu-icon"
-	clsMenuList Class = "tl-menu-list"
-	clsMenuItem Class = "tl-menu-item"
+	clsListWrap     Class = "tl-wrap"
+	clsList         Class = "tl-list"
+	clsRow          Class = "tl-row"
+	clsRowOn        Class = "tl-row-on"
+	clsLabel        Class = "tl-label"
+	clsBadge        Class = "tl-badge"
+	clsMenu         Class = "tl-menu"
+	clsMenuBtn      Class = "tl-menu-btn"
+	clsMenuIcon     Class = "tl-menu-icon"
+	clsMenuList     Class = "tl-menu-list"
+	clsMenuItem     Class = "tl-menu-item"
+	clsMenuBackdrop Class = "tl-menu-backdrop"
 )
+
+// menuGroup makes every row's ⋮ <details> part of one native HTML "exclusive
+// accordion" group: opening one auto-closes any other that's open, with no JS.
+const menuGroup = "tl-menu-group"
 
 const iconDots = svg.Icon("tl-dots")
 
@@ -84,8 +90,33 @@ func (t *TargetList) Items() []Item { return t.items }
 // Count reports how many rows are currently rendered (used by hosts/tests).
 func (t *TargetList) Count() int { return len(t.items) }
 
+// menuID is the DOM id of a row's ⋮ <details> — used to close it
+// programmatically (closeAllMenus) since native <details> only closes on a
+// summary click or an explicit attribute removal, never on an outside click.
+func menuID(key string) string { return key + ".menu" }
+
+// closeAllMenus force-closes every row's ⋮ menu. Wired to: picking Editar/
+// Eliminar (native <details> does not close itself on that), and a full-page
+// backdrop that appears (CSS :has(), see css.go) while any menu is open, so a
+// click anywhere outside a menu closes it too.
+func (t *TargetList) closeAllMenus() {
+	for _, it := range t.items {
+		if ref, ok := Get(menuID("tl-" + it.ID)); ok {
+			ref.RemoveAttr("open")
+		}
+	}
+}
+
 func (t *TargetList) Render() *Element {
-	return Ul().Set(clsList.AsAttr()).BindChildren(t.rows)
+	backdrop := Div().Set(clsMenuBackdrop.AsAttr())
+	backdrop.On("click", func(Event) { t.closeAllMenus() })
+
+	list := Ul().Set(clsList.AsAttr()).BindChildren(t.rows)
+
+	// backdrop is a plain sibling of the (BindChildren-managed) <ul>, never a
+	// static child mixed into it — the keyed reconcile assumes it owns every
+	// child of the element it's bound to.
+	return Div().Set(clsListWrap.AsAttr()).Child(backdrop, list)
 }
 
 func (t *TargetList) buildRow(it Item) *Element {
@@ -119,6 +150,7 @@ func (t *TargetList) buildRow(it Item) *Element {
 	edit := Button().Set(clsMenuItem.AsAttr()).Text("Editar")
 	edit.On("click", func(e Event) {
 		e.StopPropagation()
+		t.closeAllMenus()
 		if t.OnEdit != nil {
 			t.OnEdit(id)
 		}
@@ -126,12 +158,15 @@ func (t *TargetList) buildRow(it Item) *Element {
 	del := Button().Set(clsMenuItem.AsAttr()).Text("Eliminar")
 	del.On("click", func(e Event) {
 		e.StopPropagation()
+		t.closeAllMenus()
 		if t.OnDelete != nil {
 			t.OnDelete(id)
 		}
 	})
 
 	row.Child(Details().Set(clsMenu.AsAttr()).
+		ID(menuID(key)).
+		Attr("name", menuGroup).
 		Child(summary).
 		Child(Div().Set(clsMenuList.AsAttr()).Child(edit, del)))
 

@@ -18,6 +18,34 @@ const (
 // theme tokens; the host layout positions the list, it does not style it.
 func (t *TargetList) RenderCSS() *Stylesheet {
 	return NewStylesheet(
+		// Wrapper: passes flex sizing through from the host to the <ul> — the
+		// backdrop (see below) needs to sit outside the <ul> since that element's
+		// children are fully owned by the keyed reconcile (BindChildren), which
+		// would fight a statically-added sibling.
+		Rule(clsListWrap,
+			Display(Flex_),
+			FlexDirection(Column),
+			FlexGrow(Str("1")),
+			MinHeight(Str("0")),
+			Height(Pct(100)),
+		),
+
+		// Full-page click-catcher, shown only while a row's ⋮ menu is open, so a
+		// click anywhere outside a menu closes it (native <details> has no such
+		// behavior on its own).
+		Rule(clsMenuBackdrop,
+			Display(None),
+			Position(Str("fixed")),
+			Top(Zero),
+			Left(Zero),
+			Right(Zero),
+			Bottom(Zero),
+			ZIndex(Str("4")), // below clsMenuList (5), above the rows
+		),
+		Rule(Selector("."+string(clsListWrap)+":has(."+string(clsMenu)+"[open]) ."+string(clsMenuBackdrop)),
+			Display(Str("block")),
+		),
+
 		Rule(clsList,
 			Display(Flex_),
 			FlexDirection(Column),
@@ -120,6 +148,14 @@ func (t *TargetList) RenderCSS() *Stylesheet {
 			ZIndex(Str("5")),
 			RawRule("box-shadow: 0 4px 12px rgba(0,0,0,.18)"),
 		),
+		// The list container clips overflow (it must, to scroll) — so the last
+		// row's dropdown, which has no room below it, gets cut off opening
+		// downward. Flip it to open upward instead, where the earlier rows
+		// leave room.
+		Rule(Selector("."+string(clsRow)+":last-child ."+string(clsMenuList)),
+			RawRule("top: auto; bottom: calc(100% + 2px)"),
+		),
+
 		Rule(clsMenuItem,
 			Display(Block),
 			Width(Pct(100)),

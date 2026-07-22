@@ -67,15 +67,18 @@ func (f *Fieldset) RenderCSS() *Stylesheet {
 		),
 
 		// Locked/read-only state (Form.SetLocked, or a field's own static
-		// disabled flag): dim the box and swap the cursor, without hiding the
-		// value — the crud view uses this to show a selected row read-only
-		// until the row's ⋮ menu → Editar unlocks it.
+		// disabled flag): a "frosted glass" look — the value stays fully
+		// legible/selectable, just a hair darker than the box's normal
+		// background (ColorSurface, not the much darker ColorMuted — this is
+		// not a disabled BUTTON, the text must stay easy to read/copy) and a
+		// not-allowed cursor. No opacity dimming: that fades the text too,
+		// which is exactly what must stay readable until the row's ⋮ menu →
+		// Editar unlocks it.
 		Rule(Selector(".tw-field:has(:disabled)"),
-			Background(ColorMuted),
+			Background(ColorSurface),
 		),
 		Rule(Selector(".tw-field input:disabled, .tw-field textarea:disabled, .tw-field select:disabled"),
 			Cursor(Str("not-allowed")),
-			Opacity(0.7),
 		),
 	)
 }
