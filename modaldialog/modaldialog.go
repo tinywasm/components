@@ -56,3 +56,10 @@ func (m *ModalDialog) Render() *Element {
 func (m *ModalDialog) Open() {
 	m.visible.Set(true)
 }
+
+// Close hides the dialog programmatically — for a host that needs to dismiss
+// it after an action completes (e.g. a confirm button), not just via the
+// built-in backdrop/× close.
+func (m *ModalDialog) Close() {
+	m.visible.Set(false)
+}
