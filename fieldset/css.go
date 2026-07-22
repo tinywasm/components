@@ -59,11 +59,25 @@ func (f *Fieldset) RenderCSS() *Stylesheet {
 			BorderColor(ColorPrimary),
 		),
 
-		// The error text sits under the input; don't reserve empty height.
+		// The error message sits inside the box's top-right corner — same top/
+		// right offset as the box's own padding, so its margins read as even —
+		// transparent (no chip/badge look) and absolutely positioned so it
+		// NEVER affects the box's height, even across multiple lines of text.
+		// Hidden by default; form/render_input.go toggles tw-field-error--visible
+		// only when there's an actual validation error.
 		Rule(Selector(".tw-field .tw-field-error"),
-			MinHeight(Zero),
+			Position(Absolute),
+			Top(Em(0.5)),
+			Right(Em(0.6)),
+			Background(Str("transparent")),
 			Color(ColorError),
-			FontSize(Rem(0.72)),
+			FontSize(Rem(0.68)),
+			FontWeight(Str("600")),
+			Opacity(0),
+			Transition(Str("opacity .15s ease")),
+		),
+		Rule(Selector(".tw-field .tw-field-error--visible"),
+			Opacity(1),
 		),
 
 		// Locked/read-only state (Form.SetLocked, or a field's own static
