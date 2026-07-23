@@ -49,7 +49,13 @@ func (t *TargetList) RenderCSS() *Stylesheet {
 		Rule(clsList,
 			Display(Flex_),
 			FlexDirection(Column),
-			RawRule("gap: .5rem"),
+			// clsBadge straddles a row's bottom border by roughly half its
+			// own height (~10.8px), eating into whatever gap sits below it.
+			// Space6 leaves a clearance beyond that protrusion comparable
+			// to fieldset's field-to-field rhythm (.tw-field's
+			// MarginBottom, 0.7rem/~11px) — the same visible "breathing
+			// room" between list rows as between form fields.
+			RawRule("gap: "+Space6.Var()+";"),
 			FlexGrow(Str("1")),
 			MinHeight(Str("0")),
 			Overflow(Auto),
@@ -58,16 +64,19 @@ func (t *TargetList) RenderCSS() *Stylesheet {
 			Margin(Zero),
 		),
 
-		// Row card.
+		// Row card. Top/bottom padding uses Space3 (tinywasm/css's public
+		// spacing scale) — more breathing room than the old .5em, and the
+		// room clsBadge needs to straddle the bottom border without
+		// crowding the label text above it.
 		Rule(clsRow,
 			Position(Relative),
 			Display(Flex_),
 			FlexDirection(Column),
 			JustifyContent(Center),
 			MinHeight(Str("56px")),
-			PaddingTop(Str(".5em")),
+			PaddingTop(Space3),
 			PaddingRight(Str("2em")), // room for the ⋮ button
-			PaddingBottom(Str(".5em")),
+			PaddingBottom(Space3),
 			PaddingLeft(Str(".7em")),
 			Cursor(Pointer),
 			FontWeight(Str("600")),
@@ -77,8 +86,10 @@ func (t *TargetList) RenderCSS() *Stylesheet {
 			Color(ColorOnSurface),
 			Transition(Str("box-shadow .2s ease, border-color .2s ease")),
 		),
+		// ColorHover (not ColorPrimary) — the dedicated hover token, so every
+		// hover indicator across the app reads as the same color.
 		Rule(clsRow.Hover(),
-			BorderColor(ColorPrimary),
+			BorderColor(ColorHover),
 			RawRule("box-shadow: 0 1px 4px rgba(0,0,0,.12)"),
 		),
 		// --color-selection / --color-on-selection are theme tokens (bright orange
@@ -90,11 +101,22 @@ func (t *TargetList) RenderCSS() *Stylesheet {
 			BorderColor(Str(selectionBg)),
 		),
 
-		// Description badge, bottom-right.
+		// Description badge — centered ON the row's bottom border (mirrors
+		// fieldset's label chip straddling its box's top border): `bottom:
+		// 0` already sits on the border (position:absolute's containing-
+		// block origin is the border's inner edge), `translateY(50%)`
+		// shifts it down by exactly half its own rendered height. The
+		// right inset (Space3) is the same token fieldset uses for its
+		// label's left inset — one shared "corner chip" distance.
 		Rule(clsBadge,
 			Position(Absolute),
-			Right(Px(6)),
-			Bottom(Px(6)),
+			Right(Space3),
+			Bottom(Zero),
+			// Trailing ';' required — adjacent RawRules concatenate with no
+			// separator, so without it this glues onto the next Decl
+			// (Background below) into one invalid `transform` value that
+			// the browser drops entirely.
+			RawRule("transform: translateY(50%);"),
 			Background(ColorSurface),
 			Color(ColorMuted),
 			FontSize(Pct(75)),
