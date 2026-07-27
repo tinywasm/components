@@ -18,18 +18,18 @@ func TestModal_Render(t *testing.T) {
 	html := m.Render().String()
 
 	// Check main container
-	if !Contains(html, "class='modal'") {
-		t.Error("expected modal class")
+	if !Contains(html, "class='modaldialog'") {
+		t.Error("expected modaldialog class")
 	}
 
 	// Check internal structure
-	if !Contains(html, "class='modal-backdrop'") {
+	if !Contains(html, "class='modaldialog__backdrop'") {
 		t.Error("expected backdrop")
 	}
-	if !Contains(html, "class='modal-content'") {
+	if !Contains(html, "class='modaldialog__panel'") {
 		t.Error("expected content container")
 	}
-	if !Contains(html, "class='modal-header'") {
+	if !Contains(html, "class='modaldialog__header'") {
 		t.Error("expected header")
 	}
 	if !Contains(html, "<h2>My Modal</h2>") { // H2 factory renders <h2>...</h2>
@@ -46,8 +46,8 @@ func TestModal_Render(t *testing.T) {
 	if htmlHidden == "" {
 		t.Error("expected placeholder node string when not visible (Show condition), not empty string")
 	}
-	if Contains(htmlHidden, "modal") {
-		t.Error("should not contain modal when Visible=false")
+	if Contains(htmlHidden, "modaldialog") {
+		t.Error("should not contain modaldialog when Visible=false")
 	}
 }
 

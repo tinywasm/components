@@ -4,15 +4,14 @@ package fieldset
 
 import "testing"
 
-// The skin exists solely to emit CSS for the form structure. Guard that it stays
-// non-empty and keeps targeting the .tw-field wrapper + its label.
-func TestRenderCSS_StylesTwField(t *testing.T) {
-	css := (&Fieldset{}).RenderCSS().String()
-	if css == "" {
+// TestRenderCSS_StylesFieldset guards that RenderCSS outputs proper rules for root and parts.
+func TestRenderCSS_StylesFieldset(t *testing.T) {
+	cssStr := (&Fieldset{}).RenderCSS().String()
+	if cssStr == "" {
 		t.Fatal("RenderCSS() returned empty")
 	}
-	for _, want := range []string{".tw-field", ".tw-field label"} {
-		if !contains(css, want) {
+	for _, want := range []string{".fieldset", ".fieldset__label"} {
+		if !contains(cssStr, want) {
 			t.Errorf("RenderCSS() missing rule for %q", want)
 		}
 	}

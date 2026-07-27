@@ -1,14 +1,22 @@
 package datatable
 
 import (
-	. "github.com/tinywasm/css"
 	. "github.com/tinywasm/dom"
 	. "github.com/tinywasm/fmt"
 	. "github.com/tinywasm/html"
+	"github.com/tinywasm/widget"
+)
+
+// NameDataTable is the widget name.
+const NameDataTable = widget.Name("datatable")
+
+const (
+	PartHeader = widget.Part("header")
+	PartRow    = widget.Part("row")
 )
 
 var (
-	clsTable Class = "table"
+	clsTable = NameDataTable.Root()
 )
 
 // DataTable renders a table whose body rows can be provided up front
@@ -21,6 +29,9 @@ type DataTable struct {
 
 	rows *SignalNodes // internal — drives the reactive tbody
 }
+
+func (t *DataTable) WidgetName() widget.Name { return NameDataTable }
+func (t *DataTable) WidgetKind() widget.Kind { return widget.Grid }
 
 func (t *DataTable) Init(_ Ctx) {
 	t.rows = NewNodes(t.buildRows(t.Rows)...)

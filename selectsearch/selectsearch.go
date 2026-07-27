@@ -1,24 +1,39 @@
 package selectsearch
 
 import (
-	. "github.com/tinywasm/css"
 	. "github.com/tinywasm/dom"
 	"github.com/tinywasm/fmt"
 	. "github.com/tinywasm/html"
 	"github.com/tinywasm/svg"
+	"github.com/tinywasm/widget"
+)
+
+// NameSelectSearch is the widget name.
+const NameSelectSearch = widget.Name("selectsearch")
+
+const (
+	PartToggle   = widget.Part("toggle")
+	PartDropdown = widget.Part("dropdown")
+	PartHeader   = widget.Part("header")
+	PartIcon     = widget.Part("icon")
+	PartSearch   = widget.Part("search")
+	PartOptions  = widget.Part("options")
+	PartOption   = widget.Part("option")
+	PartLabel    = widget.Part("label")
+	PartDesc     = widget.Part("desc")
 )
 
 var (
-	ClsSsBox      Class = "ss-box"
-	ClsSsToggle   Class = "ss-toggle"
-	ClsSsDropdown Class = "ss-dropdown"
-	ClsSsHeader   Class = "ss-header"
-	ClsSsIcon     Class = "ss-icon"
-	ClsSsSearch   Class = "ss-search"
-	ClsSsOptions  Class = "ss-options"
-	ClsSsOption   Class = "ss-option"
-	ClsSsLabel    Class = "ss-label"
-	ClsSsDesc     Class = "ss-desc"
+	ClsSsBox      = NameSelectSearch.Root()
+	ClsSsToggle   = NameSelectSearch.Class(PartToggle)
+	ClsSsDropdown = NameSelectSearch.Class(PartDropdown)
+	ClsSsHeader   = NameSelectSearch.Class(PartHeader)
+	ClsSsIcon     = NameSelectSearch.Class(PartIcon)
+	ClsSsSearch   = NameSelectSearch.Class(PartSearch)
+	ClsSsOptions  = NameSelectSearch.Class(PartOptions)
+	ClsSsOption   = NameSelectSearch.Class(PartOption)
+	ClsSsLabel    = NameSelectSearch.Class(PartLabel)
+	ClsSsDesc     = NameSelectSearch.Class(PartDesc)
 )
 
 const iconArrowDown = svg.Icon("ss-arrow-down")
@@ -43,6 +58,9 @@ type SelectSearch struct {
 	isOpen        *SignalBool
 	rows          *SignalNodes
 }
+
+func (c *SelectSearch) WidgetName() widget.Name { return NameSelectSearch }
+func (c *SelectSearch) WidgetKind() widget.Kind { return widget.Combobox }
 
 func (c *SelectSearch) Init(_ Ctx) {
 	c.selectedLabel = NewString("")

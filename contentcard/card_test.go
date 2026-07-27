@@ -20,26 +20,26 @@ func TestCard_Render(t *testing.T) {
 		t.Error("expected div tag")
 	}
 
-	if !Contains(html, "class='card'") {
-		t.Error("expected card class")
+	if !Contains(html, "class='contentcard'") {
+		t.Error("expected contentcard class")
 	}
 
-	if !Contains(html, "class='card-header'") {
-		t.Error("expected card-header")
+	if !Contains(html, "class='contentcard__header'") {
+		t.Error("expected contentcard__header")
 	}
 	if !Contains(html, "Header") {
 		t.Error("expected Header content")
 	}
 
-	if !Contains(html, "class='card-body'") {
-		t.Error("expected card-body")
+	if !Contains(html, "class='contentcard__body'") {
+		t.Error("expected contentcard__body")
 	}
 	if !Contains(html, "Body") {
 		t.Error("expected Body content")
 	}
 
-	if !Contains(html, "class='card-footer'") {
-		t.Error("expected card-footer")
+	if !Contains(html, "class='contentcard__footer'") {
+		t.Error("expected contentcard__footer")
 	}
 	if !Contains(html, "Footer") {
 		t.Error("expected Footer content")

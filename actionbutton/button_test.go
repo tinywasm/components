@@ -18,8 +18,8 @@ func TestButton_Render(t *testing.T) {
 	}
 
 	// Verify classes
-	if !strings.Contains(html, "class='btn btn-primary'") && !strings.Contains(html, "class='btn-primary btn'") {
-		t.Error("expected btn-primary class, got: " + html)
+	if !strings.Contains(html, "actionbutton") || !strings.Contains(html, "actionbutton__primary") {
+		t.Error("expected actionbutton classes, got: " + html)
 	}
 
 	// Verify text

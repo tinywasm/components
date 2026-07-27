@@ -2,83 +2,48 @@
 
 package selectsearch
 
-import . "github.com/tinywasm/css"
+import (
+	"github.com/tinywasm/css"
+	"github.com/tinywasm/widget"
+	"github.com/tinywasm/widget/style"
+)
 
-func (c *SelectSearch) RenderCSS() *Stylesheet {
-	return NewStylesheet(
-		Rule(ClsSsToggle, Display(None)),
-		// Visibility of the dropdown is driven by Show(c.isOpen, ...) in selectsearch.go,
-		// which mounts/unmounts the subtree in JS. The dropdown is only present in the DOM
-		// when open, so no CSS :checked combinator is needed (and the old `~` sibling rule
-		// no longer matched once Show wrapped the dropdown in its own container).
-		Rule(ClsSsHeader,
-			Background(ColorPrimary),
-			Color(ColorOnPrimary),
-			Padding(Space2, Space4),
-			Cursor(Pointer),
-			BorderRadius(Em(0.4)),
-			Display(Flex_),
-			JustifyContent(Str("space-between")),
-			AlignItems(Center),
-		),
-		Rule(ClsSsIcon,
-			Width(Em(1)),
-			Height(Em(1)),
-			RuleContent(Decl{Prop: "fill", Val: "currentColor"}),
-			Transition(Str("transform 0.2s")),
-		),
-		Rule(Selector("."+string(ClsSsToggle)+":checked ~ ."+string(ClsSsHeader)+" ."+string(ClsSsIcon)),
-			Transform(Str("rotate(180deg)")),
-		),
-		Rule(ClsSsSearch,
-			Width(Pct(100)),
-			Border(Em(0.2), Str("solid"), ColorMuted),
-			BorderRadius(Em(0.4), Em(0.4), Zero, Zero),
-			Padding(Space2),
-			FontSize(Rem(1)),
-			BoxSizing(Str("border-box")),
-			Background(ColorBackground),
-			Color(ColorOnSurface),
-		),
-		Rule(Selector("."+string(ClsSsSearch)+":focus"), Outline(None)),
-		Rule(ClsSsOptions,
-			RuleContent(Decl{Prop: "max-height", Val: "240px"}),
-			RuleContent(Decl{Prop: "overflow-y", Val: "auto"}),
-			Background(ColorSurface),
-		),
-		Rule(ClsSsOption,
-			Padding(Space2, Space4),
-			RuleContent(Decl{Prop: "border-bottom", Val: "1px solid " + ColorMuted.Var()}),
-			Cursor(Pointer),
-			Display(Flex_),
-			JustifyContent(Str("space-between")),
-			AlignItems(Center),
-			Color(ColorOnSurface),
-		),
-		Rule(ClsSsOption.Hover(),
-			Background(ColorHover),
-			Color(ColorOnSurface),
-		),
-		Rule(Selector("."+string(ClsSsOption)+":hover ."+string(ClsSsDesc)),
-			Background(Str("transparent")),
-			Color(Str("inherit")),
-		),
-		Rule(Selector("."+string(ClsSsLabel)+", ."+string(ClsSsDesc)),
-			PointerEvents(None),
-		),
-		Rule(ClsSsDesc,
-			FontSize(Em(0.8)),
-			Background(ColorSurface),
-			BorderRadius(Em(0.3)),
-			Padding(Space1, Space2),
-			Color(ColorOnSurface),
-		),
-		Rule(Selector("."+string(ClsSsOptions)+"::-webkit-scrollbar"),
-			Width(Em(0.4)),
-			Background(None),
-		),
-		Rule(Selector("."+string(ClsSsOptions)+"::-webkit-scrollbar-thumb"),
-			Background(ColorPrimary),
-		),
-	)
+// Style defines the selectsearch visual contract using style DSL.
+func (c *SelectSearch) Style() *style.Sheet {
+	return style.Of(NameSelectSearch).
+		Root(
+			style.Stack(style.Space1),
+			style.On(style.Panel),
+			style.Round(style.RadiusMd),
+		).
+		Part(PartDropdown,
+			style.Stack(style.Space1),
+			style.On(style.Panel),
+			style.Raise(style.Floating),
+			style.Clip(),
+		).
+		Part(PartHeader,
+			style.Row(style.Space2),
+			style.Pad(style.Space2),
+		).
+		Part(PartSearch,
+			style.Pad(style.Space2),
+			style.On(style.Sunken),
+		).
+		Part(PartOptions,
+			style.Stack(style.Space0),
+			style.Scrolls(),
+		).
+		Part(PartOption,
+			style.Row(style.Space2),
+			style.Pad(style.Space2),
+		).
+		Cue(widget.Hover, PartOption,
+			style.On(style.PanelHover),
+		)
+}
+
+// RenderCSS returns compiled CSS.
+func (c *SelectSearch) RenderCSS() *css.Stylesheet {
+	return c.Style().Stylesheet()
 }

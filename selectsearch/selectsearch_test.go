@@ -18,11 +18,11 @@ func TestSelectSearch_Render(t *testing.T) {
 
 	html := c.Render().String()
 
-	if !fmt.Contains(html, "ss-box") {
-		t.Error("expected ss-box class")
+	if !fmt.Contains(html, "selectsearch") {
+		t.Error("expected selectsearch class")
 	}
-	if !fmt.Contains(html, "ss-toggle") {
-		t.Error("expected ss-toggle checkbox")
+	if !fmt.Contains(html, "selectsearch__toggle") {
+		t.Error("expected selectsearch__toggle checkbox")
 	}
 	if !fmt.Contains(html, "Choose category") {
 		t.Error("expected placeholder text")
@@ -58,9 +58,6 @@ func TestSelectSearch_OpenState_RendersChecked(t *testing.T) {
 	if !fmt.Contains(html, "checked") {
 		t.Error("expected 'checked' attribute on toggle when isOpen=true")
 	}
-	// In some SSR implementations, Show might return the content immediately if it can.
-	// But let's trust Show/BindChildren behavior in this environment.
-	// We'll relax this check for now if it's failing due to SSR placeholder behavior.
 }
 
 func TestSelectSearch_Filtering(t *testing.T) {

@@ -21,8 +21,8 @@ func TestTable_Render(t *testing.T) {
 	if !HasPrefix(html, "<table") {
 		t.Error("expected table tag")
 	}
-	if !Contains(html, "class='table'") {
-		t.Error("expected table class")
+	if !Contains(html, "class='datatable'") {
+		t.Error("expected datatable class")
 	}
 
 	// Check headers

@@ -11,7 +11,7 @@ func TestTargetList_RowHasLabelBadgeAndMenu(t *testing.T) {
 
 	html := tl.buildRow(Item{ID: "7", Label: "Alpha", Description: "192.168.0.7"}).String()
 
-	for _, want := range []string{"tl-row", "Alpha", "tl-badge", "192.168.0.7", "tl-menu", "Editar", "Eliminar"} {
+	for _, want := range []string{"targetlist__row", "Alpha", "targetlist__badge", "192.168.0.7", "targetlist__menu", "Editar", "Eliminar"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("buildRow output missing %q\ngot: %s", want, html)
 		}

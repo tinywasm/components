@@ -2,27 +2,33 @@
 
 package datatable
 
-import . "github.com/tinywasm/css"
+import (
+	"github.com/tinywasm/css"
+	"github.com/tinywasm/widget"
+	"github.com/tinywasm/widget/style"
+)
 
-func (t *DataTable) RenderCSS() *Stylesheet {
-	return NewStylesheet(
-		Rule(clsTable,
-			Width(Pct(100)),
-			RuleContent(Decl{Prop: "border-collapse", Val: "collapse"}),
-			RuleContent(Decl{Prop: "text-align", Val: "left"}),
-			RuleContent(Decl{Prop: "margin-bottom", Val: Space2.Var()}),
-			Color(ColorOnSurface),
-		),
-		Rule(Selector("."+string(clsTable)+" th, ."+string(clsTable)+" td"),
-			Padding(Rem(0.75)),
-			RuleContent(Decl{Prop: "border-bottom", Val: "1px solid " + ColorMuted.Var()}),
-		),
-		Rule(Selector("."+string(clsTable)+" th"),
-			RuleContent(Decl{Prop: "font-weight", Val: "600"}),
-			BackgroundColor(ColorSurface),
-		),
-		Rule(Selector("."+string(clsTable)+" tbody tr:hover"),
-			BackgroundColor(ColorHover),
-		),
-	)
+// Style defines the datatable visual contract using the style DSL.
+func (t *DataTable) Style() *style.Sheet {
+	return style.Of(NameDataTable).
+		Root(
+			style.Width(style.Full),
+			style.On(style.Panel),
+		).
+		Part(PartHeader,
+			style.On(style.Sunken),
+			style.FontWeight(style.WeightBold),
+			style.Pad(style.Space2),
+		).
+		Part(PartRow,
+			style.Pad(style.Space2),
+		).
+		Cue(widget.Hover, PartRow,
+			style.On(style.PanelHover),
+		)
+}
+
+// RenderCSS returns the compiled CSS stylesheet.
+func (t *DataTable) RenderCSS() *css.Stylesheet {
+	return t.Style().Stylesheet()
 }
