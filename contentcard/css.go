@@ -3,7 +3,6 @@
 package contentcard
 
 import (
-	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget/style"
 )
 
@@ -28,9 +27,4 @@ func (c *ContentCard) Style() *style.Sheet {
 			style.Pad(style.Space2),
 			style.On(style.Sunken),
 		)
-}
-
-// RenderCSS returns the compiled CSS stylesheet.
-func (c *ContentCard) RenderCSS() *css.Stylesheet {
-	return c.Style().Stylesheet()
 }

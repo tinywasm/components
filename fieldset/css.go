@@ -3,7 +3,6 @@
 package fieldset
 
 import (
-	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
@@ -37,9 +36,4 @@ func (f *Fieldset) Style() *style.Sheet {
 		When(widget.Invalid, "",
 			style.On(style.Danger),
 		)
-}
-
-// RenderCSS returns the compiled CSS stylesheet.
-func (f *Fieldset) RenderCSS() *css.Stylesheet {
-	return f.Style().Stylesheet()
 }

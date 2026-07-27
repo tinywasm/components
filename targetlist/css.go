@@ -3,7 +3,6 @@
 package targetlist
 
 import (
-	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
@@ -46,9 +45,4 @@ func (t *TargetList) Style() *style.Sheet {
 		Cue(widget.Hover, PartRow,
 			style.On(style.PanelHover),
 		)
-}
-
-// RenderCSS returns the compiled CSS stylesheet.
-func (t *TargetList) RenderCSS() *css.Stylesheet {
-	return t.Style().Stylesheet()
 }

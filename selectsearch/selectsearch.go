@@ -109,6 +109,9 @@ func (c *SelectSearch) Render() *Element {
 		Set(ClsSsSearch.AsAttr()).
 		ID("ss-search").
 		Attr("placeholder", "Search...").
+		Attr("role", "combobox").
+		BindAttrBool("aria-expanded", c.isOpen).
+		Attr("aria-controls", "ss-options").
 		Bind(c.query).
 		Autofocus().
 		On("input", func(e Event) {
@@ -135,6 +138,7 @@ func (c *SelectSearch) Render() *Element {
 		})
 
 	optList := Ul().Set(ClsSsOptions.AsAttr()).ID("ss-options").
+		Attr("role", "listbox").
 		BindChildren(c.rows)
 
 	dropdown := Show(c.isOpen, func() *Element {
@@ -160,6 +164,7 @@ func (c *SelectSearch) buildRows(term string) []*Element {
 		item := Li().Set(ClsSsOption.AsAttr()).
 			Key(opt.ID).
 			ID("ss-opt-"+opt.ID). // required for wirePendingEvents to attach the click handler
+			Attr("role", "option").
 			Child(Span().Set(ClsSsLabel.AsAttr()).Text(opt.Label)).
 			On("click", func(e Event) {
 				c.selectedLabel.Set(o.Label)

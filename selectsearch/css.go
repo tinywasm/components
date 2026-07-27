@@ -3,7 +3,6 @@
 package selectsearch
 
 import (
-	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
@@ -41,9 +40,4 @@ func (c *SelectSearch) Style() *style.Sheet {
 		Cue(widget.Hover, PartOption,
 			style.On(style.PanelHover),
 		)
-}
-
-// RenderCSS returns compiled CSS.
-func (c *SelectSearch) RenderCSS() *css.Stylesheet {
-	return c.Style().Stylesheet()
 }

@@ -29,6 +29,54 @@ With the construction harness closed, styling components in the TinyWasm ecosyst
 
 ---
 
+## File Structure
+
+Each component resides in its own folder within `tinywasm/components`. There are **no `.css` files** — styles and assets are expressed as Go code in backend-only files (`css.go`, `svg.go`, etc.).
+
+```
+tinywasm/components/
+└── mycomponent/
+    ├── mycomponent.go   # Struct, Render() + optional Init(ctx) — shared WASM + SSR
+    ├── css.go           # !wasm only: Style() *style.Sheet visual sheet
+    ├── svg.go           # !wasm only: IconSvg() *sprite.Sprite (optional)
+    └── mycomponent_test.go
+```
+
+---
+
+## Icon Management (`svg.go`)
+
+The framework injects the SVG sprite **directly into `<body>`** at server time.
+
+Pipeline: **`IconSvg()` in `svg.go`** → sprite built in memory → **injected inline in HTML** → `<svg><use href="#id">` in `Render()` resolves with zero network requests.
+
+> **MANDATORY:** `svg.go` MUST have `//go:build !wasm` build tag.
+> SVG definition code is dead code on WASM — never define icons outside `svg.go`.
+
+> **MANDATORY:** All paths and shapes MUST include `fill="currentColor"` (or `stroke="currentColor"`) so CSS can control icon color via `fill` or `color` on any ancestor.
+
+**`svg.go` — register the icon (backend only):**
+```go
+//go:build !wasm
+
+package mycomponent
+
+import (
+	"github.com/tinywasm/svg"
+	"github.com/tinywasm/svg/sprite"
+)
+
+func (m *MyComponent) IconSvg() *sprite.Sprite {
+	return sprite.NewSprite(
+		sprite.Define(iconX, "0 0 16 16",
+			sprite.Path(`M2 2h5v5H2zm7 0h5v5H9zm-7 7h5v5H2zm7 0h5v5H9z`),
+		),
+	)
+}
+```
+
+---
+
 ## Example: Anatomy and Styling of `TargetList`
 
 A standard component implements `widget.Widget` to declare its identity, and optional `style.Styler` in a tagged `!wasm` file to define its visual rules.

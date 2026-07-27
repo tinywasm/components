@@ -3,7 +3,6 @@
 package actionbutton
 
 import (
-	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
@@ -34,9 +33,4 @@ func (b *ActionButton) Style() *style.Sheet {
 		Cue(widget.Hover, PartDanger,
 			style.On(style.DangerHover),
 		)
-}
-
-// RenderCSS returns the compiled CSS stylesheet.
-func (b *ActionButton) RenderCSS() *css.Stylesheet {
-	return b.Style().Stylesheet()
 }

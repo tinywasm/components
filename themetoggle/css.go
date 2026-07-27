@@ -3,7 +3,6 @@
 package themetoggle
 
 import (
-	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
@@ -20,9 +19,4 @@ func (t *ThemeToggle) Style() *style.Sheet {
 		Cue(widget.Hover, "",
 			style.On(style.AccentHover),
 		)
-}
-
-// RenderCSS returns compiled CSS.
-func (t *ThemeToggle) RenderCSS() *css.Stylesheet {
-	return t.Style().Stylesheet()
 }

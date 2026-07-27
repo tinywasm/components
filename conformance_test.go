@@ -206,13 +206,22 @@ func TestConformance(t *testing.T) {
 				}
 			}
 
-			// 2. Cero RawRule / Media identifiers
+			// 2. Cero RawRule / Media / RootCSS / Theme / Declare identifiers
 			if ident, ok := n.(*ast.Ident); ok {
 				if ident.Name == "RawRule" {
 					t.Errorf("%s: uses forbidden RawRule", path)
 				}
 				if ident.Name == "Media" {
 					t.Errorf("%s: uses forbidden Media", path)
+				}
+				if ident.Name == "RootCSS" {
+					t.Errorf("%s: uses forbidden RootCSS (only reserved for app / tinywasm/dom)", path)
+				}
+				if ident.Name == "Theme" {
+					t.Errorf("%s: uses forbidden Theme (only reserved for app / tinywasm/dom)", path)
+				}
+				if ident.Name == "Declare" {
+					t.Errorf("%s: uses forbidden Declare (only reserved for app / tinywasm/dom)", path)
 				}
 			}
 

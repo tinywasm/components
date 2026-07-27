@@ -38,12 +38,12 @@ func (t *DataTable) Init(_ Ctx) {
 }
 
 func (t *DataTable) Render() *Element {
-	table := Table().Set(clsTable.AsAttr())
+	table := Table().Set(clsTable.AsAttr()).Attr("role", "grid")
 
 	thead := Thead()
-	tr := Tr()
+	tr := Tr().Attr("role", "row")
 	for _, header := range t.Headers {
-		tr.Child(Th().Text(header))
+		tr.Child(Th().Attr("role", "columnheader").Text(header))
 	}
 	thead.Child(tr)
 	table.Child(thead)
@@ -67,9 +67,9 @@ func (t *DataTable) SetRows(rows [][]string) {
 func (t *DataTable) buildRows(rows [][]string) []*Element {
 	out := make([]*Element, 0, len(rows))
 	for i, row := range rows {
-		tr := Tr().Key(Sprint(i))
+		tr := Tr().Key(Sprint(i)).Attr("role", "row")
 		for _, cell := range row {
-			tr.Child(Td().Text(cell))
+			tr.Child(Td().Attr("role", "gridcell").Text(cell))
 		}
 		out = append(out, tr)
 	}

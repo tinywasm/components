@@ -58,8 +58,8 @@ func TestIcon_AllThemes_NonEmpty(t *testing.T) {
 
 func TestRenderCSS_NotEmpty(t *testing.T) {
 	ts := &ThemeToggle{}
-	css := ts.RenderCSS()
+	css := ts.Style().Stylesheet()
 	if css.String() == "" {
-		t.Error("RenderCSS() returned empty string")
+		t.Error("Stylesheet() returned empty string")
 	}
 }

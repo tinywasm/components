@@ -3,7 +3,6 @@
 package modaldialog
 
 import (
-	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget/style"
 )
 
@@ -31,9 +30,4 @@ func (m *ModalDialog) Style() *style.Sheet {
 		Part(PartBody,
 			style.Stack(style.Space1),
 		)
-}
-
-// RenderCSS returns the compiled CSS stylesheet.
-func (m *ModalDialog) RenderCSS() *css.Stylesheet {
-	return m.Style().Stylesheet()
 }
