@@ -64,23 +64,29 @@ func (t *TargetList) Style() *style.Sheet {
 		)
 }
 
-// RenderCSS returns custom positioning rules for targetlist backdrop overlay
-// since those overlay/fixed rules are not currently supported by style.Sheet DSL.
+// RenderCSS carries the ⋮ menu's backdrop: a full-viewport click-catcher that is
+// hidden until a row's <details> menu is open, so clicking anywhere outside closes
+// it (native <details> has no such behaviour on its own).
+//
+// KNOWN UPSTREAM GAP — widget/style has no vocabulary for an overlay: position
+// outside the flow, full inset, stacking order, and "visible only while a sibling
+// is open". style.Fixed() is the *does-not-reflow* exception (flex-grow/shrink: 0),
+// NOT positioning — using it here silently turned the backdrop into a visible block
+// in the flow and broke click-outside-to-close. Report the gap to tinywasm/widget;
+// delete this method once the vocabulary exists.
+//
+// Selectors are DERIVED from the widget anatomy, never written by hand, so markup
+// and stylesheet cannot drift apart.
 func (t *TargetList) RenderCSS() *css.Stylesheet {
+	var (
+		root     = "." + clsListWrap.String()
+		menu     = "." + clsMenu.String()
+		backdrop = "." + clsMenuBackdrop.String()
+	)
 	return css.NewStylesheet(
-		css.Raw(`
-.targetlist__backdrop {
-	display: none;
-	position: fixed;
-	top: 0;
-	left: 0;
-	right: 0;
-	bottom: 0;
-	z-index: 4;
-}
-.targetlist:has(.targetlist__menu[open]) .targetlist__backdrop {
-	display: block;
-}
-		`),
+		css.Raw(
+			backdrop + "{display:none;position:fixed;top:0;left:0;right:0;bottom:0;z-index:4;}" +
+				root + ":has(" + menu + "[open]) " + backdrop + "{display:block;}",
+		),
 	)
 }

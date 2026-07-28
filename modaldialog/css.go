@@ -36,20 +36,20 @@ func (m *ModalDialog) Style() *style.Sheet {
 		)
 }
 
-// RenderCSS returns custom positioning rules for modaldialog backdrop overlay
-// since absolute overlay positioning rules are not supported by the style.Sheet DSL.
+// RenderCSS carries the dialog's scrim: the dimmed layer that covers the mount
+// point while the dialog is open.
+//
+// KNOWN UPSTREAM GAP — same as targetlist's backdrop: widget/style has no overlay
+// vocabulary (out-of-flow positioning, full inset, stacking order, translucent
+// scrim). Report it to tinywasm/widget; delete this method once it exists.
+//
+// Selectors are DERIVED from the widget anatomy, never written by hand.
 func (m *ModalDialog) RenderCSS() *css.Stylesheet {
+	backdrop := "." + clsModalBackdrop.String()
 	return css.NewStylesheet(
-		css.Raw(`
-.modaldialog__backdrop {
-	position: absolute;
-	top: 0;
-	left: 0;
-	width: 100%;
-	height: 100%;
-	background-color: color-mix(in srgb, var(--color-surface) 60%, transparent);
-	z-index: 1;
-}
-		`),
+		css.Raw(
+			backdrop + "{position:absolute;top:0;left:0;width:100%;height:100%;" +
+				"background-color:color-mix(in srgb, var(--color-surface) 60%, transparent);z-index:1;}",
+		),
 	)
 }
