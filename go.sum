@@ -12,5 +12,5 @@ github.com/tinywasm/model v0.1.0 h1:Y33DNQ6ZRzORo5vYplWI/1Swp6TpmXBZCO3pjaosfPU=
 github.com/tinywasm/model v0.1.0/go.mod h1:wkYZLW6CWVrlx5TiLEBL71KgDxhjUcFtY3KXZKpkCXA=
 github.com/tinywasm/svg v0.1.8 h1:SoMz1AmTSMcsVrXtmaYW8Pzlp3kYCkR2t6stDf+hAEA=
 github.com/tinywasm/svg v0.1.8/go.mod h1:gZOI1TD2UnOwNpcWGhgsk87ynGd7KJ5fl+75lPT9i6c=
-github.com/tinywasm/widget v0.2.0 h1:JAFX4NeHkPmo47O6eqcXiHMyGOzO/nmNJ092u8Au2Is=
-github.com/tinywasm/widget v0.2.0/go.mod h1:VPC73YHWnPTMdnqb4sVBAVfJQVLKnZCh7ebYACC/cE4=
+github.com/tinywasm/widget v0.3.0 h1:ihHuOAVY6VPXu1355hwq4Trkv9BaplvT6XJKh224vgo=
+github.com/tinywasm/widget v0.3.0/go.mod h1:pNVsOcZeBHN+XgBF43psr7RU20+EYO8bjl0s0q5XSQ8=
