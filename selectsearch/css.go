@@ -15,6 +15,9 @@ func (c *SelectSearch) Style() *style.Sheet {
 			style.On(style.Panel),
 			style.Round(style.RadiusMd),
 		).
+		Part(PartToggle,
+			style.On(style.Panel),
+		).
 		Part(PartDropdown,
 			style.Stack(style.Space1),
 			style.On(style.Panel),
@@ -24,6 +27,9 @@ func (c *SelectSearch) Style() *style.Sheet {
 		Part(PartHeader,
 			style.Row(style.Space2),
 			style.Pad(style.Space2),
+		).
+		Part(PartIcon,
+			style.On(style.Panel),
 		).
 		Part(PartSearch,
 			style.Pad(style.Space2),
@@ -36,6 +42,13 @@ func (c *SelectSearch) Style() *style.Sheet {
 		Part(PartOption,
 			style.Row(style.Space2),
 			style.Pad(style.Space2),
+		).
+		Part(PartLabel,
+			style.On(style.Panel),
+		).
+		Part(PartDesc,
+			style.On(style.Sunken),
+			style.Text(style.TextXs),
 		).
 		Cue(widget.Hover, PartOption,
 			style.On(style.PanelHover),

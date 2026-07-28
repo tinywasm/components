@@ -3,6 +3,7 @@
 package modaldialog
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget/style"
 )
 
@@ -29,5 +30,26 @@ func (m *ModalDialog) Style() *style.Sheet {
 		).
 		Part(PartBody,
 			style.Stack(style.Space1),
+		).
+		Part(PartClose,
+			style.On(style.Panel),
 		)
+}
+
+// RenderCSS returns custom positioning rules for modaldialog backdrop overlay
+// since absolute overlay positioning rules are not supported by the style.Sheet DSL.
+func (m *ModalDialog) RenderCSS() *css.Stylesheet {
+	return css.NewStylesheet(
+		css.Raw(`
+.modaldialog__backdrop {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background-color: color-mix(in srgb, var(--color-surface) 60%, transparent);
+	z-index: 1;
+}
+		`),
+	)
 }

@@ -43,7 +43,7 @@ func (t *DataTable) Render() *Element {
 	thead := Thead()
 	tr := Tr().Attr("role", "row")
 	for _, header := range t.Headers {
-		tr.Child(Th().Attr("role", "columnheader").Text(header))
+		tr.Child(Th().Set(NameDataTable.Class(PartHeader).AsAttr()).Attr("role", "columnheader").Text(header))
 	}
 	thead.Child(tr)
 	table.Child(thead)
@@ -67,7 +67,7 @@ func (t *DataTable) SetRows(rows [][]string) {
 func (t *DataTable) buildRows(rows [][]string) []*Element {
 	out := make([]*Element, 0, len(rows))
 	for i, row := range rows {
-		tr := Tr().Key(Sprint(i)).Attr("role", "row")
+		tr := Tr().Set(NameDataTable.Class(PartRow).AsAttr()).Key(Sprint(i)).Attr("role", "row")
 		for _, cell := range row {
 			tr.Child(Td().Attr("role", "gridcell").Text(cell))
 		}
