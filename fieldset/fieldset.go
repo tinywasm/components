@@ -5,16 +5,6 @@ import (
 	"github.com/tinywasm/widget"
 )
 
-// NameFieldset is the widget name for fieldset.
-const NameFieldset = widget.Name("fieldset")
-
-// Parts of the fieldset widget.
-const (
-	PartLabel = widget.Part("label")
-	PartError = widget.Part("error")
-	PartInput = widget.Part("input")
-)
-
 // Fieldset is the skin's receiver type. The SSR collector instantiates it to call
 // RenderCSS(); it carries no state and paints no markup of its own.
 type Fieldset struct {
@@ -23,7 +13,7 @@ type Fieldset struct {
 
 // WidgetName returns the widget identity name.
 func (f *Fieldset) WidgetName() widget.Name {
-	return NameFieldset
+	return widget.NameField
 }
 
 // WidgetKind returns the widget ARIA kind.

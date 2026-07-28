@@ -10,7 +10,7 @@ func TestRenderCSS_StylesFieldset(t *testing.T) {
 	if cssStr == "" {
 		t.Fatal("Stylesheet() returned empty")
 	}
-	for _, want := range []string{".fieldset", ".fieldset__label"} {
+	for _, want := range []string{".tw-field", ".tw-field__label"} {
 		if !contains(cssStr, want) {
 			t.Errorf("Stylesheet() missing rule for %q", want)
 		}

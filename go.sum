@@ -18,3 +18,5 @@ github.com/tinywasm/widget v0.0.0-20260727063806-0a98d72e8067 h1:ZhkzWUsfMMy+/Ns
 github.com/tinywasm/widget v0.0.0-20260727063806-0a98d72e8067/go.mod h1:6hqOSCq1XO2Dgk7DtAt9UmIrSkVrri8HTBu02iPNvDk=
 github.com/tinywasm/widget v0.1.0 h1:Z7E5Xw5eqyD0JOJ692SBy3G/cquzUHwKbwsQ0OrpS6g=
 github.com/tinywasm/widget v0.1.0/go.mod h1:OwZipHFE6VfKgyRw0sNAqu1QwLo+G8AekB+nIdK+KXg=
+github.com/tinywasm/widget v0.2.0 h1:JAFX4NeHkPmo47O6eqcXiHMyGOzO/nmNJ092u8Au2Is=
+github.com/tinywasm/widget v0.2.0/go.mod h1:VPC73YHWnPTMdnqb4sVBAVfJQVLKnZCh7ebYACC/cE4=
