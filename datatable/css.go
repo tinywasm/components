@@ -19,6 +19,7 @@ func (t *DataTable) RenderCSS() *css.Stylesheet {
 			style.As(style.Inset),
 			style.FontWeight(style.WeightBold),
 			style.Pad(style.Space2),
+			style.Round(style.RadiusNone),
 		).
 		Part(PartRow,
 			style.Pad(style.Space2),
