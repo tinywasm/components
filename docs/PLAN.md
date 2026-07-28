@@ -1,6 +1,8 @@
 ---
 PLAN: "components: eliminar el último escape hatch (css.Raw) usando el vocabulario de overlay"
 EXECUTOR: jules
+STATUS: running
+SESSION: 9617337153435704162
 ---
 
 > Este plan se despacha con el flujo CodeJob. Ver skill: **agents-workflow**.
