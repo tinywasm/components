@@ -113,38 +113,14 @@ func menuID(key string) string { return key + ".menu" }
 
 // anyMenuOpen informa si alguna fila tiene su ⋮ <details> abierto. El navegador
 // posee ese estado; esto lo refleja en Go para que la hoja pueda seleccionarlo.
+//
+// GetAttr wraps js.Value.String(): a present attribute (even "<details open>",
+// whose value is "") returns its string value; a missing one returns the
+// stringified JS null, "<null>" — that's the only case treated as closed.
 func (t *TargetList) anyMenuOpen() bool {
 	for _, it := range t.items {
 		if ref, ok := Get(menuID("tl-" + it.ID)); ok {
-			val := ref.GetAttr("open")
-			// If getAttribute("open") returns "true", "open", "", etc., and does not return null.
-			// Let's see what is returned. We'll check if the returned string represents attribute presence.
-			// In JS, element.getAttribute("open") on `<details>` when not open returns `null`.
-			// In syscall/js, calling .String() on `null` value returns either `"<null>"` (standard library go)
-			// or `""` / `"null"` (tinygo). Since we are in both WASM (tinygo) and backend-SSR,
-			// let's handle both. If it is NOT "null", NOT "<null>", and NOT empty (or maybe empty is valid if open is present as `<details open>`),
-			// actually we can do: `val != "null" && val != "<null>" && val != ""` but wait!
-			// If `<details open>` is present, JS `getAttribute("open")` returns `""`!
-			// So if we check `val != "null" && val != "<null>"`, that would work because a missing attribute returns `null`, which converts to `"<null>"` or `"null"` or `"undefined"` or `""` depending on Go wasm library.
-			// Wait, let's look at `github.com/tinywasm/dom` Element/Reference in WASM:
-			// `func (e *elementWasm) GetAttr(key string) string { return e.val.Call("getAttribute", key).String() }`
-			// In standard go1.24/go1.25 WASM (which is what browser tests run), `js.Value.String()` for JS `null` returns `"<null>"`.
-			// Wait, does it? Let's check. Yes, standard library `syscall/js.Value.String()` returns `"<null>"` for `null`.
-			// In tinygo WASM (which ships to production), `js.Value.String()` for `null` might return `""` or `"<null>"`.
-			// To be extremely safe, we should check both. But wait! If `<details open>` is present, is `val` empty `""`? Yes, in HTML, a boolean attribute like `open` without a value renders as `open` or `open=""`, so `getAttribute("open")` returns `""`.
-			// Wait, is there a way to distinguish between `null` and `""`?
-			// Actually, wait! In Go, if we set the attribute as `ref.SetAttr("open", "true")` or `ref.SetAttr("open", "")`, then the attribute value is `"true"` or `""`.
-			// Wait! When native toggle is triggered, the browser automatically toggles `<details open>`.
-			// What value does the browser assign to `open` attribute? It assigns `""` (empty string)!
-			// So `ref.GetAttr("open")` returns `""`.
-			// Wait, what if the browser doesn't have the attribute? It returns `null` (which translates to `"<null>"` or `"null"`).
-			// So if we check: `val != "null" && val != "<null>"`, wait, does `val` equal `""` when the attribute is missing in tinygo?
-			// If tinygo `String()` returns `""` for null, then `val` would be `""` both when open and when missing. That would be bad!
-			// But wait, does tinygo return `""` for null?
-			// Let's write a tiny test to see what `GetAttr` actually returns.
-			// We can write a WASM browser test in `targetlist/uc_targetlist_test.go`.
-			// Let's do that! That is extremely proactive and will solve this decisively.
-			if val != "null" && val != "<null>" && val != "undefined" {
+			if ref.GetAttr("open") != "<null>" {
 				return true
 			}
 		}
