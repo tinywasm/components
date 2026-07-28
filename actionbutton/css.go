@@ -4,35 +4,25 @@ package actionbutton
 
 import (
 	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
 
 // RenderCSS defines the actionbutton visual contract using the style DSL.
 func (b *ActionButton) RenderCSS() *css.Stylesheet {
-	return style.Of(NameActionButton).
+	return style.For(b).
 		Root(
 			style.Pad(style.Space2),
 			style.Round(style.RadiusSm),
-			style.On(style.Page),
+			style.As(style.Page),
 		).
 		Part(PartPrimary,
-			style.On(style.Accent),
+			style.Interactive(style.Primary),
 		).
 		Part(PartSecondary,
-			style.On(style.Secondary),
+			style.Interactive(style.Secondary),
 		).
 		Part(PartDanger,
-			style.On(style.Danger),
-		).
-		Cue(widget.Hover, PartPrimary,
-			style.On(style.AccentHover),
-		).
-		Cue(widget.Hover, PartSecondary,
-			style.On(style.SecondaryHover),
-		).
-		Cue(widget.Hover, PartDanger,
-			style.On(style.DangerHover),
+			style.Interactive(style.Danger),
 		).
 		Stylesheet()
 }

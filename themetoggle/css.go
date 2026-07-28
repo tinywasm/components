@@ -4,21 +4,17 @@ package themetoggle
 
 import (
 	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
 
 // RenderCSS defines the themetoggle visual contract using style DSL.
 func (t *ThemeToggle) RenderCSS() *css.Stylesheet {
-	return style.Of(NameThemeToggle).
+	return style.For(t).
 		Root(
-			style.Fixed(),
-			style.On(style.Accent),
+			style.KeepSize(),
+			style.Interactive(style.Primary),
 			style.Round(style.RadiusFull),
 			style.Pad(style.Space1),
-		).
-		Cue(widget.Hover, "",
-			style.On(style.AccentHover),
 		).
 		Stylesheet()
 }
