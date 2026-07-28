@@ -19,6 +19,10 @@ func (t *TargetList) Style() *style.Sheet {
 			style.Scrolls(),
 			style.Pad(style.Space1),
 		).
+		Part(PartBackdrop,
+			style.On(style.Sunken),
+			style.Fixed(),
+		).
 		Part(PartRow,
 			style.Row(style.Space2),
 			style.On(style.Panel),

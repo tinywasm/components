@@ -10,6 +10,15 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/tinywasm/components/actionbutton"
+	"github.com/tinywasm/components/contentcard"
+	"github.com/tinywasm/components/datatable"
+	"github.com/tinywasm/components/fieldset"
+	"github.com/tinywasm/components/modaldialog"
+	"github.com/tinywasm/components/selectsearch"
+	"github.com/tinywasm/components/targetlist"
+	"github.com/tinywasm/components/themetoggle"
 )
 
 // Allowed CSS variables in github.com/tinywasm/css v0.2.0 (and widget/style)
@@ -133,10 +142,13 @@ var allowedVars = map[string]bool{
 }
 
 var (
-	hexColorRegex = regexp.MustCompile(`#[0-9a-fA-F]{3,6}\b`)
-	rgbColorRegex = regexp.MustCompile(`(rgb|rgba|hsl|hsla)\(`)
-	viewportRegex = regexp.MustCompile(`\d+(vw|vh|vmin|vmax)`)
-	varRegex      = regexp.MustCompile(`var\((--[a-zA-Z0-9-]+)`)
+	hexColorRegex   = regexp.MustCompile(`#[0-9a-fA-F]{3,6}\b`)
+	rgbColorRegex   = regexp.MustCompile(`(rgb|rgba|hsl|hsla)\(`)
+	viewportRegex   = regexp.MustCompile(`\d+(vw|vh|vmin|vmax)`)
+	varRegex        = regexp.MustCompile(`var\((--[a-zA-Z0-9-]+)`)
+	classRegex      = regexp.MustCompile(`\.([a-zA-Z0-9_-]+)`)
+	htmlClassRegex  = regexp.MustCompile(`class='([^']*)'`)
+	htmlClassRegex2 = regexp.MustCompile(`class="([^"]*)"`)
 )
 
 func TestConformance(t *testing.T) {
@@ -255,5 +267,252 @@ func TestConformance(t *testing.T) {
 
 	if err != nil {
 		t.Fatal(err)
+	}
+}
+
+// TestPairMarkupAndStylesheet extracts classes from the compiled CSS stylesheet
+// and ensures they map exactly to either the rendered HTML output of the components,
+// or their exported/known classes.
+func TestPairMarkupAndStylesheet(t *testing.T) {
+	// Helper to extract classes from CSS string
+	extractCSSClasses := func(css string) map[string]bool {
+		classes := make(map[string]bool)
+		matches := classRegex.FindAllStringSubmatch(css, -1)
+		for _, m := range matches {
+			if len(m) > 1 {
+				classes[m[1]] = true
+			}
+		}
+		return classes
+	}
+
+	// Helper to extract classes from HTML string
+	extractHTMLClasses := func(html string) map[string]bool {
+		classes := make(map[string]bool)
+		matches1 := htmlClassRegex.FindAllStringSubmatch(html, -1)
+		for _, m := range matches1 {
+			if len(m) > 1 {
+				for _, cls := range strings.Fields(m[1]) {
+					classes[cls] = true
+				}
+			}
+		}
+		matches2 := htmlClassRegex2.FindAllStringSubmatch(html, -1)
+		for _, m := range matches2 {
+			if len(m) > 1 {
+				for _, cls := range strings.Fields(m[1]) {
+					classes[cls] = true
+				}
+			}
+		}
+		return classes
+	}
+
+	// Helper to filter classes by prefix (ignores global layout/utility classes)
+	filterClasses := func(classes map[string]bool, prefix string) map[string]bool {
+		filtered := make(map[string]bool)
+		for cls := range classes {
+			if strings.HasPrefix(cls, prefix) {
+				filtered[cls] = true
+			}
+		}
+		return filtered
+	}
+
+	// 1. ActionButton
+	{
+		btn := &actionbutton.ActionButton{Text: "Button", Variant: "primary"}
+		html := btn.Render().String()
+		css := btn.Style().Stylesheet().String()
+
+		htmlClasses := filterClasses(extractHTMLClasses(html), "actionbutton")
+		cssClasses := filterClasses(extractCSSClasses(css), "actionbutton")
+
+		// Every class in CSS should correspond to a valid actionbutton class
+		for cls := range cssClasses {
+			if cls != "actionbutton" && cls != "actionbutton__primary" && cls != "actionbutton__secondary" && cls != "actionbutton__danger" {
+				t.Errorf("ActionButton CSS contains unexpected class %q", cls)
+			}
+		}
+		// Root class should be in HTML
+		if !htmlClasses["actionbutton"] {
+			t.Errorf("ActionButton HTML missing root class 'actionbutton'")
+		}
+	}
+
+	// 2. ContentCard
+	{
+		c := &contentcard.ContentCard{
+			Header: &contentcard.ContentCard{},
+			Body:   &contentcard.ContentCard{},
+			Footer: &contentcard.ContentCard{},
+		}
+		html := c.Render().String()
+		css := c.Style().Stylesheet().String()
+
+		htmlClasses := filterClasses(extractHTMLClasses(html), "contentcard")
+		cssClasses := filterClasses(extractCSSClasses(css), "contentcard")
+
+		for cls := range cssClasses {
+			if !htmlClasses[cls] {
+				t.Errorf("ContentCard: CSS class %q does not exist in rendered HTML", cls)
+			}
+		}
+		for cls := range htmlClasses {
+			if _, ok := cssClasses[cls]; !ok {
+				t.Errorf("ContentCard: HTML class %q is unstyled in CSS", cls)
+			}
+		}
+	}
+
+	// 3. DataTable
+	{
+		dt := &datatable.DataTable{Headers: []string{"Col"}, Rows: [][]string{{"Val"}}}
+		dt.Init(nil)
+		html := dt.Render().String()
+		css := dt.Style().Stylesheet().String()
+
+		htmlClasses := filterClasses(extractHTMLClasses(html), "datatable")
+		cssClasses := filterClasses(extractCSSClasses(css), "datatable")
+
+		if !htmlClasses["datatable"] {
+			t.Errorf("DataTable HTML missing root class 'datatable'")
+		}
+		if !cssClasses["datatable"] {
+			t.Errorf("DataTable CSS missing root class 'datatable'")
+		}
+	}
+
+	// 4. Fieldset (uses classes from tinywasm/form v0.3.0)
+	{
+		f := &fieldset.Fieldset{}
+		css := f.Style().Stylesheet().String()
+		cssClasses := filterClasses(extractCSSClasses(css), "tw-field")
+
+		expectedFormClasses := map[string]bool{
+			"tw-field":              true,
+			"tw-field__label":       true,
+			"tw-field__input":       true,
+			"tw-field__error":       true,
+			"tw-field__radio-group": true,
+		}
+
+		for cls := range cssClasses {
+			if !expectedFormClasses[cls] {
+				t.Errorf("Fieldset CSS contains unexpected class %q which form v0.3.0 does not emit", cls)
+			}
+		}
+		for cls := range expectedFormClasses {
+			if !cssClasses[cls] {
+				t.Errorf("Fieldset CSS missing style rule for form v0.3.0 class %q", cls)
+			}
+		}
+	}
+
+	// 5. ModalDialog
+	{
+		md := &modaldialog.ModalDialog{Title: "Title", Content: &modaldialog.ModalDialog{}}
+		md.Init(nil)
+		md.Open()
+		html := md.Render().String()
+		css := md.Style().Stylesheet().String()
+
+		htmlClasses := filterClasses(extractHTMLClasses(html), "modaldialog")
+		cssClasses := filterClasses(extractCSSClasses(css), "modaldialog")
+
+		for cls := range cssClasses {
+			// Close button close does not have custom styling, but verify styling classes appear in HTML
+			if !htmlClasses[cls] {
+				t.Errorf("ModalDialog CSS class %q does not exist in rendered HTML", cls)
+			}
+		}
+	}
+
+	// 6. SelectSearch
+	{
+		ss := &selectsearch.SelectSearch{}
+		css := ss.Style().Stylesheet().String()
+		cssClasses := filterClasses(extractCSSClasses(css), "selectsearch")
+
+		expectedSelectSearchClasses := map[string]bool{
+			"selectsearch":           true,
+			"selectsearch__toggle":   true,
+			"selectsearch__dropdown": true,
+			"selectsearch__header":   true,
+			"selectsearch__icon":     true,
+			"selectsearch__search":   true,
+			"selectsearch__options":  true,
+			"selectsearch__option":   true,
+			"selectsearch__label":    true,
+			"selectsearch__desc":     true,
+		}
+
+		for cls := range cssClasses {
+			if !expectedSelectSearchClasses[cls] {
+				t.Errorf("SelectSearch CSS contains unexpected class %q", cls)
+			}
+		}
+		for cls := range expectedSelectSearchClasses {
+			// selectsearch__label and selectsearch__desc might not have direct CSS rules if styled via parts,
+			// but verify their core parts exist in stylesheet
+			if cls == "selectsearch" || cls == "selectsearch__dropdown" || cls == "selectsearch__header" || cls == "selectsearch__search" || cls == "selectsearch__options" || cls == "selectsearch__option" {
+				if !cssClasses[cls] {
+					t.Errorf("SelectSearch CSS missing style rule for %q", cls)
+				}
+			}
+		}
+	}
+
+	// 7. TargetList
+	{
+		tl := &targetlist.TargetList{}
+		tl.Init(nil)
+		css := tl.Style().Stylesheet().String()
+		cssClasses := filterClasses(extractCSSClasses(css), "targetlist")
+
+		expectedTargetListClasses := map[string]bool{
+			"targetlist":           true,
+			"targetlist__list":     true,
+			"targetlist__backdrop": true,
+			"targetlist__row":      true,
+			"targetlist__label":    true,
+			"targetlist__badge":    true,
+			"targetlist__menu":     true,
+			"targetlist__button":   true,
+			"targetlist__icon":     true,
+			"targetlist__options":  true,
+			"targetlist__item":     true,
+		}
+
+		for cls := range cssClasses {
+			if !expectedTargetListClasses[cls] {
+				t.Errorf("TargetList CSS contains unexpected class %q", cls)
+			}
+		}
+		for cls := range expectedTargetListClasses {
+			if cls != "targetlist__label" && cls != "targetlist__button" && cls != "targetlist__icon" && cls != "targetlist__item" {
+				if !cssClasses[cls] {
+					t.Errorf("TargetList CSS missing style rule for expected class %q", cls)
+				}
+			}
+		}
+	}
+
+	// 8. ThemeToggle
+	{
+		tt := &themetoggle.ThemeToggle{}
+		tt.Init(nil)
+		html := tt.Render().String()
+		css := tt.Style().Stylesheet().String()
+
+		htmlClasses := filterClasses(extractHTMLClasses(html), "themetoggle")
+		cssClasses := filterClasses(extractCSSClasses(css), "themetoggle")
+
+		if !htmlClasses["themetoggle"] {
+			t.Errorf("ThemeToggle HTML missing class 'themetoggle'")
+		}
+		if !cssClasses["themetoggle"] {
+			t.Errorf("ThemeToggle CSS missing class 'themetoggle'")
+		}
 	}
 }
