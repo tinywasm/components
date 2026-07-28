@@ -37,6 +37,52 @@ func TestTargetList_SetItemsPopulatesRows(t *testing.T) {
 	}
 }
 
+func TestTargetList_MenuOpenStateBackdrop(t *testing.T) {
+	tl := &TargetList{}
+	tl.Init(nil)
+	tl.SetItems([]Item{{ID: "1", Label: "One"}})
+
+	// Initially, with no open menus, backdrop shouldn't have data-open="true"
+	htmlInit := tl.Render().String()
+	t.Logf("htmlInit: %s", htmlInit)
+	if strings.Contains(htmlInit, `data-open='true'`) {
+		t.Error("expected backdrop NOT to have data-open='true' initially")
+	}
+
+	// Mocking menu open
+	tl.menuOpen.Set(true)
+	htmlOpen := tl.Render().String()
+	t.Logf("htmlOpen: %s", htmlOpen)
+	if !strings.Contains(htmlOpen, `data-open='true'`) {
+		t.Error("expected backdrop to have data-open='true' when a menu is open")
+	}
+
+	// Verify closeAllMenus clears it
+	tl.closeAllMenus()
+	if tl.menuOpen.Get() {
+		t.Error("expected menuOpen to be false after closeAllMenus")
+	}
+}
+
+func TestTargetList_CSSDoesNotContainHas(t *testing.T) {
+	tl := &TargetList{}
+	tl.Init(nil)
+	css := tl.Style().Stylesheet().String()
+
+	if strings.Contains(css, ":has(") {
+		t.Error("expected CSS not to contain forbidden :has( selector")
+	}
+	if !strings.Contains(css, "display: none") {
+		t.Error("expected CSS to have display: none under normal condition for backdrop")
+	}
+	if !strings.Contains(css, "[data-open=\"true\"]") {
+		t.Error("expected CSS to contain selector matching [data-open=\"true\"]")
+	}
+	if !strings.Contains(css, "display: block") {
+		t.Error("expected CSS to have display: block under open condition")
+	}
+}
+
 func TestPairMarkupAndStylesheet(t *testing.T) {
 	extractCSSClasses := func(css string) map[string]bool {
 		classes := make(map[string]bool)
