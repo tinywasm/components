@@ -3,12 +3,13 @@
 package fieldset
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
 
-// Style defines the fieldset widget visual contract using the style DSL.
-func (f *Fieldset) Style() *style.Sheet {
+// RenderCSS defines the fieldset widget visual contract using the style DSL.
+func (f *Fieldset) RenderCSS() *css.Stylesheet {
 	return style.Of(widget.NameField).
 		Root(
 			style.On(style.Panel),
@@ -39,5 +40,6 @@ func (f *Fieldset) Style() *style.Sheet {
 		).
 		When(widget.Invalid, "",
 			style.On(style.Danger),
-		)
+		).
+		Stylesheet()
 }

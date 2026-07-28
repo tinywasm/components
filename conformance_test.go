@@ -162,10 +162,34 @@ func TestConformance(t *testing.T) {
 			return fmt.Errorf("failed to parse %s: %w", path, err)
 		}
 
-		// Check for forbidden imports
+		// Check for forbidden imports: github.com/tinywasm/css is only allowed in css.go files
 		for _, imp := range node.Imports {
-			if imp.Path != nil && imp.Path.Value == `"github.com/tinywasm/css"` {
+			if imp.Path != nil && imp.Path.Value == `"github.com/tinywasm/css"` && !strings.HasSuffix(path, "css.go") {
 				t.Errorf("%s: imports forbidden package \"github.com/tinywasm/css\"", path)
+			}
+		}
+
+		// Check css.go structure: declares exactly one method named RenderCSS and no method named Style
+		if strings.HasSuffix(path, "css.go") {
+			var hasStyleMethod bool
+			var renderCSSCount int
+			for _, decl := range node.Decls {
+				if fn, ok := decl.(*ast.FuncDecl); ok {
+					if fn.Recv != nil && len(fn.Recv.List) > 0 {
+						if fn.Name.Name == "Style" {
+							hasStyleMethod = true
+						}
+						if fn.Name.Name == "RenderCSS" {
+							renderCSSCount++
+						}
+					}
+				}
+			}
+			if hasStyleMethod {
+				t.Errorf("%s: declares Style(); the SSR CSS entry point is RenderCSS() *css.Stylesheet", path)
+			}
+			if renderCSSCount != 1 {
+				t.Errorf("%s: expected exactly one RenderCSS() method, got %d", path, renderCSSCount)
 			}
 		}
 

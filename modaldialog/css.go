@@ -3,11 +3,12 @@
 package modaldialog
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget/style"
 )
 
-// Style defines the modaldialog visual contract using the style DSL.
-func (m *ModalDialog) Style() *style.Sheet {
+// RenderCSS defines the modaldialog visual contract using the style DSL.
+func (m *ModalDialog) RenderCSS() *css.Stylesheet {
 	return style.Of(NameModalDialog).
 		Root(
 			style.Fill(),
@@ -34,5 +35,6 @@ func (m *ModalDialog) Style() *style.Sheet {
 		).
 		Part(PartClose,
 			style.On(style.Panel),
-		)
+		).
+		Stylesheet()
 }

@@ -3,12 +3,13 @@
 package themetoggle
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
 
-// Style defines the themetoggle visual contract using style DSL.
-func (t *ThemeToggle) Style() *style.Sheet {
+// RenderCSS defines the themetoggle visual contract using style DSL.
+func (t *ThemeToggle) RenderCSS() *css.Stylesheet {
 	return style.Of(NameThemeToggle).
 		Root(
 			style.Fixed(),
@@ -18,5 +19,6 @@ func (t *ThemeToggle) Style() *style.Sheet {
 		).
 		Cue(widget.Hover, "",
 			style.On(style.AccentHover),
-		)
+		).
+		Stylesheet()
 }

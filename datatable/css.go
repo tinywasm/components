@@ -3,12 +3,13 @@
 package datatable
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
 
-// Style defines the datatable visual contract using the style DSL.
-func (t *DataTable) Style() *style.Sheet {
+// RenderCSS defines the datatable visual contract using the style DSL.
+func (t *DataTable) RenderCSS() *css.Stylesheet {
 	return style.Of(NameDataTable).
 		Root(
 			style.Width(style.Full),
@@ -24,5 +25,6 @@ func (t *DataTable) Style() *style.Sheet {
 		).
 		Cue(widget.Hover, PartRow,
 			style.On(style.PanelHover),
-		)
+		).
+		Stylesheet()
 }

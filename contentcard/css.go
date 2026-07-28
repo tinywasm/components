@@ -3,11 +3,12 @@
 package contentcard
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget/style"
 )
 
-// Style defines the visual sheet for contentcard.
-func (c *ContentCard) Style() *style.Sheet {
+// RenderCSS defines the visual sheet for contentcard.
+func (c *ContentCard) RenderCSS() *css.Stylesheet {
 	return style.Of(NameContentCard).
 		Root(
 			style.Stack(style.Space0),
@@ -26,5 +27,6 @@ func (c *ContentCard) Style() *style.Sheet {
 		Part(PartFooter,
 			style.Pad(style.Space2),
 			style.On(style.Sunken),
-		)
+		).
+		Stylesheet()
 }

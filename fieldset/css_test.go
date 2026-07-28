@@ -14,7 +14,7 @@ var (
 
 // TestRenderCSS_StylesFieldset guards that Style outputs proper rules for root and parts.
 func TestRenderCSS_StylesFieldset(t *testing.T) {
-	cssStr := (&Fieldset{}).Style().Stylesheet().String()
+	cssStr := (&Fieldset{}).RenderCSS().String()
 	if cssStr == "" {
 		t.Fatal("Stylesheet() returned empty")
 	}
@@ -48,7 +48,7 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 	}
 
 	f := &Fieldset{}
-	css := f.Style().Stylesheet().String()
+	css := f.RenderCSS().String()
 	cssClasses := filterClasses(extractCSSClasses(css), "tw-field")
 
 	expectedFormClasses := map[string]bool{

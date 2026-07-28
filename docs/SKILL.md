@@ -1,6 +1,6 @@
 ---
 name: component-creation
-description: Standard for creating reusable, efficient, WebAssembly-ready UI components. Pattern based on style.Styler and widget package visual-contract.
+description: Standard for creating reusable, efficient, WebAssembly-ready UI components. Pattern based on RenderCSS() and the widget package visual-contract.
 ---
 
 # SKILL: tinywasm/components
@@ -11,7 +11,7 @@ A catalog of reusable, efficient, and WebAssembly-ready UI components in the Tin
 
 ## Guide to Styling with Visual Contract (The One Page Guide)
 
-With the construction harness closed, styling components in the TinyWasm ecosystem is done by implementing `style.Styler` using the typed `style.Sheet` DSL. It prevents local color patching, manual class strings, and media query overheads.
+With the construction harness closed, styling components in the TinyWasm ecosystem is done by declaring `RenderCSS() *css.Stylesheet`, built with the typed `style.Sheet` DSL. It prevents local color patching, manual class strings, and media query overheads.
 
 ### Quick Reference
 
@@ -37,7 +37,7 @@ Each component resides in its own folder within `tinywasm/components`. There are
 tinywasm/components/
 └── mycomponent/
     ├── mycomponent.go   # Struct, Render() + optional Init(ctx) — shared WASM + SSR
-    ├── css.go           # !wasm only: Style() *style.Sheet visual sheet
+    ├── css.go           # !wasm only: RenderCSS() *css.Stylesheet visual sheet
     ├── svg.go           # !wasm only: IconSvg() *sprite.Sprite (optional)
     └── mycomponent_test.go
 ```
@@ -79,7 +79,7 @@ func (m *MyComponent) IconSvg() *sprite.Sprite {
 
 ## Example: Anatomy and Styling of `TargetList`
 
-A standard component implements `widget.Widget` to declare its identity, and optional `style.Styler` in a tagged `!wasm` file to define its visual rules.
+A standard component implements `widget.Widget` to declare its identity, and optionally declares `RenderCSS()` in a tagged `!wasm` file to define its visual rules.
 
 ```go
 const (
@@ -92,13 +92,14 @@ const (
 func (l *TargetList) WidgetName() widget.Name { return nameTargetList }
 func (l *TargetList) WidgetKind() widget.Kind { return widget.Listbox }
 
-func (l *TargetList) Style() *style.Sheet {
+func (l *TargetList) RenderCSS() *css.Stylesheet {
 	return style.Of(nameTargetList).
 		Root(Stack(Space1), On(Sunken), Scrolls(), Round(RadiusMd)).
 		Part(partRow, Row(Space2), On(Panel), Pad(Space2), Round(RadiusSm)).
 		Part(partMenu, Stack(Space0), On(Panel), Raise(Floating), Clip()).
 		When(widget.Selected, partRow, On(Selected)).
-		Cue(widget.Hover, partRow, On(PanelHover))
+		Cue(widget.Hover, partRow, On(PanelHover)).
+		Stylesheet()
 }
 ```
 

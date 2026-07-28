@@ -64,7 +64,7 @@ func TestModal_Render(t *testing.T) {
 func TestModal_CSSContent(t *testing.T) {
 	md := &ModalDialog{Title: "Title", Content: &simpleComponent{html: "<p>Content</p>"}}
 	md.Init(nil)
-	css := md.Style().Stylesheet().String()
+	css := md.RenderCSS().String()
 
 	if !strings.Contains(css, "position: absolute") {
 		t.Errorf("expected modal backdrop to be position: absolute, got CSS: %s", css)
@@ -121,7 +121,7 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 	md.Init(nil)
 	md.Open()
 	html := md.Render().String()
-	css := md.Style().Stylesheet().String()
+	css := md.RenderCSS().String()
 
 	htmlClasses := filterClasses(extractHTMLClasses(html), "modaldialog")
 	cssClasses := filterClasses(extractCSSClasses(css), "modaldialog")

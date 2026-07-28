@@ -3,12 +3,13 @@
 package targetlist
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
 
-// Style defines the targetlist visual contract using the style DSL.
-func (t *TargetList) Style() *style.Sheet {
+// RenderCSS defines the targetlist visual contract using the style DSL.
+func (t *TargetList) RenderCSS() *css.Stylesheet {
 	return style.Of(NameTargetList).
 		Root(
 			style.Fill(),
@@ -64,5 +65,6 @@ func (t *TargetList) Style() *style.Sheet {
 		).
 		Cue(widget.Hover, PartRow,
 			style.On(style.PanelHover),
-		)
+		).
+		Stylesheet()
 }
