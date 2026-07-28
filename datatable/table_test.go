@@ -98,7 +98,7 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 	dt := &DataTable{Headers: []string{"Col"}, Rows: [][]string{{"Val"}}}
 	dt.Init(nil)
 	html := dt.Render().String()
-	css := dt.Style().Stylesheet().String()
+	css := dt.RenderCSS().String()
 
 	htmlClasses := filterClasses(extractHTMLClasses(html), "datatable")
 	cssClasses := filterClasses(extractCSSClasses(css), "datatable")

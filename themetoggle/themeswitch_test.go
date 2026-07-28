@@ -66,7 +66,7 @@ func TestIcon_AllThemes_NonEmpty(t *testing.T) {
 
 func TestRenderCSS_NotEmpty(t *testing.T) {
 	ts := &ThemeToggle{}
-	css := ts.Style().Stylesheet()
+	css := ts.RenderCSS()
 	if css.String() == "" {
 		t.Error("Stylesheet() returned empty string")
 	}
@@ -118,7 +118,7 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 	tt := &ThemeToggle{}
 	tt.Init(nil)
 	html := tt.Render().String()
-	css := tt.Style().Stylesheet().String()
+	css := tt.RenderCSS().String()
 
 	htmlClasses := filterClasses(extractHTMLClasses(html), "themetoggle")
 	cssClasses := filterClasses(extractCSSClasses(css), "themetoggle")

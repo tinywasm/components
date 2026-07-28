@@ -105,7 +105,7 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 		Footer: &simpleComponent{html: "Footer"},
 	}
 	html := c.Render().String()
-	css := c.Style().Stylesheet().String()
+	css := c.RenderCSS().String()
 
 	htmlClasses := filterClasses(extractHTMLClasses(html), "contentcard")
 	cssClasses := filterClasses(extractCSSClasses(css), "contentcard")

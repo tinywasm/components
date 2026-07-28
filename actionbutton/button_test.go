@@ -80,7 +80,7 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 		return filtered
 	}
 
-	cssStr := (&ActionButton{}).Style().Stylesheet().String()
+	cssStr := (&ActionButton{}).RenderCSS().String()
 	cssClasses := filterClasses(extractCSSClasses(cssStr), "actionbutton")
 
 	variants := []string{"primary", "secondary", "danger"}

@@ -3,12 +3,13 @@
 package selectsearch
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
 
-// Style defines the selectsearch visual contract using style DSL.
-func (c *SelectSearch) Style() *style.Sheet {
+// RenderCSS defines the selectsearch visual contract using style DSL.
+func (c *SelectSearch) RenderCSS() *css.Stylesheet {
 	return style.Of(NameSelectSearch).
 		Root(
 			style.Stack(style.Space1),
@@ -52,5 +53,6 @@ func (c *SelectSearch) Style() *style.Sheet {
 		).
 		Cue(widget.Hover, PartOption,
 			style.On(style.PanelHover),
-		)
+		).
+		Stylesheet()
 }

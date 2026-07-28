@@ -67,7 +67,7 @@ func TestTargetList_MenuOpenStateBackdrop(t *testing.T) {
 func TestTargetList_CSSDoesNotContainHas(t *testing.T) {
 	tl := &TargetList{}
 	tl.Init(nil)
-	css := tl.Style().Stylesheet().String()
+	css := tl.RenderCSS().String()
 
 	if strings.Contains(css, ":has(") {
 		t.Error("expected CSS not to contain forbidden :has( selector")
@@ -129,7 +129,7 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 	tl := &TargetList{}
 	tl.Init(nil)
 	html := tl.Render().String() + tl.buildRow(Item{ID: "1", Label: "A", Description: "B"}).String()
-	css := tl.Style().Stylesheet().String()
+	css := tl.RenderCSS().String()
 
 	htmlClasses := filterClasses(extractHTMLClasses(html), "targetlist")
 	cssClasses := filterClasses(extractCSSClasses(css), "targetlist")

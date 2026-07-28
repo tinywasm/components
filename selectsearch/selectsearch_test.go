@@ -141,7 +141,7 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 	// Render option row too
 	html += ss.buildRows("")[0].String()
 
-	css := ss.Style().Stylesheet().String()
+	css := ss.RenderCSS().String()
 
 	htmlClasses := filterClasses(extractHTMLClasses(html), "selectsearch")
 	cssClasses := filterClasses(extractCSSClasses(css), "selectsearch")

@@ -3,12 +3,13 @@
 package actionbutton
 
 import (
+	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
 
-// Style defines the actionbutton visual contract using the style DSL.
-func (b *ActionButton) Style() *style.Sheet {
+// RenderCSS defines the actionbutton visual contract using the style DSL.
+func (b *ActionButton) RenderCSS() *css.Stylesheet {
 	return style.Of(NameActionButton).
 		Root(
 			style.Pad(style.Space2),
@@ -32,5 +33,6 @@ func (b *ActionButton) Style() *style.Sheet {
 		).
 		Cue(widget.Hover, PartDanger,
 			style.On(style.DangerHover),
-		)
+		).
+		Stylesheet()
 }
