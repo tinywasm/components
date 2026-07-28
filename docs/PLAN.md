@@ -1,7 +1,8 @@
 ---
 PLAN: "components: eliminar el último escape hatch (css.Raw) usando el vocabulario de overlay"
-STATUS: running
+STATUS: review
 SESSION: 7910493481322808537
+PR: https://github.com/tinywasm/components/pull/15
 ---
 
 > Este plan se despacha con el flujo CodeJob. Ver skill: **agents-workflow**.

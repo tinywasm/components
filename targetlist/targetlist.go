@@ -64,8 +64,9 @@ type TargetList struct {
 	OnEdit   func(id string) // ⋮ → Editar
 	OnDelete func(id string) // ⋮ → Eliminar
 
-	items []Item
-	rows  *SignalNodes
+	items    []Item
+	rows     *SignalNodes
+	menuOpen *SignalBool
 }
 
 func (t *TargetList) WidgetName() widget.Name { return NameTargetList }
@@ -79,6 +80,9 @@ func (t *TargetList) ensure() {
 	}
 	if t.Selected == nil {
 		t.Selected = NewString("")
+	}
+	if t.menuOpen == nil {
+		t.menuOpen = NewBool(false)
 	}
 }
 
@@ -107,20 +111,45 @@ func (t *TargetList) Count() int { return len(t.items) }
 // summary click or an explicit attribute removal, never on an outside click.
 func menuID(key string) string { return key + ".menu" }
 
+// anyMenuOpen informa si alguna fila tiene su ⋮ <details> abierto. El navegador
+// posee ese estado; esto lo refleja en Go para que la hoja pueda seleccionarlo.
+//
+// GetAttr wraps js.Value.String(): a present attribute (even "<details open>",
+// whose value is "") returns its string value; a missing one returns the
+// stringified JS null, "<null>" — that's the only case treated as closed.
+func (t *TargetList) anyMenuOpen() bool {
+	for _, it := range t.items {
+		if ref, ok := Get(menuID("tl-" + it.ID)); ok {
+			if ref.GetAttr("open") != "<null>" {
+				return true
+			}
+		}
+	}
+	return false
+}
+
 // closeAllMenus force-closes every row's ⋮ menu. Wired to: picking Editar/
 // Eliminar (native <details> does not close itself on that), and a full-page
-// backdrop that appears (CSS :has(), see css.go) while any menu is open, so a
-// click anywhere outside a menu closes it too.
+// backdrop that is shown while any menu is open, so a click anywhere outside
+// a menu closes it too.
 func (t *TargetList) closeAllMenus() {
 	for _, it := range t.items {
 		if ref, ok := Get(menuID("tl-" + it.ID)); ok {
 			ref.RemoveAttr("open")
 		}
 	}
+	t.menuOpen.Set(false)
 }
 
 func (t *TargetList) Render() *Element {
-	backdrop := Div().Set(clsMenuBackdrop.AsAttr())
+	attrOpen := widget.Open.Attr()
+	backdrop := Div().Set(clsMenuBackdrop.AsAttr()).
+		BindAttrFunc(attrOpen.Key, func() string {
+			if t.menuOpen.Get() {
+				return attrOpen.Value
+			}
+			return ""
+		})
 	backdrop.On("click", func(Event) { t.closeAllMenus() })
 
 	list := Ul().Set(clsList.AsAttr()).Attr("role", "listbox").BindChildren(t.rows)
@@ -181,11 +210,17 @@ func (t *TargetList) buildRow(it Item) *Element {
 		}
 	})
 
-	row.Child(Details().Set(clsMenu.AsAttr()).
+	menu := Details().Set(clsMenu.AsAttr()).
 		ID(menuID(key)).
 		Attr("name", menuGroup).
 		Child(summary).
-		Child(Div().Set(clsMenuList.AsAttr()).Child(edit, del)))
+		Child(Div().Set(clsMenuList.AsAttr()).Child(edit, del))
+
+	menu.On("toggle", func(e Event) {
+		t.menuOpen.Set(t.anyMenuOpen())
+	})
+
+	row.Child(menu)
 
 	return row
 }

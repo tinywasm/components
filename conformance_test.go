@@ -162,6 +162,13 @@ func TestConformance(t *testing.T) {
 			return fmt.Errorf("failed to parse %s: %w", path, err)
 		}
 
+		// Check for forbidden imports
+		for _, imp := range node.Imports {
+			if imp.Path != nil && imp.Path.Value == `"github.com/tinywasm/css"` {
+				t.Errorf("%s: imports forbidden package \"github.com/tinywasm/css\"", path)
+			}
+		}
+
 		ast.Inspect(node, func(n ast.Node) bool {
 			if n == nil {
 				return true
@@ -210,6 +217,12 @@ func TestConformance(t *testing.T) {
 
 			// 2. Cero RawRule / Media / RootCSS / Theme / Declare identifiers
 			if ident, ok := n.(*ast.Ident); ok {
+				if ident.Name == "Raw" {
+					t.Errorf("%s: uses forbidden css.Raw (escape hatch — report the gap upstream in widget/style)", path)
+				}
+				if ident.Name == "RawItem" {
+					t.Errorf("%s: uses forbidden css.RawItem (escape hatch — report the gap upstream in widget/style)", path)
+				}
 				if ident.Name == "RawRule" {
 					t.Errorf("%s: uses forbidden RawRule", path)
 				}
