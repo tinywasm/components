@@ -1,10 +1,20 @@
+//go:build !wasm
+
 package modaldialog
 
 import (
+	"regexp"
+	"strings"
 	"testing"
 
 	. "github.com/tinywasm/dom"
 	. "github.com/tinywasm/fmt"
+)
+
+var (
+	classRegex      = regexp.MustCompile(`\.([a-zA-Z0-9_-]+)`)
+	htmlClassRegex  = regexp.MustCompile(`class='([^']*)'`)
+	htmlClassRegex2 = regexp.MustCompile(`class="([^"]*)"`)
 )
 
 func TestModal_Render(t *testing.T) {
@@ -18,18 +28,18 @@ func TestModal_Render(t *testing.T) {
 	html := m.Render().String()
 
 	// Check main container
-	if !Contains(html, "class='modal'") {
-		t.Error("expected modal class")
+	if !Contains(html, "class='modaldialog'") {
+		t.Error("expected modaldialog class")
 	}
 
 	// Check internal structure
-	if !Contains(html, "class='modal-backdrop'") {
+	if !Contains(html, "class='modaldialog__backdrop'") {
 		t.Error("expected backdrop")
 	}
-	if !Contains(html, "class='modal-content'") {
+	if !Contains(html, "class='modaldialog__panel'") {
 		t.Error("expected content container")
 	}
-	if !Contains(html, "class='modal-header'") {
+	if !Contains(html, "class='modaldialog__header'") {
 		t.Error("expected header")
 	}
 	if !Contains(html, "<h2>My Modal</h2>") { // H2 factory renders <h2>...</h2>
@@ -46,8 +56,72 @@ func TestModal_Render(t *testing.T) {
 	if htmlHidden == "" {
 		t.Error("expected placeholder node string when not visible (Show condition), not empty string")
 	}
-	if Contains(htmlHidden, "modal") {
-		t.Error("should not contain modal when Visible=false")
+	if Contains(htmlHidden, "modaldialog") {
+		t.Error("should not contain modaldialog when Visible=false")
+	}
+}
+
+func TestPairMarkupAndStylesheet(t *testing.T) {
+	extractCSSClasses := func(css string) map[string]bool {
+		classes := make(map[string]bool)
+		matches := classRegex.FindAllStringSubmatch(css, -1)
+		for _, m := range matches {
+			if len(m) > 1 {
+				classes[m[1]] = true
+			}
+		}
+		return classes
+	}
+
+	extractHTMLClasses := func(html string) map[string]bool {
+		classes := make(map[string]bool)
+		matches1 := htmlClassRegex.FindAllStringSubmatch(html, -1)
+		for _, m := range matches1 {
+			if len(m) > 1 {
+				for _, cls := range strings.Fields(m[1]) {
+					classes[cls] = true
+				}
+			}
+		}
+		matches2 := htmlClassRegex2.FindAllStringSubmatch(html, -1)
+		for _, m := range matches2 {
+			if len(m) > 1 {
+				for _, cls := range strings.Fields(m[1]) {
+					classes[cls] = true
+				}
+			}
+		}
+		return classes
+	}
+
+	filterClasses := func(classes map[string]bool, prefix string) map[string]bool {
+		filtered := make(map[string]bool)
+		for cls := range classes {
+			if strings.HasPrefix(cls, prefix) {
+				filtered[cls] = true
+			}
+		}
+		return filtered
+	}
+
+	md := &ModalDialog{Title: "Title", Content: &simpleComponent{html: "<p>Content</p>"}}
+	md.Init(nil)
+	md.Open()
+	html := md.Render().String()
+	css := md.Style().Stylesheet().String()
+
+	htmlClasses := filterClasses(extractHTMLClasses(html), "modaldialog")
+	cssClasses := filterClasses(extractCSSClasses(css), "modaldialog")
+
+	for cls := range cssClasses {
+		if !htmlClasses[cls] {
+			t.Errorf("ModalDialog CSS class %q does not exist in rendered HTML", cls)
+		}
+	}
+	for cls := range htmlClasses {
+		if !cssClasses[cls] {
+			t.Errorf("ModalDialog HTML class %q is unstyled in CSS", cls)
+		}
 	}
 }
 

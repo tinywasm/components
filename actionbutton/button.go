@@ -1,25 +1,43 @@
 package actionbutton
 
 import (
-	. "github.com/tinywasm/css"
 	. "github.com/tinywasm/dom"
 	. "github.com/tinywasm/html"
+	"github.com/tinywasm/widget"
+)
+
+// NameActionButton is the widget name for actionbutton.
+const NameActionButton = widget.Name("actionbutton")
+
+const (
+	PartPrimary     = widget.Part("primary")
+	PartSecondary   = widget.Part("secondary")
+	PartDanger      = widget.Part("danger")
+	PartUrlUp       = widget.Part("url-up")
+	PartUrlDown     = widget.Part("url-down")
+	PartUrl         = widget.Part("url")
+	PartUrlDisable  = widget.Part("url-disable")
+	PartSelected    = widget.Part("selected")
+	PartLogin       = widget.Part("login")
+	PartUrlPulse    = widget.Part("url-pulse")
+	PartContebuton  = widget.Part("contebuton")
+	PartCenteredBtn = widget.Part("centered-btn")
 )
 
 var (
-	clsBtn             Class = "btn"
-	clsBtnPrimary      Class = "btn btn-primary"
-	clsBtnSecondary    Class = "btn btn-secondary"
-	clsBtnDanger       Class = "btn btn-danger"
-	clsBtnUrlUp        Class = "btn-url-up"
-	clsBtnUrlDown      Class = "btn-url-down"
-	clsBtnUrl          Class = "btn-url"
-	clsBtnUrlDisable   Class = "btn-url-disable"
-	clsBtnSelected     Class = "btn-selected"
-	clsBtnLogin        Class = "btn-login"
-	clsBtnUrlPulse     Class = "btn-url-pulse"
-	clsContebuton      Class = "contebuton"
-	clsContCenteredBtn Class = "cont-centered-btn"
+	clsBtn             = NameActionButton.Root()
+	clsBtnPrimary      = NameActionButton.Class(PartPrimary)
+	clsBtnSecondary    = NameActionButton.Class(PartSecondary)
+	clsBtnDanger       = NameActionButton.Class(PartDanger)
+	clsBtnUrlUp        = NameActionButton.Class(PartUrlUp)
+	clsBtnUrlDown      = NameActionButton.Class(PartUrlDown)
+	clsBtnUrl          = NameActionButton.Class(PartUrl)
+	clsBtnUrlDisable   = NameActionButton.Class(PartUrlDisable)
+	clsBtnSelected     = NameActionButton.Class(PartSelected)
+	clsBtnLogin        = NameActionButton.Class(PartLogin)
+	clsBtnUrlPulse     = NameActionButton.Class(PartUrlPulse)
+	clsContebuton      = NameActionButton.Class(PartContebuton)
+	clsContCenteredBtn = NameActionButton.Class(PartCenteredBtn)
 )
 
 type ActionButton struct {
@@ -29,8 +47,11 @@ type ActionButton struct {
 	OnClick func(Event)
 }
 
+func (b *ActionButton) WidgetName() widget.Name { return NameActionButton }
+func (b *ActionButton) WidgetKind() widget.Kind { return widget.Region }
+
 func (b *ActionButton) Render() *Element {
-	var variantCls Class
+	var variantCls widget.Class
 	switch b.Variant {
 	case "secondary":
 		variantCls = clsBtnSecondary
@@ -40,7 +61,8 @@ func (b *ActionButton) Render() *Element {
 		variantCls = clsBtnPrimary
 	}
 
-	btn := Button().Set(variantCls.AsAttr()).
+	btn := Button().
+		Attr("class", string(clsBtn)+" "+string(variantCls)).
 		Text(b.Text)
 
 	if b.OnClick != nil {

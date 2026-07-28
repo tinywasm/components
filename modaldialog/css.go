@@ -2,64 +2,54 @@
 
 package modaldialog
 
-import . "github.com/tinywasm/css"
+import (
+	"github.com/tinywasm/css"
+	"github.com/tinywasm/widget/style"
+)
 
-func (m *ModalDialog) RenderCSS() *Stylesheet {
-	return NewStylesheet(
-		Rule(clsModal,
-			Position(Str("fixed")),
-			Top(Zero),
-			Left(Zero),
-			Width(Pct(100)),
-			Height(Pct(100)),
-			ZIndex(ZModal),
-			Display(Flex_),
-			JustifyContent(Center),
-			AlignItems(Center),
-		),
-		Rule(Selector("."+string(clsModal)+"."+string(clsModalHidden)),
-			Display(None),
-		),
-		Rule(clsModalBackdrop,
-			Position(Str("absolute")),
-			Top(Zero),
-			Left(Zero),
-			Width(Pct(100)),
-			Height(Pct(100)),
-			RuleContent(Decl{Prop: "background-color", Val: "color-mix(in srgb, " + ColorSurface.Var() + ", transparent 40%)"}),
-			ZIndex(Str("1")),
-		),
-		Rule(clsModalContent,
-			BackgroundColor(ColorBackground),
-			Color(ColorOnSurface),
-			BorderRadius(RadiusMd),
-			BoxShadow(Str("0 4px 6px -1px rgba(0, 0, 0, 0.3)")),
-			ZIndex(Str("2")),
-			RuleContent(Decl{Prop: "min-width", Val: "300px"}),
-			RuleContent(Decl{Prop: "max-width", Val: "90%"}),
-		),
-		Rule(clsModalHeader,
-			Display(Flex_),
-			JustifyContent(Str("space-between")),
-			AlignItems(Center),
-			Padding(Space2),
-			RuleContent(Decl{Prop: "border-bottom", Val: "1px solid " + ColorMuted.Var()}),
-		),
-		Rule(Selector("."+string(clsModalHeader)+" h2"),
-			Margin(Zero),
-			FontSize(Rem(1.25)),
-		),
-		Rule(clsModalClose,
-			Background(None),
-			Border(None),
-			FontSize(Rem(1.5)),
-			Cursor(Pointer),
-			Padding(Zero),
-			LineHeight(Str("1")),
-			Color(ColorOnSurface),
-		),
-		Rule(clsModalBody,
-			Padding(Space2),
+// Style defines the modaldialog visual contract using the style DSL.
+func (m *ModalDialog) Style() *style.Sheet {
+	return style.Of(NameModalDialog).
+		Root(
+			style.Fill(),
+			style.Fixed(),
+			style.Cover(),
+			style.On(style.Page),
+		).
+		Part(PartBackdrop,
+			style.On(style.Sunken),
+		).
+		Part(PartPanel,
+			style.On(style.Panel),
+			style.Round(style.RadiusLg),
+			style.Raise(style.Overlay),
+			style.Pad(style.Space3),
+		).
+		Part(PartHeader,
+			style.Row(style.Space2),
+		).
+		Part(PartBody,
+			style.Stack(style.Space1),
+		).
+		Part(PartClose,
+			style.On(style.Panel),
+		)
+}
+
+// RenderCSS carries the dialog's scrim: the dimmed layer that covers the mount
+// point while the dialog is open.
+//
+// KNOWN UPSTREAM GAP — same as targetlist's backdrop: widget/style has no overlay
+// vocabulary (out-of-flow positioning, full inset, stacking order, translucent
+// scrim). Report it to tinywasm/widget; delete this method once it exists.
+//
+// Selectors are DERIVED from the widget anatomy, never written by hand.
+func (m *ModalDialog) RenderCSS() *css.Stylesheet {
+	backdrop := "." + clsModalBackdrop.String()
+	return css.NewStylesheet(
+		css.Raw(
+			backdrop + "{position:absolute;top:0;left:0;width:100%;height:100%;" +
+				"background-color:color-mix(in srgb, var(--color-surface) 60%, transparent);z-index:1;}",
 		),
 	)
 }

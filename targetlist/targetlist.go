@@ -1,32 +1,41 @@
 // Package targetlist is the selectable record list used by CRUD views.
-//
-// It renders rows of Item{Label, Description}, tracks a single selected row, and
-// gives each row a ⋮ options menu (Editar / Eliminar) in its top-right corner.
-// It owns ONLY its own look (rows, badge, selected state, menu); the layout that
-// hosts it decides where it sits. Reactive: call SetItems to (re)populate; the
-// selected highlight follows the shared Selected signal.
 package targetlist
 
 import (
-	. "github.com/tinywasm/css"
 	. "github.com/tinywasm/dom"
 	. "github.com/tinywasm/html"
 	"github.com/tinywasm/svg"
+	"github.com/tinywasm/widget"
+)
+
+// NameTargetList is the widget identity.
+const NameTargetList = widget.Name("targetlist")
+
+const (
+	PartRow      = widget.Part("row")
+	PartMenu     = widget.Part("menu")
+	PartOptions  = widget.Part("options")
+	PartBadge    = widget.Part("badge")
+	PartLabel    = widget.Part("label")
+	PartList     = widget.Part("list")
+	PartBackdrop = widget.Part("backdrop")
+	PartButton   = widget.Part("button")
+	PartIcon     = widget.Part("icon")
+	PartItem     = widget.Part("item")
 )
 
 var (
-	clsListWrap     Class = "tl-wrap"
-	clsList         Class = "tl-list"
-	clsRow          Class = "tl-row"
-	clsRowOn        Class = "tl-row-on"
-	clsLabel        Class = "tl-label"
-	clsBadge        Class = "tl-badge"
-	clsMenu         Class = "tl-menu"
-	clsMenuBtn      Class = "tl-menu-btn"
-	clsMenuIcon     Class = "tl-menu-icon"
-	clsMenuList     Class = "tl-menu-list"
-	clsMenuItem     Class = "tl-menu-item"
-	clsMenuBackdrop Class = "tl-menu-backdrop"
+	clsListWrap     = NameTargetList.Root()
+	clsList         = NameTargetList.Class(PartList)
+	clsRow          = NameTargetList.Class(PartRow)
+	clsLabel        = NameTargetList.Class(PartLabel)
+	clsBadge        = NameTargetList.Class(PartBadge)
+	clsMenu         = NameTargetList.Class(PartMenu)
+	clsMenuBtn      = NameTargetList.Class(PartButton)
+	clsMenuIcon     = NameTargetList.Class(PartIcon)
+	clsMenuList     = NameTargetList.Class(PartOptions)
+	clsMenuItem     = NameTargetList.Class(PartItem)
+	clsMenuBackdrop = NameTargetList.Class(PartBackdrop)
 )
 
 // menuGroup makes every row's ⋮ <details> part of one native HTML "exclusive
@@ -58,6 +67,9 @@ type TargetList struct {
 	items []Item
 	rows  *SignalNodes
 }
+
+func (t *TargetList) WidgetName() widget.Name { return NameTargetList }
+func (t *TargetList) WidgetKind() widget.Kind { return widget.Listbox }
 
 // ensure lazily creates the reactive state so a host may call SetItems before the
 // framework mounts the component (both Init and SetItems are safe in any order).
@@ -111,7 +123,7 @@ func (t *TargetList) Render() *Element {
 	backdrop := Div().Set(clsMenuBackdrop.AsAttr())
 	backdrop.On("click", func(Event) { t.closeAllMenus() })
 
-	list := Ul().Set(clsList.AsAttr()).BindChildren(t.rows)
+	list := Ul().Set(clsList.AsAttr()).Attr("role", "listbox").BindChildren(t.rows)
 
 	// backdrop is a plain sibling of the (BindChildren-managed) <ul>, never a
 	// static child mixed into it — the keyed reconcile assumes it owns every
@@ -123,12 +135,17 @@ func (t *TargetList) buildRow(it Item) *Element {
 	id := it.ID
 	key := "tl-" + id
 
+	isSelSig := DeriveBool(func() bool {
+		return t.Selected.Get() == id
+	})
+
 	row := Li().Set(clsRow.AsAttr()).
 		ID(key).
 		Key(key).
-		BindClass(string(clsRowOn), DeriveBool(func() bool {
-			return t.Selected.Get() == id
-		}))
+		Attr("role", "option").
+		BindAttrBool("aria-selected", isSelSig).
+		BindAttrBool("data-selected", isSelSig)
+
 	row.On("click", func(Event) {
 		if t.OnSelect != nil {
 			t.OnSelect(it)

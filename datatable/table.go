@@ -1,14 +1,22 @@
 package datatable
 
 import (
-	. "github.com/tinywasm/css"
 	. "github.com/tinywasm/dom"
 	. "github.com/tinywasm/fmt"
 	. "github.com/tinywasm/html"
+	"github.com/tinywasm/widget"
+)
+
+// NameDataTable is the widget name.
+const NameDataTable = widget.Name("datatable")
+
+const (
+	PartHeader = widget.Part("header")
+	PartRow    = widget.Part("row")
 )
 
 var (
-	clsTable Class = "table"
+	clsTable = NameDataTable.Root()
 )
 
 // DataTable renders a table whose body rows can be provided up front
@@ -22,17 +30,20 @@ type DataTable struct {
 	rows *SignalNodes // internal — drives the reactive tbody
 }
 
+func (t *DataTable) WidgetName() widget.Name { return NameDataTable }
+func (t *DataTable) WidgetKind() widget.Kind { return widget.Grid }
+
 func (t *DataTable) Init(_ Ctx) {
 	t.rows = NewNodes(t.buildRows(t.Rows)...)
 }
 
 func (t *DataTable) Render() *Element {
-	table := Table().Set(clsTable.AsAttr())
+	table := Table().Set(clsTable.AsAttr()).Attr("role", "grid")
 
 	thead := Thead()
-	tr := Tr()
+	tr := Tr().Attr("role", "row")
 	for _, header := range t.Headers {
-		tr.Child(Th().Text(header))
+		tr.Child(Th().Set(NameDataTable.Class(PartHeader).AsAttr()).Attr("role", "columnheader").Text(header))
 	}
 	thead.Child(tr)
 	table.Child(thead)
@@ -56,9 +67,9 @@ func (t *DataTable) SetRows(rows [][]string) {
 func (t *DataTable) buildRows(rows [][]string) []*Element {
 	out := make([]*Element, 0, len(rows))
 	for i, row := range rows {
-		tr := Tr().Key(Sprint(i))
+		tr := Tr().Set(NameDataTable.Class(PartRow).AsAttr()).Key(Sprint(i)).Attr("role", "row")
 		for _, cell := range row {
-			tr.Child(Td().Text(cell))
+			tr.Child(Td().Attr("role", "gridcell").Text(cell))
 		}
 		out = append(out, tr)
 	}

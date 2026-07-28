@@ -1,23 +1,26 @@
 package themetoggle
 
 import (
-	. "github.com/tinywasm/css"
 	. "github.com/tinywasm/dom"
 	. "github.com/tinywasm/html"
+	"github.com/tinywasm/widget"
+)
+
+// NameThemeToggle is the widget name.
+const NameThemeToggle = widget.Name("themetoggle")
+
+const (
+	PartButton = widget.Part("button")
 )
 
 var (
-	clsTsBtn Class = "ts-btn"
+	clsTsBtn = NameThemeToggle.Root()
 )
 
 // storageKey identifica la entrada de localStorage del componente.
 const storageKey = "tinywasm-themeswitch"
 
 // TsTheme representa el estado de tema del componente.
-// Solo hay 2 estados: dark o light. No existe un tercer estado "auto" —
-// si una app quiere seguir la preferencia del SO, eso se resuelve fuera de
-// este componente (p. ej. eligiendo el valor inicial antes de montar
-// ThemeToggle), no como un estado más del ciclo.
 type TsTheme string
 
 const (
@@ -31,13 +34,13 @@ const defaultTheme = TsThemeLight
 
 // ThemeToggle es un botón flotante que alterna entre dark y light.
 // Restaura automáticamente el tema guardado en localStorage al montarse.
-//
-//	ts := &themetoggle.ThemeToggle{}
-//	Append("body", ts)
 type ThemeToggle struct {
 	Element
 	theme *SignalString // "dark" | "light"
 }
+
+func (t *ThemeToggle) WidgetName() widget.Name { return NameThemeToggle }
+func (t *ThemeToggle) WidgetKind() widget.Kind { return widget.Region }
 
 func (t *ThemeToggle) Render() *Element {
 	// labelSig is used twice (title + aria-label) → a named shared computed. Auto-tracked: no deps list.

@@ -1,19 +1,30 @@
 package modaldialog
 
 import (
-	. "github.com/tinywasm/css"
 	. "github.com/tinywasm/dom"
 	. "github.com/tinywasm/html"
+	"github.com/tinywasm/widget"
+)
+
+// NameModalDialog is the widget name for modal dialog.
+const NameModalDialog = widget.Name("modaldialog")
+
+const (
+	PartBackdrop = widget.Part("backdrop")
+	PartPanel    = widget.Part("panel")
+	PartHeader   = widget.Part("header")
+	PartBody     = widget.Part("body")
+	PartActions  = widget.Part("actions")
+	PartClose    = widget.Part("close")
 )
 
 var (
-	clsModal         Class = "modal"
-	clsModalHidden   Class = "hidden"
-	clsModalBackdrop Class = "modal-backdrop"
-	clsModalContent  Class = "modal-content"
-	clsModalHeader   Class = "modal-header"
-	clsModalClose    Class = "modal-close"
-	clsModalBody     Class = "modal-body"
+	clsModal         = NameModalDialog.Root()
+	clsModalBackdrop = NameModalDialog.Class(PartBackdrop)
+	clsModalContent  = NameModalDialog.Class(PartPanel)
+	clsModalHeader   = NameModalDialog.Class(PartHeader)
+	clsModalBody     = NameModalDialog.Class(PartBody)
+	clsModalClose    = NameModalDialog.Class(PartClose)
 )
 
 // ModalDialog represents a modal dialog component.
@@ -23,6 +34,9 @@ type ModalDialog struct {
 	Content Component
 	visible *SignalBool
 }
+
+func (m *ModalDialog) WidgetName() widget.Name { return NameModalDialog }
+func (m *ModalDialog) WidgetKind() widget.Kind { return widget.Dialog }
 
 func (m *ModalDialog) Init(_ Ctx) {
 	m.visible = NewBool(false)
@@ -47,6 +61,8 @@ func (m *ModalDialog) Render() *Element {
 
 	return Show(m.visible, func() *Element {
 		return Div().Set(clsModal.AsAttr()).
+			Attr("role", "dialog").
+			Attr("aria-modal", "true").
 			Child(Div().Set(clsModalBackdrop.AsAttr()).
 				On("click", func(e Event) { m.visible.Set(false) })).
 			Child(modalContent)
@@ -57,9 +73,7 @@ func (m *ModalDialog) Open() {
 	m.visible.Set(true)
 }
 
-// Close hides the dialog programmatically — for a host that needs to dismiss
-// it after an action completes (e.g. a confirm button), not just via the
-// built-in backdrop/× close.
+// Close hides the dialog programmatically.
 func (m *ModalDialog) Close() {
 	m.visible.Set(false)
 }
