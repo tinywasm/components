@@ -1,309 +1,347 @@
 ---
-PLAN: "components: rename the SSR style entry point from Style() to RenderCSS()"
-EXECUTOR: jules
-STATUS: running
-SESSION: 14427496519939977001
+PLAN: "components: migrate the eight component sheets to widget v0.4.0"
+EXECUTOR: unassigned
+STATUS: draft
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: **agents-workflow**.
 
-# Plan — `tinywasm/components`: one CSS entry point, `RenderCSS()`
+# Plan — `tinywasm/components`: migrate to `widget` v0.4.0
 
-Eight packages currently expose their visual sheet as `Style() *style.Sheet`. The rest of the
-ecosystem — `tinywasm/css`, `tinywasm/layout`, every app module — exposes it as
-`RenderCSS() *css.Stylesheet`. This plan collapses that into one.
+`tinywasm/widget` v0.4.0 is a closed-API breaking release. **All eight component
+packages fail to compile against it.** This plan is the mechanical part of that
+migration plus the three places where it is *not* mechanical.
 
-**Only the signature changes. The `style` DSL stays exactly as it is** — every rule body is
-copied verbatim; a `.Stylesheet()` call is appended to the chain.
+The upstream rename table is authoritative and is not restated here:
+[`widget/docs/MIGRATION.md`](https://github.com/tinywasm/widget/blob/main/docs/MIGRATION.md).
+Exact emitted output is in
+[`widget/docs/SPECS.md`](https://github.com/tinywasm/widget/blob/main/docs/SPECS.md).
 
----
-
-## 🚦 0. Blocking gate — do not start without this
-
-This plan requires `github.com/tinywasm/ssr` to be **published** without its `Style()`
-detection branch (see
-[`ssr/docs/PLAN.md`](https://github.com/tinywasm/ssr/blob/main/docs/PLAN.md)).
-
-Until that ships, the released extractor **hard-errors** on any package that imports
-`github.com/tinywasm/widget/style` and does not declare a `Style()` method — which is exactly
-the state this plan produces. Renaming first would break asset extraction for every consumer.
-
-**Mandatory check before stage 1:**
-
-```bash
-go list -m -versions github.com/tinywasm/ssr
-```
-
-Take the newest version and confirm the branch is gone:
-
-```bash
-go doc github.com/tinywasm/ssr 2>/dev/null
-grep -rn "widgetStylePkg\|HasStyle" "$(go env GOMODCACHE)"/github.com/tinywasm/ssr@*/invoke.go
-```
-
-That `grep` must print **nothing** for the newest `ssr@*` directory. If it prints matches, or if
-no `ssr` version newer than `v0.0.24` exists, **stop and report it**. Do not add a local
-`replace` to work around the gate.
+Every count below was measured by running
+`go get github.com/tinywasm/widget@v0.4.0 && go build ./...` against this
+repository, not estimated.
 
 ---
 
-## ⚠️ 1. Scope — read this before touching anything
+## ⚠️ 1. Scope
 
-Eight `css.go` files, their tests, `go.mod`, the root conformance test, and `docs/SKILL.md`. One
-change, no staged waits; the gate is a single `gotest` green at the end.
+Eight `css.go` files, their tests, `go.mod`, `conformance_test.go`, and the docs
+that teach the pattern.
 
 **FORBIDDEN — do not do any of this:**
 
 | Prohibition | Reason |
 |---|---|
-| Changing any styling rule | This is a rename. Every `style.On(...)`, `style.Pad(...)`, `Part(...)`, `When(...)`, `Cue(...)` argument stays byte-identical. A visual diff is a bug. |
-| Dropping the `style` DSL for hand-written CSS | The DSL is the typed harness and it stays. Only the method name and return type change. |
-| Dot-importing `github.com/tinywasm/css` | Use a named import. A dot-import would collide with the free function `css.RenderCSS()` and force contortions — that collision is the reason the old `AGENTS.md` rule existed. |
-| Removing the `github.com/tinywasm/widget/style` import | It is still needed: `style.Of(...)` builds the sheet. |
+| Changing a rule's *intent* | This is a migration. A part that was a `Panel` stays a `Panel`. Where the new API changes emitted output (§4), that is upstream's decision, not a licence to restyle. |
+| Adding a compatibility shim or alias | v0.4.0 is a single breaking release with no deprecation period. Recreating the old names defeats it. |
+| Dropping the `style` DSL for hand-written CSS | The DSL is the typed harness and it stays. |
 | Touching `//go:build !wasm` | Every `css.go` and `svg.go` keeps it. `css` and `widget/style` must never reach the WASM binary. |
-| Adding a `Style()` shim that calls `RenderCSS()` (or the reverse) | That recreates the two paths this plan deletes. |
-| Renaming component types, `Name*` constants, or `widget.Part*` values | Out of scope. |
+| Renaming component types or `Name*` constants | Out of scope. They stay — see §2.2. |
+| Reproducing an old shape with new names | Where v0.4.0 collapses several calls into one (`Interactive`, `RevealedBy`), use the collapsed form. |
 | Using `go test` | This repo uses `gotest`. |
 
 ---
 
-## 2. The transformation — exactly one shape
+## 2. Mechanical rewrites
 
-Current (`fieldset/css.go`):
+Find-and-replace, no judgement. Counts are actual occurrences across the eight
+`css.go` files.
 
-```go
-//go:build !wasm
+### 2.1 Renamed symbols
 
-package fieldset
-
-import (
-	"github.com/tinywasm/widget"
-	"github.com/tinywasm/widget/style"
-)
-
-// Style defines the fieldset widget visual contract using the style DSL.
-func (f *Fieldset) Style() *style.Sheet {
-	return style.Of(widget.NameField).
-		Root(
-			style.On(style.Panel),
-			style.Round(style.RadiusMd),
-		).
-		Part(widget.PartLabel,
-			style.On(style.Accent),
-		)
-}
-```
-
-After:
-
-```go
-//go:build !wasm
-
-package fieldset
-
-import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
-	"github.com/tinywasm/widget/style"
-)
-
-// RenderCSS defines the fieldset widget visual contract using the style DSL.
-func (f *Fieldset) RenderCSS() *css.Stylesheet {
-	return style.Of(widget.NameField).
-		Root(
-			style.On(style.Panel),
-			style.Round(style.RadiusMd),
-		).
-		Part(widget.PartLabel,
-			style.On(style.Accent),
-		).
-		Stylesheet()
-}
-```
-
-Three edits per file, nothing else:
-
-1. Add `"github.com/tinywasm/css"` to the import block.
-2. `func (r *T) Style() *style.Sheet` → `func (r *T) RenderCSS() *css.Stylesheet`, keeping the
-   **existing receiver name** unchanged.
-3. Append `.Stylesheet()` to the end of the returned chain.
-
-Update the doc comment's first word from `Style` to `RenderCSS`; keep the rest of the sentence.
-
-**Watch the chain terminator.** `Stylesheet()` goes on the **last** call of the builder chain,
-after the final `)` of the last `Part`/`When`/`Cue`. Some of these chains are long — read to the
-end of the `return` statement before editing.
-
----
-
-## 3. Stage 1 — the eight `css.go` files
-
-Each keeps its own receiver name. Apply §2 to all of them:
-
-| File | Receiver | Signature after |
+| Old | New | Uses |
 |---|---|---|
-| `actionbutton/css.go` | `b *ActionButton` | `func (b *ActionButton) RenderCSS() *css.Stylesheet` |
-| `contentcard/css.go` | `c *ContentCard` | `func (c *ContentCard) RenderCSS() *css.Stylesheet` |
-| `datatable/css.go` | `t *DataTable` | `func (t *DataTable) RenderCSS() *css.Stylesheet` |
-| `fieldset/css.go` | `f *Fieldset` | `func (f *Fieldset) RenderCSS() *css.Stylesheet` |
-| `modaldialog/css.go` | `m *ModalDialog` | `func (m *ModalDialog) RenderCSS() *css.Stylesheet` |
-| `selectsearch/css.go` | `c *SelectSearch` | `func (c *SelectSearch) RenderCSS() *css.Stylesheet` |
-| `targetlist/css.go` | `t *TargetList` | `func (t *TargetList) RenderCSS() *css.Stylesheet` |
-| `themetoggle/css.go` | `t *ThemeToggle` | `func (t *ThemeToggle) RenderCSS() *css.Stylesheet` |
+| `style.On(…)` | `style.As(…)` | 41 |
+| `style.Of(Name)` | `style.For(receiver)` — **takes the widget, not the name** | 8 |
+| `style.Sunken` | `style.Inset` | 6 |
+| `style.Accent` | `style.Primary` | 3 |
+| `style.Space0` | `style.SpaceNone` | 4 |
+| `style.Text(…)` | `style.FontSize(…)` | 4 |
+| `style.Scrolls()` | `style.Scroll()` | 2 |
+| `style.Fixed()` | `style.KeepSize()` | 2 |
+| `style.Cover()` | `style.FillCentered()` | 1 |
+| `style.Scrim()` | `style.Veil()` | 1 |
+| `style.Overlay` | `style.Popover` | 1 |
+| `style.Selected` (surface) | `style.Highlight` | 1 |
 
-`contentcard/css.go` and `modaldialog/css.go` import only `widget/style` today (no `widget`) —
-they gain `css` and keep it that way. Do not add a `widget` import they do not use.
+Unchanged, and used heavily — do not touch: `Pad` (15), `Round` (9), `Stack`,
+`Row`, `Raise`, `Fill`, `Clip`, `Backdrop`, `Width`, `FontWeight`, `Space1/2/3`,
+`Radius*`, `Text*`, `Weight*`, `Raised`, `Floating`, `Page`, `Panel`, `Danger`,
+`Secondary`, `Parent`, `Viewport`.
+
+### 2.2 `Of(Name)` → `For(Widget)`
+
+The sheet now needs the widget's `Kind`, not just its `Name`: stacking and
+validation both derive from it.
+
+```go
+// before
+func (t *TargetList) RenderCSS() *css.Stylesheet {
+    return style.Of(NameTargetList).
+
+// after
+func (t *TargetList) RenderCSS() *css.Stylesheet {
+    return style.For(t).
+```
+
+The `Name*` constants stay — `Render()` still uses them to build class
+attributes. They simply stop being the sheet's entry point.
+
+**`fieldset` is safe.** It passes `widget.NameField` — a name it does not own —
+but its `WidgetName()` already returns `widget.NameField`, so `style.For(f)`
+produces the identical name. Verified; no special handling needed.
+
+Some packages will no longer need their `widget` import once the name argument
+goes. Let `goimports` decide; do not add an import that is unused.
+
+### 2.3 Collapse the hover pairs into `Interactive`
+
+Seven `Cue(widget.Hover, …)` calls exist, each pairing a base surface with the
+`*Hover` twin of the same family. Those twins are unexported in v0.4.0:
+
+```go
+// before
+Part(PartRow, style.Row(style.Space2), style.On(style.Panel)).
+Cue(widget.Hover, PartRow, style.On(style.PanelHover)).
+
+// after
+Part(PartRow, style.Row(style.Space2), style.Interactive(style.Panel)).
+```
+
+| Family | Packages | Uses |
+|---|---|---|
+| `Panel` | `datatable`, `targetlist`, `selectsearch` | 3 |
+| `Primary` (was `Accent`) | `actionbutton`, `themetoggle` | 2 |
+| `Secondary` | `actionbutton` | 1 |
+| `Danger` | `actionbutton` | 1 |
+
+**This is a deliberate gain, not a like-for-like swap.** `Interactive` emits
+hover **and** focus-visible **and** press; the old code had hover only. The focus
+states are new — that is the accessibility improvement the upstream release
+exists to deliver — but look at them once rather than merging blind.
+
+`Interactive` is rejected on `Page` and `Inactive`. No component uses either
+interactively, so nothing here is affected.
+
+### 2.4 `Above()` is deleted
+
+`modaldialog` calls it once. Stacking now derives from `Kind`: the package
+declares `widget.Dialog`, which resolves to `--z-modal`. Delete the call and
+change nothing else.
+
+This is also a fix. The old hardcoded `z-index: 101` sat *below* a sticky element
+at `--z-sticky: 200`, so a sticky header could cover an open modal.
 
 ---
 
-## 4. Stage 2 — `go.mod`
+## 3. ⚠️ Not mechanical — `targetlist` will panic
 
-`github.com/tinywasm/css v0.3.0` is currently an **indirect** requirement. After stage 1 it is
-imported directly by eight packages, so `go mod tidy` moves it into the direct `require` block.
-Run `go mod tidy` and commit the result. Do not change the version.
-
-Expected direct block afterwards:
+**A compile-clean migration will not catch this.** After the renames,
+`targetlist` builds and then aborts at emission. Reproduced against v0.4.0:
 
 ```
-require (
-	github.com/tinywasm/css v0.3.0
-	github.com/tinywasm/dom v0.11.4
-	github.com/tinywasm/fmt v0.25.5
-	github.com/tinywasm/html v0.0.6
-	github.com/tinywasm/svg v0.1.8
-	github.com/tinywasm/widget v0.3.0
-)
+VALIDATE: sheet targetlist: part "panel": state Open is not meaningful for kind Listbox
+PANIC:    widget/style: sheet targetlist: part "panel": state Open is not meaningful for kind Listbox
 ```
 
-Do **not** add a `replace` directive.
+`Kind.Allows()` permits `Selected` and `Current` for a `Listbox` (plus the
+universal `Disabled`/`Locked`/`Busy`). `Open` belongs to `Menu`, `Dialog`,
+`Disclosure` and `Combobox`.
 
----
+`targetlist` declares `widget.Listbox` and uses `Open` to show and hide a
+backdrop. Because `ssr` calls `RenderCSS()` at build time, this aborts asset
+extraction for the **whole application**, not just this package.
 
-## 5. Stage 3 — tests
+**Three ways out. Decide before starting — it changes the diff.**
 
-Every call site of the form `X.Style().Stylesheet()` becomes `X.RenderCSS()`. The
-`.Stylesheet()` call moved into the method, so it must **not** remain at the call site.
+| Option | What it means | Cost |
+|---|---|---|
+| **A. Change the `Kind` to `Combobox`** | `Combobox` allows `Open`, `Selected` and `Invalid`. A list with a search field that expands over a backdrop *is* a combobox in WAI-ARIA terms. | `Role()` goes from `listbox` to `combobox`; confirm the markup's ARIA attributes agree |
+| **B. Split the widget** | The overlay panel becomes its own `Kind` — `Disclosure` or `Dialog` — and the list stays a `Listbox`. | Two sheets, two `Name`s. Truest to the anatomy, largest change |
+| **C. Widen `Allows` upstream** | Let `Listbox` accept `Open`. | Another `widget` release, and it is the wrong fix: ARIA gives the open/closed state to the combobox that *owns* a listbox, not to the listbox |
 
-| File | Lines (approximate) | Current | After |
+**Recommendation: A.** `selectsearch` already declares `widget.Combobox` for the
+same shape, so the suite already treats "list plus expanding panel" as a
+combobox. Avoid C — it would widen the very table that caught this bug.
+
+Whichever is chosen, the `Hidden()`/`Shown()` pair also collapses:
+
+```go
+// before — a pair split across two rules, with an ordering rule to remember
+Part(PartBackdrop, style.Backdrop(style.Viewport), style.Hidden()).
+When(widget.Open, PartBackdrop, style.Shown())
+
+// after — one call
+Part(PartBackdrop, style.Backdrop(style.Viewport), style.RevealedBy(widget.Open))
+```
+
+**The other seven are clean.** Measured `Kind`/state pairs:
+
+| Package | `Kind` | states used | verdict |
 |---|---|---|---|
-| `actionbutton/button_test.go` | 83 | `(&ActionButton{}).Style().Stylesheet().String()` | `(&ActionButton{}).RenderCSS().String()` |
-| `contentcard/card_test.go` | 108 | `c.Style().Stylesheet().String()` | `c.RenderCSS().String()` |
-| `datatable/table_test.go` | 101 | `dt.Style().Stylesheet().String()` | `dt.RenderCSS().String()` |
-| `fieldset/css_test.go` | 17, 51 | `(&Fieldset{}).Style().Stylesheet().String()` / `f.Style().Stylesheet().String()` | `(&Fieldset{}).RenderCSS().String()` / `f.RenderCSS().String()` |
-| `modaldialog/modaldialog_test.go` | 67, 124 | `md.Style().Stylesheet().String()` | `md.RenderCSS().String()` |
-| `selectsearch/selectsearch_test.go` | 144 | `ss.Style().Stylesheet().String()` | `ss.RenderCSS().String()` |
-| `targetlist/targetlist_test.go` | 70, 132 | `tl.Style().Stylesheet().String()` | `tl.RenderCSS().String()` |
-| `themetoggle/themeswitch_test.go` | 69, 121 | `ts.Style().Stylesheet()` / `tt.Style().Stylesheet().String()` | `ts.RenderCSS()` / `tt.RenderCSS().String()` |
-
-Line numbers are a starting point, not an authority — resolve every occurrence with
-`grep -rn "\.Style()" .` and leave none behind.
-
-**Assertions do not change.** The emitted CSS is identical, so every `strings.Contains` check
-keeps its expected substring. If an assertion starts failing, the rule body was altered in
-stage 1 — fix the rule, not the assertion.
-
-**Anti-footgun:** several tests use a local variable named `css` (`css := tl.Style()...`).
-Go imports are file-scoped, so a `css` variable in `targetlist_test.go` does **not** collide with
-the `css` package imported by `targetlist/css.go`. Leave those variable names alone — renaming
-them is churn.
-
-`themetoggle/themeswitch_test.go:67` is named `TestRenderCSS_NotEmpty` and
-`fieldset/css_test.go:16` is named `TestRenderCSS_StylesFieldset`. Both names become accurate
-again; keep them.
+| `fieldset` | `Form` | `Invalid`, `Locked` | OK — `Invalid` allowed, `Locked` universal |
+| `targetlist` | `Listbox` | `Open`, `Selected` | **`Open` rejected** |
+| the other six | `Region` / `Grid` / `Dialog` / `Combobox` | none | OK |
 
 ---
 
-## 6. Stage 4 — root conformance test
+## 4. ⚠️ Not mechanical — two silent appearance changes
 
-`conformance_test.go` is an AST walker over the repo. Add one check to it so the old shape can
-never come back:
+Neither produces a compile error.
 
-> For every package directory containing a `css.go`, the file declares **exactly one** method
-> named `RenderCSS` and **no** method named `Style`.
+### 4.1 Surfaces now carry a radius
 
-Fail with a message that states the file and what was found, e.g.
-`components/foo/css.go: declares Style(); the SSR CSS entry point is RenderCSS() *css.Stylesheet`.
+In v0.4.0 a surface resolves background, text, border **and radius**. Every
+`As(Panel)` gains `border-radius: var(--radius-md)`; `As(Primary)`, `As(Inset)`
+and the rest gain `--radius-sm`, unless the rule already overrides it.
 
-Resolve `css.go` by walking the repo the same way the existing checks in that file do — reuse
-its helpers rather than adding a second directory walk. Detect the method through the AST
-(`*ast.FuncDecl` with a non-nil `Recv`), never by matching selector text.
+Measured exposure — surface applications versus explicit `Round()` calls:
 
----
-
-## 7. Stage 5 — `docs/SKILL.md`
-
-This file teaches the pattern, so it currently teaches the wrong one. Update:
-
-| Line | Current | After |
+| Package | surfaces | explicit `Round()` |
 |---|---|---|
-| 3 (`description:`) | `Pattern based on style.Styler and widget package visual-contract.` | `Pattern based on RenderCSS() and the widget package visual-contract.` |
-| 14 | `…is done by implementing style.Styler using the typed style.Sheet DSL.` | `…is done by declaring RenderCSS() *css.Stylesheet, built with the typed style.Sheet DSL.` |
-| 40 | `├── css.go           # !wasm only: Style() *style.Sheet visual sheet` | `├── css.go           # !wasm only: RenderCSS() *css.Stylesheet visual sheet` |
-| 82 | `…and optional style.Styler in a tagged !wasm file…` | `…and optionally declares RenderCSS() in a tagged !wasm file…` |
-| 95 | `func (l *TargetList) Style() *style.Sheet {` | `func (l *TargetList) RenderCSS() *css.Stylesheet {` — and the example's chain gains `.Stylesheet()` plus the `css` import |
+| `targetlist` | 10 | 2 |
+| `selectsearch` | 8 | 1 |
+| `actionbutton` | 6 | 1 |
+| `fieldset` | 6 | 2 |
+| `datatable` | 3 | **0** |
+| `contentcard` | 2 | 1 |
+| `modaldialog` | 2 | 1 |
+| `themetoggle` | 2 | 1 |
 
-Any other `Styler` / `Style()` mention in `docs/SKILL.md`, `docs/CATALOG.md`,
-`docs/DOCUMENTATION.md` or a component `README.md` gets the same treatment. Find them with
-`grep -rn "Styler\|Style()" docs/ */README.md README.md`.
+About thirty rules gain a corner radius they did not have. Most will look right —
+that is the point of the change — but **`datatable` has no explicit radius
+anywhere and its cells will now round**. Add `style.Round(style.RadiusNone)`
+wherever square is intended, and look at a rendered table before merging.
 
-**Do not** change `fieldset/fieldset.go:9` — its comment already says `RenderCSS()` and becomes
-correct on its own.
+Padding is unaffected: it was never folded into surfaces, and the fifteen `Pad()`
+calls stay exactly as they are.
+
+### 4.2 Focus rings arrive globally
+
+`tinywasm/css` now owns a single global `:focus-visible` rule using
+`--color-focus-ring`, and `Interactive()` adds a per-family focus background.
+Components that previously showed no focus affordance will start showing one.
+That is the intended fix — verify it looks deliberate rather than reverting it.
+
+### 4.3 The palette changed
+
+Step 1 pulls a newer `css` transitively. Its contrast-corrected palette changes
+several colours — `--color-primary`, `--color-success` and `--color-error` among
+them — because the previous values failed WCAG AA at the colours that actually
+rendered. Expect a visual diff on brand colours and do not treat it as a
+regression.
+
+---
+
+## 5. `actionbutton/button.go`
+
+The only non-`css.go` file that mentions the migrated API:
+
+```go
+var variantCls widget.Class
+```
+
+`widget.Class` still exists in v0.4.0 with the same shape, so this compiles
+unchanged. **No action required** — listed only so it is not mistaken for an
+oversight during review.
+
+---
+
+## 6. Implementation order
+
+One package per commit, so a visual regression is bisectable.
+
+| # | Stage | Files | Gate |
+|---|---|---|---|
+| 0 | **Decide §3** — the `targetlist` `Kind` | — | recorded in the PR description |
+| 1 | Bump | `go.mod`, `go.sum` | `go mod tidy` clean |
+| 2 | The five straightforward packages: `contentcard`, `themetoggle`, `actionbutton`, `datatable`, `fieldset` | 5 `css.go` | each compiles |
+| 3 | `modaldialog` — adds `Above()` deletion and the `Cover`/`Scrim`/`Fixed`/`Overlay` renames | `modaldialog/css.go` | compiles |
+| 4 | `selectsearch` — largest surface count | `selectsearch/css.go` | compiles |
+| 5 | `targetlist` — the §3 decision plus `RevealedBy` | `targetlist/css.go` | **emits without panicking** |
+| 6 | Test call sites | 8 `*_test.go` | compiles |
+| 7 | `conformance_test.go` — add the §7 guards | root | `gotest` green |
+| 8 | Docs | `docs/SKILL.md`, `docs/CATALOG.md`, `*/README.md` | §8.5 empty |
+
+Stage 1 is `go get github.com/tinywasm/widget@v0.4.0 && go mod tidy`. Do not add
+a `replace` directive.
+
+Stage 5 is the real gate: it is the only stage whose failure mode is a panic
+rather than a compile error.
+
+---
+
+## 7. Test strategy
+
+| Test | Asserts |
+|---|---|
+| `TestEveryPackageEmits` | every package's `RenderCSS()` runs on a **zero value** without panicking. This is what catches §3; a compile-only check does not. |
+| `TestKindAllowsEveryState` | table-driven: for each package, every state passed to `When()` satisfies its own `Kind.Allows()`, so §3 cannot recur when a component gains a state |
+| `TestNoRemovedSymbols` | no `css.go` contains `style.On(`, `style.Of(`, `Hidden()`, `Shown()`, `Above()`, `Scrim()`, `Cover()`, `Fixed()`, `Scrolls()`, `style.Accent`, `style.Sunken` |
+| `TestNoHoverCuePairs` | no `Cue(widget.Hover, …)` remains — all seven collapsed into `Interactive` |
+| existing `conformance_test.go` | extend, do not replace. Its no-colour-literal / no-viewport-unit checks must keep passing untouched. |
+
+`TestEveryPackageEmits` matters most. The migration's failure mode is *compiling
+successfully and then aborting extraction*, and only calling `RenderCSS()` on
+each package finds it.
+
+Existing assertions in the per-package tests **will** need their expected
+substrings updated where §4 changes the output — that is the one place this
+migration legitimately edits an assertion, unlike the previous plan. Change the
+expectation only after confirming the new output is what §4 predicts.
 
 ---
 
 ## 8. Acceptance criteria — grep-verifiable
 
 1. `gotest` green.
-2. `grep -rn "func .*) Style()" --include='*.go' .` → **empty**.
-3. `grep -rn "\.Style()\|Styler" --include='*.go' .` → **empty**.
-4. `grep -rn "Styler\|Style()" docs/ *.md */README.md` → **empty**. Both spellings, not just
-   `Styler`: `docs/SKILL.md` carries each of them in different places (§7).
-5. `grep -rln "func .*) RenderCSS() \*css.Stylesheet" --include='css.go' .` → **exactly 8 files**.
-6. `grep -rn "Stylesheet()" --include='*_test.go' .` → **empty** (the call moved into the method).
-7. `grep -c "go:build !wasm" */css.go` → **1 for each of the 8 files**.
-8. `GOOS=js GOARCH=wasm go list -deps ./...` contains **neither** `github.com/tinywasm/css` **nor**
-   `github.com/tinywasm/widget/style`.
+2. `go build ./...` → clean. The failing-package count goes **8 → 0**.
+3. `grep -rn "style\.On(\|style\.Of(\|style\.Accent\|style\.Sunken\|Hidden()\|Shown()\|Above()\|Scrim()\|Cover()\|style\.Fixed()\|Scrolls()" --include='*.go' .` → **empty**.
+4. `grep -rn "Cue(widget.Hover" --include='*.go' .` → **empty**.
+5. `grep -rn "style\.Of\|style\.On\|Styler" docs/ *.md */README.md` → **empty**.
+6. `grep -rl "style.For(" --include='css.go' .` → **exactly 8 files**.
+7. `grep -c "go:build !wasm" */css.go` → **1 for each of the 8**.
+8. `GOOS=js GOARCH=wasm go list -deps ./...` contains **neither** `github.com/tinywasm/css` **nor** `github.com/tinywasm/widget/style`.
 9. `grep -nE '^[[:space:]]*replace' go.mod` → **empty**.
-10. The emitted CSS is unchanged: for each component, the string produced by `RenderCSS()` equals
-    what `Style().Stylesheet()` produced before. Verified by every existing assertion in stage 3
-    passing **without editing its expected substrings**.
+10. `go.mod` requires `github.com/tinywasm/widget v0.4.0` and no `v0.3.x`.
 
 ---
 
 ## 9. Go quality checklist (mandatory)
 
-- No repeated string literals: classes still derive from `widget.Name` via `.Root()` /
-  `.Class(Part)`. No new `"…"` class literal appears anywhere.
+- No repeated string literals: classes still derive from `widget.Name` via
+  `.Root()` / `.Class(Part)`. No new `"…"` class literal appears anywhere.
 - Errors via `github.com/tinywasm/fmt`, never stdlib `errors`/`fmt`.
-  **Anti-footgun:** `conformance_test.go` is a `!wasm` test that already imports stdlib
-  `fmt`, `go/ast`, `go/parser`, `go/token`. That is legitimate for repo tooling — do **not**
-  "fix" those imports.
+  **Anti-footgun:** `conformance_test.go` is a `!wasm` test that already imports
+  stdlib `fmt`, `go/ast`, `go/parser`, `go/token`. That is legitimate repo
+  tooling — do **not** "fix" those imports.
 - `//go:build !wasm` preserved on every `css.go` and `svg.go`.
 - Zero `any`, zero `map` in new API.
-- No color literal (`#rrggbb`, `rgb(`, `hsl(`), no viewport unit (`vw`/`vh`), no `Media(`, no
-  `RawRule(`, no `Str(` is introduced. The existing conformance test already enforces this —
-  it must keep passing untouched.
+- No colour literal (`#rrggbb`, `rgb(`, `hsl(`), no viewport unit (`vw`/`vh`) is
+  introduced. The existing conformance test enforces this and must keep passing
+  untouched.
 
 ---
 
-## 10. Stages table
+## 10. Coordination
 
-| # | Stage | Files | Gate |
-|---|---|---|---|
-| 0 | *(gate)* `ssr` published without the `Style()` branch | — | `grep` in §0 prints nothing |
-| 1 | Rename in the eight `css.go` | `*/css.go` | `go build ./...` |
-| 2 | `go.mod` | `go.mod`, `go.sum` | `go mod tidy` clean |
-| 3 | Test call sites | 8 `*_test.go` | compiles |
-| 4 | Conformance guard | `conformance_test.go` | `gotest` green |
-| 5 | Docs | `docs/SKILL.md`, other `.md` | §8.4 empty |
-
-Sequential. Stage 4 is the real gate.
+- **`tinywasm/widget` v0.4.0** — published. Nothing pending.
+- **`tinywasm/css`** — pulled transitively by stage 1. The palette change is
+  intended (§4.3).
+- **`tinywasm/ssr`** — has an unshipped plan (E-7) to recover per producer and
+  name the offending package on panic. Until it lands, a §3-style panic surfaces
+  as a stack trace inside generated code. **Worth landing first if this migration
+  is executed by an agent**, since it turns a confusing failure into a named one.
+- **`tinywasm/form`** — the other `widget` consumer. `NameField` and its parts are
+  unchanged, but any sheet it owns needs this same migration. Not in scope here;
+  check it before tagging the suite.
 
 ---
 
-## 11. Downstream — informational, not this agent's work
+## 11. Note on the previous plan
 
-Once this is published, [`tinywasm/layout`](https://github.com/tinywasm/layout) can run its own
-visual-contract migration; its `docs/PLAN.md` gate points at the version published from this
-plan. `tinywasm/widget` deletes the now-unused `style.Styler` interface under its own plan. Do
-not attempt either from this repo.
+The plan this file replaces — `Style()` → `RenderCSS()` — is **complete**. Its
+acceptance criteria were re-verified before overwriting: no `Style()` method
+remains, no `.Style()` or `Styler` reference remains in any `.go` file, and all
+eight `css.go` declare `RenderCSS() *css.Stylesheet`. Its only surviving mentions
+were inside the plan document itself.
