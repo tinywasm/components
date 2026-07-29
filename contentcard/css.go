@@ -9,10 +9,10 @@ import (
 
 // RenderCSS defines the visual sheet for contentcard.
 func (c *ContentCard) RenderCSS() *css.Stylesheet {
-	return style.Of(NameContentCard).
+	return style.For(c).
 		Root(
-			style.Stack(style.Space0),
-			style.On(style.Panel),
+			style.Stack(style.SpaceNone),
+			style.As(style.Panel),
 			style.Round(style.RadiusMd),
 			style.Raise(style.Raised),
 		).
@@ -26,7 +26,7 @@ func (c *ContentCard) RenderCSS() *css.Stylesheet {
 		).
 		Part(PartFooter,
 			style.Pad(style.Space2),
-			style.On(style.Sunken),
+			style.As(style.Inset),
 		).
 		Stylesheet()
 }

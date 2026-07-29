@@ -10,36 +10,36 @@ import (
 
 // RenderCSS defines the fieldset widget visual contract using the style DSL.
 func (f *Fieldset) RenderCSS() *css.Stylesheet {
-	return style.Of(widget.NameField).
+	return style.For(f).
 		Root(
-			style.On(style.Panel),
+			style.As(style.Panel),
 			style.Round(style.RadiusMd),
 			style.Pad(style.Space3),
 			style.Stack(style.Space2),
 		).
 		Part(widget.PartLabel,
-			style.On(style.Accent),
+			style.As(style.Primary),
 			style.Round(style.RadiusSm),
-			style.Text(style.TextXs),
+			style.FontSize(style.TextXs),
 			style.FontWeight(style.WeightBold),
 			style.Raise(style.Raised),
 		).
 		Part(widget.PartError,
-			style.On(style.Danger),
-			style.Text(style.TextXs),
+			style.As(style.Danger),
+			style.FontSize(style.TextXs),
 		).
 		Part(widget.PartInput,
-			style.On(style.Panel),
+			style.As(style.Panel),
 		).
 		Part(widget.PartRadioGroup,
 			style.Row(style.Space3),
 			style.Pad(style.Space1),
 		).
 		When(widget.Locked, "",
-			style.On(style.Sunken),
+			style.As(style.Inset),
 		).
 		When(widget.Invalid, "",
-			style.On(style.Danger),
+			style.As(style.Danger),
 		).
 		Stylesheet()
 }

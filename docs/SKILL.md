@@ -17,15 +17,15 @@ With the construction harness closed, styling components in the TinyWasm ecosyst
 
 | To achieve… | Use |
 |---|---|
-| A card over the page background | `On(Panel)` |
-| A sunken well inside a card | `On(Sunken)` |
+| A card over the page background | `As(Panel)` |
+| A sunken well inside a card | `As(Inset)` |
 | Vertical layout rhythm | `Stack(Space2)` |
 | Two panels that stack on mobile | `Split(style.RatioTwoThirds, Space2)` |
 | A grid that auto-fits its columns | `Grid(TrackMd, Space2)` |
 | Make element take up all available height | `Fill()` |
-| Enable internal scroll instead of expanding | `Scrolls()` |
-| Keep layout fixed (do not reflow on mobile) | `Fixed()` |
-| Highlight a selected row / part | `When(widget.Selected, partRow, On(Selected))` |
+| Enable internal scroll instead of expanding | `Scroll()` |
+| Keep layout fixed (do not reflow on mobile) | `KeepSize()` |
+| Highlight a selected row / part | `When(widget.Selected, partRow, As(Highlight))` |
 
 ---
 
@@ -93,12 +93,11 @@ func (l *TargetList) WidgetName() widget.Name { return nameTargetList }
 func (l *TargetList) WidgetKind() widget.Kind { return widget.Listbox }
 
 func (l *TargetList) RenderCSS() *css.Stylesheet {
-	return style.Of(nameTargetList).
-		Root(Stack(Space1), On(Sunken), Scrolls(), Round(RadiusMd)).
-		Part(partRow, Row(Space2), On(Panel), Pad(Space2), Round(RadiusSm)).
-		Part(partMenu, Stack(Space0), On(Panel), Raise(Floating), Clip()).
-		When(widget.Selected, partRow, On(Selected)).
-		Cue(widget.Hover, partRow, On(PanelHover)).
+	return style.For(l).
+		Root(Stack(Space1), As(Inset), Scroll(), Round(RadiusMd)).
+		Part(partRow, Row(Space2), Interactive(Panel), Pad(Space2), Round(RadiusSm)).
+		Part(partMenu, Stack(SpaceNone), As(Panel), Raise(Floating), HideOverflow()).
+		When(widget.Selected, partRow, As(Highlight)).
 		Stylesheet()
 }
 ```

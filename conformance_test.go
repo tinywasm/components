@@ -12,6 +12,17 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	"github.com/tinywasm/components/actionbutton"
+	"github.com/tinywasm/components/contentcard"
+	"github.com/tinywasm/components/datatable"
+	"github.com/tinywasm/components/fieldset"
+	"github.com/tinywasm/components/modaldialog"
+	"github.com/tinywasm/components/selectsearch"
+	"github.com/tinywasm/components/targetlist"
+	"github.com/tinywasm/components/themetoggle"
+	"github.com/tinywasm/css"
+	"github.com/tinywasm/widget"
 )
 
 // Allowed CSS variables in github.com/tinywasm/css v0.2.0 (and widget/style)
@@ -292,6 +303,194 @@ func TestConformance(t *testing.T) {
 		return nil
 	})
 
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestEveryPackageEmits(t *testing.T) {
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("RenderCSS panicked: %v", r)
+		}
+	}()
+
+	components := []interface {
+		RenderCSS() *css.Stylesheet
+	}{
+		&actionbutton.ActionButton{},
+		&contentcard.ContentCard{},
+		&datatable.DataTable{},
+		&fieldset.Fieldset{},
+		&modaldialog.ModalDialog{},
+		&selectsearch.SelectSearch{},
+		&targetlist.TargetList{},
+		&themetoggle.ThemeToggle{},
+	}
+
+	for _, c := range components {
+		name := fmt.Sprintf("%T", c)
+		t.Run(name, func(t *testing.T) {
+			sheet := c.RenderCSS()
+			if sheet == nil {
+				t.Error("RenderCSS returned nil")
+			}
+		})
+	}
+}
+
+func TestKindAllowsEveryState(t *testing.T) {
+	packageComponents := map[string]interface {
+		WidgetKind() widget.Kind
+	}{
+		"actionbutton": &actionbutton.ActionButton{},
+		"contentcard":  &contentcard.ContentCard{},
+		"datatable":    &datatable.DataTable{},
+		"fieldset":     &fieldset.Fieldset{},
+		"modaldialog":  &modaldialog.ModalDialog{},
+		"selectsearch": &selectsearch.SelectSearch{},
+		"targetlist":   &targetlist.TargetList{},
+		"themetoggle":  &themetoggle.ThemeToggle{},
+	}
+
+	stateMap := map[string]widget.State{
+		"Selected": widget.Selected,
+		"Disabled": widget.Disabled,
+		"Locked":   widget.Locked,
+		"Invalid":  widget.Invalid,
+		"Busy":     widget.Busy,
+		"Open":     widget.Open,
+		"Current":  widget.Current,
+	}
+
+	for pkg, comp := range packageComponents {
+		t.Run(pkg, func(t *testing.T) {
+			path := filepath.Join(pkg, "css.go")
+			fset := token.NewFileSet()
+			node, err := parser.ParseFile(fset, path, nil, parser.AllErrors)
+			if err != nil {
+				t.Fatalf("failed to parse %s: %v", path, err)
+			}
+
+			kind := comp.WidgetKind()
+
+			ast.Inspect(node, func(n ast.Node) bool {
+				call, ok := n.(*ast.CallExpr)
+				if !ok {
+					return true
+				}
+
+				// Check if this is a call to a function/method
+				var funcName string
+				if ident, ok := call.Fun.(*ast.Ident); ok {
+					funcName = ident.Name
+				} else if sel, ok := call.Fun.(*ast.SelectorExpr); ok {
+					funcName = sel.Sel.Name
+				}
+
+				if funcName != "When" && funcName != "RevealedBy" {
+					return true
+				}
+
+				// The state argument is the first argument for When, or the only argument for RevealedBy
+				if len(call.Args) == 0 {
+					return true
+				}
+				arg := call.Args[0]
+
+				// Look for widget.State
+				if sel, ok := arg.(*ast.SelectorExpr); ok {
+					if ident, ok := sel.X.(*ast.Ident); ok && ident.Name == "widget" {
+						stateName := sel.Sel.Name
+						if stateVal, ok := stateMap[stateName]; ok {
+							if !kind.Allows(stateVal) {
+								t.Errorf("%s: part/rule uses state %q which is not allowed by its kind %q", path, stateName, kind.String())
+							}
+						}
+					}
+				}
+				return true
+			})
+		})
+	}
+}
+
+func TestNoRemovedSymbols(t *testing.T) {
+	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			if info.Name() == "docs" || info.Name() == ".git" || info.Name() == "web" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, "css.go") {
+			return nil
+		}
+
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		str := string(content)
+
+		forbidden := []string{
+			"style.On(",
+			"style.Of(",
+			"Hidden()",
+			"Shown()",
+			"Above()",
+			"Scrim()",
+			"Cover()",
+			"Fixed()",
+			"Scrolls()",
+			"style.Accent",
+			"style.Sunken",
+		}
+
+		for _, term := range forbidden {
+			if strings.Contains(str, term) {
+				t.Errorf("%s: contains forbidden term %q", path, term)
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestNoHoverCuePairs(t *testing.T) {
+	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
+		if err != nil {
+			return err
+		}
+		if info.IsDir() {
+			if info.Name() == "docs" || info.Name() == ".git" || info.Name() == "web" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(path, "css.go") {
+			return nil
+		}
+
+		content, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		str := string(content)
+
+		// Check for Cue(widget.Hover
+		if strings.Contains(strings.ReplaceAll(str, " ", ""), "Cue(widget.Hover") {
+			t.Errorf("%s: contains forbidden Cue(widget.Hover)", path)
+		}
+
+		return nil
+	})
 	if err != nil {
 		t.Fatal(err)
 	}

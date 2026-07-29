@@ -4,27 +4,27 @@ package datatable
 
 import (
 	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
 )
 
 // RenderCSS defines the datatable visual contract using the style DSL.
 func (t *DataTable) RenderCSS() *css.Stylesheet {
-	return style.Of(NameDataTable).
+	return style.For(t).
 		Root(
 			style.Width(style.Full),
-			style.On(style.Panel),
+			style.As(style.Panel),
+			style.Round(style.RadiusNone),
 		).
 		Part(PartHeader,
-			style.On(style.Sunken),
+			style.As(style.Inset),
 			style.FontWeight(style.WeightBold),
 			style.Pad(style.Space2),
+			style.Round(style.RadiusNone),
 		).
 		Part(PartRow,
 			style.Pad(style.Space2),
-		).
-		Cue(widget.Hover, PartRow,
-			style.On(style.PanelHover),
+			style.Interactive(style.Panel),
+			style.Round(style.RadiusNone),
 		).
 		Stylesheet()
 }

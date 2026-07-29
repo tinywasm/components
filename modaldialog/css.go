@@ -9,22 +9,21 @@ import (
 
 // RenderCSS defines the modaldialog visual contract using the style DSL.
 func (m *ModalDialog) RenderCSS() *css.Stylesheet {
-	return style.Of(NameModalDialog).
+	return style.For(m).
 		Root(
 			style.Fill(),
-			style.Fixed(),
-			style.Cover(),
-			style.On(style.Page),
+			style.KeepSize(),
+			style.FillCentered(),
+			style.As(style.Page),
 		).
 		Part(PartBackdrop,
 			style.Backdrop(style.Parent),
-			style.Scrim(),
+			style.Veil(),
 		).
 		Part(PartPanel,
-			style.Above(),
-			style.On(style.Panel),
+			style.As(style.Panel),
 			style.Round(style.RadiusLg),
-			style.Raise(style.Overlay),
+			style.Raise(style.Popover),
 			style.Pad(style.Space3),
 		).
 		Part(PartHeader,
@@ -34,7 +33,7 @@ func (m *ModalDialog) RenderCSS() *css.Stylesheet {
 			style.Stack(style.Space1),
 		).
 		Part(PartClose,
-			style.On(style.Panel),
+			style.As(style.Panel),
 		).
 		Stylesheet()
 }

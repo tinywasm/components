@@ -70,7 +70,7 @@ type TargetList struct {
 }
 
 func (t *TargetList) WidgetName() widget.Name { return NameTargetList }
-func (t *TargetList) WidgetKind() widget.Kind { return widget.Listbox }
+func (t *TargetList) WidgetKind() widget.Kind { return widget.Combobox }
 
 // ensure lazily creates the reactive state so a host may call SetItems before the
 // framework mounts the component (both Init and SetItems are safe in any order).
