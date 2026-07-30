@@ -24,13 +24,19 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.Backdrop(style.Viewport),
 			style.RevealedBy(widget.Open),
 		).
+		// One line per row: the label takes the free space and pushes the badge
+		// and the menu affordance to the trailing edge. Without a flow the <li>
+		// falls back to display:list-item and the menu, a block-level <details>,
+		// drops onto a second full-width line.
 		Part(PartRow,
+			style.Row(style.Space2),
 			style.Interactive(style.Panel),
 			style.Pad(style.Space3),
 			style.Round(style.RadiusMd),
 		).
 		Part(PartLabel,
-			style.As(style.Panel),
+			style.As(style.Subtle),
+			style.Grow(),
 		).
 		Part(PartBadge,
 			style.As(style.Inset),
@@ -38,16 +44,17 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.FontSize(style.TextXs),
 		).
 		Part(PartMenu,
-			style.As(style.Panel),
+			style.As(style.Subtle),
+			style.KeepSize(),
 		).
 		Part(PartButton,
-			style.As(style.Panel),
+			style.As(style.Subtle),
 		).
 		// IconBox is not optional: a bare <svg> with no width or height falls
 		// back to the replaced-element default of 300x150 and drags the whole
 		// row open with it.
 		Part(PartIcon,
-			style.As(style.Panel),
+			style.As(style.Subtle),
 			style.IconBox(style.IconMd),
 		).
 		Part(PartOptions,

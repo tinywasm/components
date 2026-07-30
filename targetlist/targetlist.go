@@ -182,9 +182,6 @@ func (t *TargetList) buildRow(it Item) *Element {
 	})
 
 	row.Child(Span().Set(clsLabel.AsAttr()).Text(it.Label))
-	if it.Description != "" {
-		row.Child(Span().Set(clsBadge.AsAttr()).Text(it.Description))
-	}
 
 	// ⋮ options menu — native <details> so open/close is CSS-only. The clicks
 	// stopPropagation so opening the menu or picking an option never selects the
@@ -220,7 +217,12 @@ func (t *TargetList) buildRow(it Item) *Element {
 		t.menuOpen.Set(t.anyMenuOpen())
 	})
 
+	// The menu sits on the label's line and the badge after it, so a row that
+	// runs out of width wraps the badge rather than the affordance.
 	row.Child(menu)
+	if it.Description != "" {
+		row.Child(Span().Set(clsBadge.AsAttr()).Text(it.Description))
+	}
 
 	return row
 }
