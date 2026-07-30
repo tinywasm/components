@@ -71,18 +71,22 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.As(style.Subtle),
 			style.IconBox(style.IconMd),
 		).
-		// Fixed to the viewport, not anchored to the row. Six ancestors between
-		// the row and the screen carry overflow — the list's own <ul>, crudview's
-		// list and aside, the platform panel and stage, the shell root — and an
-		// absolutely positioned panel is clipped by every one of them. Only
-		// `fixed` escapes. The backdrop above is what closes it.
+		// On a wide screen the menu hangs off the row it belongs to.
 		Part(PartOptions,
 			style.Stack(style.SpaceNone),
 			style.As(style.Panel),
 			style.Raise(style.Floating),
-			// SideStart, not SideEnd: the trailing corner is where a host's
-			// floating action button sits, and the two would land on top of
-			// each other.
+			style.Flyout(style.SideEnd),
+		).
+		// On a phone it becomes an action sheet fixed to the screen instead.
+		// Six ancestors between the row and the viewport carry overflow — the
+		// list's own <ul>, crudview's list and aside, the platform panel and
+		// stage, the shell root — and on a narrow screen there is no room to
+		// hang a panel off a row without it landing outside one of them. Only
+		// `fixed` escapes. Leading corner, because the trailing one is where a
+		// host's floating action button sits.
+		On(css.Mobile, PartOptions,
+			style.Stack(style.SpaceNone),
 			style.Docked(style.Viewport, style.EdgeBottom, style.SideStart, style.Space4),
 		).
 		Part(PartItem,
