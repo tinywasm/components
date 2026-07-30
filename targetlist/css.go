@@ -55,7 +55,7 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 		Part(PartMenu,
 			style.As(style.Subtle),
 			style.KeepSize(),
-			style.Docked(style.EdgeTop, style.SideEnd, style.Space2),
+			style.Docked(style.Parent, style.EdgeTop, style.SideEnd, style.Space2),
 		).
 		Part(PartButton,
 			style.Interactive(style.Subtle),
