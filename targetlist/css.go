@@ -43,8 +43,12 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 		Part(PartButton,
 			style.As(style.Panel),
 		).
+		// IconBox is not optional: a bare <svg> with no width or height falls
+		// back to the replaced-element default of 300x150 and drags the whole
+		// row open with it.
 		Part(PartIcon,
 			style.As(style.Panel),
+			style.IconBox(style.IconMd),
 		).
 		Part(PartOptions,
 			style.Stack(style.SpaceNone),
