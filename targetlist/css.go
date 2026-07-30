@@ -35,13 +35,17 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.Round(style.RadiusMd),
 		).
 		Part(PartLabel,
-			style.As(style.Subtle),
+			style.FontWeight(style.WeightBold),
 			style.Grow(),
 		).
+		// PushEnd because the badge wraps onto its own line under the label:
+		// nothing is left beside it to push it, so the free space goes in front.
 		Part(PartBadge,
 			style.As(style.Inset),
 			style.Round(style.RadiusSm),
 			style.FontSize(style.TextXs),
+			style.PushEnd(),
+			style.KeepSize(),
 		).
 		Part(PartMenu,
 			style.As(style.Subtle),
