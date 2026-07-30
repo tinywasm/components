@@ -1,5 +1,5 @@
-github.com/tinywasm/css v0.4.0 h1:vpkTI6D7l7eiEROrfYkYvveakFyttvg05vjop5YHGXA=
-github.com/tinywasm/css v0.4.0/go.mod h1:yEE72kT1GaC67CDvMaqQ62Vq6xNIOjdYAGcxp+qo1pk=
+github.com/tinywasm/css v0.4.1 h1:jtqxoNgNMk/lqt59Vq7lo3TAe/UvfLmhnRov65y3hZo=
+github.com/tinywasm/css v0.4.1/go.mod h1:yEE72kT1GaC67CDvMaqQ62Vq6xNIOjdYAGcxp+qo1pk=
 github.com/tinywasm/dom v0.11.4 h1:I2fFjnMi7WwTw8b0pYikj5SpvGbpOCOoMjJ2HfLx/EQ=
 github.com/tinywasm/dom v0.11.4/go.mod h1:86HXXsAgsM35cFmlGaXXVhRmo1+ee7Ks4szUSep9Yes=
 github.com/tinywasm/fmt v0.25.5 h1:2nBU5H1lszhkGIusm7m4S+rGM2rPiIJkhvQqwqN17qo=
