@@ -46,6 +46,8 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.As(style.Inset),
 			style.Round(style.RadiusSm),
 			style.FontSize(style.TextXs),
+			style.ChipBox(),
+			style.CenterContent(),
 			style.KeepSize(),
 			style.OnEdge(style.EdgeBottom, style.SideEnd, style.SpaceNone, style.Space3),
 		).
@@ -69,14 +71,19 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.As(style.Subtle),
 			style.IconBox(style.IconMd),
 		).
-		// Flyout, not flow: an inline dropdown pushes every row below it down and
-		// the list jumps out from under the pointer that opened it.
+		// Fixed to the viewport, not anchored to the row. Six ancestors between
+		// the row and the screen carry overflow — the list's own <ul>, crudview's
+		// list and aside, the platform panel and stage, the shell root — and an
+		// absolutely positioned panel is clipped by every one of them. Only
+		// `fixed` escapes. The backdrop above is what closes it.
 		Part(PartOptions,
 			style.Stack(style.SpaceNone),
 			style.As(style.Panel),
 			style.Raise(style.Floating),
-			style.HideOverflow(),
-			style.Flyout(style.SideEnd),
+			// SideStart, not SideEnd: the trailing corner is where a host's
+			// floating action button sits, and the two would land on top of
+			// each other.
+			style.Docked(style.Viewport, style.EdgeBottom, style.SideStart, style.Space4),
 		).
 		Part(PartItem,
 			style.Interactive(style.Panel),

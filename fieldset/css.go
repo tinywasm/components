@@ -34,10 +34,14 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 			style.FontWeight(style.WeightBold),
 			style.Raise(style.Raised),
 			style.Pad(style.Space1),
-			style.Width(style.Content),
+			style.ChipBox(),
+			style.CenterContent(),
 		).
+		// Red text in the field's top-right corner, growing leftward — not a
+		// filled bar across the whole field. Docked against the Root's Anchor.
 		Part(widget.PartError,
-			style.As(style.Danger),
+			style.Docked(style.Parent, style.EdgeTop, style.SideEnd, style.Space2),
+			style.Glyph(style.Danger),
 			style.FontSize(style.TextXs),
 		).
 		// Space4, not Space2: the legend rides the input's top border and hangs
@@ -55,8 +59,10 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 		When(widget.Locked, "",
 			style.As(style.Inset),
 		).
-		When(widget.Invalid, "",
-			style.As(style.Danger),
+		// No filled state on the field itself: the red message in the corner is
+		// the signal. Painting the whole box danger buried the value.
+		When(widget.Invalid, widget.PartInput,
+			style.Glyph(style.Danger),
 		).
 		Stylesheet()
 }

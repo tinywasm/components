@@ -3,10 +3,19 @@ package targetlist
 
 import (
 	. "github.com/tinywasm/dom"
+	"github.com/tinywasm/fmt"
 	. "github.com/tinywasm/html"
 	"github.com/tinywasm/svg"
 	"github.com/tinywasm/widget"
 )
+
+// badgeChars is the badge's budget, calibrated against the --chip-width the
+// skin gives it. Truncate counts the three-byte ellipsis inside this number.
+//
+// The count is BYTES, not runes, so an accented character costs two and a cut
+// can land mid-character. Badges carry identifiers and addresses in practice,
+// which is why this is acceptable here.
+const badgeChars = 16
 
 // NameTargetList is the widget identity.
 const NameTargetList = widget.Name("targetlist")
@@ -221,7 +230,9 @@ func (t *TargetList) buildRow(it Item) *Element {
 	// runs out of width wraps the badge rather than the affordance.
 	row.Child(menu)
 	if it.Description != "" {
-		row.Child(Span().Set(clsBadge.AsAttr()).Text(it.Description))
+		row.Child(Span().Set(clsBadge.AsAttr()).
+			Attr("title", it.Description). // the untruncated text stays reachable
+			Text(fmt.Convert(it.Description).Truncate(badgeChars).String()))
 	}
 
 	return row
