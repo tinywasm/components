@@ -50,9 +50,11 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 		Part(PartMenu,
 			style.As(style.Subtle),
 			style.KeepSize(),
+			style.Anchor(),
 		).
 		Part(PartButton,
-			style.As(style.Subtle),
+			style.Interactive(style.Subtle),
+			style.Round(style.RadiusSm),
 		).
 		// IconBox is not optional: a bare <svg> with no width or height falls
 		// back to the replaced-element default of 300x150 and drags the whole
@@ -61,14 +63,19 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.As(style.Subtle),
 			style.IconBox(style.IconMd),
 		).
+		// Flyout, not flow: an inline dropdown pushes every row below it down and
+		// the list jumps out from under the pointer that opened it.
 		Part(PartOptions,
 			style.Stack(style.SpaceNone),
 			style.As(style.Panel),
 			style.Raise(style.Floating),
 			style.HideOverflow(),
+			style.Flyout(style.SideEnd),
 		).
 		Part(PartItem,
-			style.As(style.Panel),
+			style.Interactive(style.Panel),
+			style.Pad(style.Space2),
+			style.Width(style.Full),
 		).
 		When(widget.Selected, PartRow,
 			style.As(style.Highlight),
