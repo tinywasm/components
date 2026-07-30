@@ -18,14 +18,16 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 		// the only place to put air between consecutive fields is inside each
 		// one.
 		Root(
+			style.Anchor(),
 			style.Stack(style.SpaceNone),
 			style.Pad(style.Space2),
 			style.KeepSize(),
 		).
-		// Width(Content) is what makes this a chip. Inside a Stack the default
-		// cross-axis alignment is stretch, so without it the label spans the
-		// whole field and turns into a solid bar above the input.
+		// A legend, not a caption: OnEdge centres the chip ON the input's top
+		// border rather than stacking it above, and Space2 is the field's own
+		// padding — the distance from the field's border to the input's.
 		Part(widget.PartLabel,
+			style.OnEdge(style.EdgeTop, style.SideStart, style.Space2, style.Space4),
 			style.As(style.Primary),
 			style.Round(style.RadiusSm),
 			style.FontSize(style.TextXs),
@@ -38,10 +40,12 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 			style.As(style.Danger),
 			style.FontSize(style.TextXs),
 		).
+		// Space4, not Space2: the legend rides the input's top border and hangs
+		// half its height inside the box, so the value needs room to clear it.
 		Part(widget.PartInput,
 			style.As(style.Panel),
 			style.Round(style.RadiusMd),
-			style.Pad(style.Space2),
+			style.Pad(style.Space4),
 		).
 		Part(widget.PartRadioGroup,
 			style.Row(style.Space3),

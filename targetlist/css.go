@@ -29,6 +29,7 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 		// falls back to display:list-item and the menu, a block-level <details>,
 		// drops onto a second full-width line.
 		Part(PartRow,
+			style.Anchor(),
 			style.Row(style.Space2),
 			style.Interactive(style.Panel),
 			style.Pad(style.Space3),
@@ -44,13 +45,17 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.As(style.Inset),
 			style.Round(style.RadiusSm),
 			style.FontSize(style.TextXs),
-			style.PushEnd(),
 			style.KeepSize(),
+			style.OnEdge(style.EdgeBottom, style.SideEnd, style.SpaceNone, style.Space3),
 		).
+		// Both the menu and the badge leave the flow, so the label is the only
+		// thing sizing the row: every row ends up the same height regardless of
+		// how long its title or its badge is. No Anchor() here — Docked already
+		// makes this a containing block, and the two fight over `position`.
 		Part(PartMenu,
 			style.As(style.Subtle),
 			style.KeepSize(),
-			style.Anchor(),
+			style.Docked(style.EdgeTop, style.SideEnd, style.Space2),
 		).
 		Part(PartButton,
 			style.Interactive(style.Subtle),
