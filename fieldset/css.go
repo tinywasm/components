@@ -46,6 +46,7 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 			style.As(style.Panel),
 			style.Round(style.RadiusMd),
 			style.Pad(style.Space4),
+			style.ControlBox(),
 		).
 		Part(widget.PartRadioGroup,
 			style.Row(style.Space3),

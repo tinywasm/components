@@ -18,3 +18,6 @@ require (
 
 // TEMP: local widget checkout — Grow() primitive (pending release).
 replace github.com/tinywasm/widget => ../widget
+
+// TEMP: local css checkout — accent + control-height tokens (pending release).
+replace github.com/tinywasm/css => ../css

@@ -31,6 +31,7 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 		Part(PartRow,
 			style.Anchor(),
 			style.Row(style.Space2),
+			style.ControlBox(),
 			style.Interactive(style.Panel),
 			style.Pad(style.Space3),
 			style.Round(style.RadiusMd),
