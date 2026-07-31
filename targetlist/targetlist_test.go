@@ -83,6 +83,29 @@ func TestTargetList_CSSDoesNotContainHas(t *testing.T) {
 	}
 }
 
+func TestTargetList_SelectionUsesAccent(t *testing.T) {
+	// PLAN v0.2.0 item 3: the selected row wears the amber Accent surface —
+	// the same "where I am" statement the rail's current nav item makes —
+	// never the 15% blue Highlight wash, which was close to invisible.
+	css := (&TargetList{}).RenderCSS().String()
+	i := strings.Index(css, `.targetlist__row[data-selected="true"] {`)
+	if i == -1 {
+		t.Fatal("expected a rule for the selected row state")
+	}
+	body := css[i:]
+	end := strings.Index(body, "}")
+	if end == -1 {
+		t.Fatal("malformed rule block")
+	}
+	b := body[:end]
+	if !strings.Contains(b, "--color-accent") {
+		t.Errorf("selected row must use the Accent surface, block:\n%s", b)
+	}
+	if strings.Contains(b, "--color-selection") {
+		t.Errorf("selected row must not use the Highlight surface, block:\n%s", b)
+	}
+}
+
 func TestPairMarkupAndStylesheet(t *testing.T) {
 	extractCSSClasses := func(css string) map[string]bool {
 		classes := make(map[string]bool)

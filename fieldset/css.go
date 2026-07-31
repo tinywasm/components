@@ -26,6 +26,9 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 		// A legend, not a caption: OnEdge centres the chip ON the input's top
 		// border rather than stacking it above, and Space2 is the field's own
 		// padding — the distance from the field's border to the input's.
+		// No Pad: the badge treatment a list row carries is the height this
+		// chip must match (ChipBox alone is 20px — adding Space1 made the
+		// legend 26px and taller than every badge beside it).
 		Part(widget.PartLabel,
 			style.OnEdge(style.EdgeTop, style.SideStart, style.Space2, style.Space4),
 			style.As(style.Primary),
@@ -33,9 +36,8 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 			style.FontSize(style.TextXs),
 			style.FontWeight(style.WeightBold),
 			style.Raise(style.Raised),
-			style.Pad(style.Space1),
 			style.ChipBox(),
-			style.CenterContent(),
+			style.StartContent(),
 		).
 		// Red text in the field's top-right corner, growing leftward — not a
 		// filled bar across the whole field. Docked against the Root's Anchor.
@@ -46,6 +48,8 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 		).
 		// Space4, not Space2: the legend rides the input's top border and hangs
 		// half its height inside the box, so the value needs room to clear it.
+		// At the chip's 20px height the hang is 10px and Space4's 16px still
+		// clears it.
 		Part(widget.PartInput,
 			style.As(style.Panel),
 			style.Round(style.RadiusMd),

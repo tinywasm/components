@@ -25,6 +25,28 @@ func TestRenderCSS_StylesFieldset(t *testing.T) {
 	}
 }
 
+func TestFieldset_LabelChip(t *testing.T) {
+	// PLAN v0.2.0 item 4: the label chip matches the list badge's height
+	// (no Pad — ChipBox alone) and packs its text at the leading edge.
+	css := (&Fieldset{}).RenderCSS().String()
+	i := strings.Index(css, ".tw-field__label {")
+	if i == -1 {
+		t.Fatal("expected a rule for .tw-field__label")
+	}
+	body := css[i:]
+	end := strings.Index(body, "}")
+	if end == -1 {
+		t.Fatal("malformed rule block")
+	}
+	b := body[:end]
+	if contains(b, "padding") {
+		t.Errorf("label chip must not be padded (keeps it at badge height), block:\n%s", b)
+	}
+	if !contains(b, "justify-content: flex-start") {
+		t.Errorf("label chip must pack text at the leading edge, block:\n%s", b)
+	}
+}
+
 func TestPairMarkupAndStylesheet(t *testing.T) {
 	extractCSSClasses := func(css string) map[string]bool {
 		classes := make(map[string]bool)

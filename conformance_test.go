@@ -446,7 +446,6 @@ func TestNoRemovedSymbols(t *testing.T) {
 			"Cover()",
 			"Fixed()",
 			"Scrolls()",
-			"style.Accent",
 			"style.Sunken",
 		}
 

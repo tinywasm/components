@@ -90,8 +90,12 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.Pad(style.Space2),
 			style.Width(style.Full),
 		).
+		// Accent, not Highlight: the selection tint is a 15% blue wash that
+		// reads as "disabled" on a light panel. The amber fill is the one
+		// "where I am" statement the whole chassis shares — the rail's current
+		// nav item wears the same surface.
 		When(widget.Selected, PartRow,
-			style.As(style.Highlight),
+			style.As(style.Accent),
 		).
 		Stylesheet()
 }

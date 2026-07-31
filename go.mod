@@ -15,3 +15,8 @@ require (
 	github.com/tinywasm/json v0.5.11 // indirect
 	github.com/tinywasm/model v0.1.0 // indirect
 )
+
+// ── replaces de desarrollo local ─────────────────────────────────────────────
+// PLAN v0.2.0 — the widget/style EdgeToEdge fix is exercised here before it is
+// published. Revert when the work lands.
+replace github.com/tinywasm/widget => ../widget
