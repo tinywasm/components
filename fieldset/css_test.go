@@ -27,7 +27,9 @@ func TestRenderCSS_StylesFieldset(t *testing.T) {
 
 func TestFieldset_LabelChip(t *testing.T) {
 	// PLAN v0.2.0 item 4: the label chip matches the list badge's height
-	// (no Pad — ChipBox alone) and packs its text at the leading edge.
+	// (no vertical padding — ChipBox alone) and packs its text at the leading
+	// edge. Inline padding is the one exemption: it leaves the height alone
+	// and keeps the text off the chip's filled edges.
 	css := (&Fieldset{}).RenderCSS().String()
 	i := strings.Index(css, ".tw-field__label {")
 	if i == -1 {
@@ -39,8 +41,11 @@ func TestFieldset_LabelChip(t *testing.T) {
 		t.Fatal("malformed rule block")
 	}
 	b := body[:end]
-	if contains(b, "padding") {
-		t.Errorf("label chip must not be padded (keeps it at badge height), block:\n%s", b)
+	if contains(b, "padding: ") || contains(b, "padding-block") {
+		t.Errorf("label chip must not grow vertically (keeps it at badge height), block:\n%s", b)
+	}
+	if !contains(b, "padding-inline") {
+		t.Errorf("label chip text needs inline air off the chip's edges, block:\n%s", b)
 	}
 	if !contains(b, "justify-content: flex-start") {
 		t.Errorf("label chip must pack text at the leading edge, block:\n%s", b)
