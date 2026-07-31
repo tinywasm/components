@@ -32,6 +32,13 @@ type ModalDialog struct {
 	Element
 	Title   string
 	Content Component
+
+	// HideClose drops the "×" from the header. Set it when the dialog's own
+	// content already offers an explicit way out — a confirmation with
+	// Cancel/Confirm buttons, where a third exit is one more thing to read and
+	// says nothing Cancel does not. Clicking the backdrop still closes.
+	HideClose bool
+
 	visible *SignalBool
 }
 
@@ -43,18 +50,17 @@ func (m *ModalDialog) Init(_ Ctx) {
 }
 
 func (m *ModalDialog) Render() *Element {
-	// Create close button
-	closeBtn := Button().
-		Text("×").
-		Set(clsModalClose.AsAttr()).
-		On("click", func(e Event) { m.visible.Set(false) })
+	header := Div().Set(clsModalHeader.AsAttr()).
+		Child(H2().Text(m.Title))
+	if !m.HideClose {
+		header.Child(Button().
+			Text("×").
+			Set(clsModalClose.AsAttr()).
+			On("click", func(e Event) { m.visible.Set(false) }))
+	}
 
 	modalContent := Div().Set(clsModalContent.AsAttr()).
-		Child(
-			Div().Set(clsModalHeader.AsAttr()).
-				Child(H2().Text(m.Title)).
-				Child(closeBtn),
-		).
+		Child(header).
 		Child(
 			Div().Set(clsModalBody.AsAttr()).Child(m.Content),
 		)

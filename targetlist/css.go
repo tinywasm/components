@@ -71,24 +71,15 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.As(style.Subtle),
 			style.IconBox(style.IconMd),
 		).
-		// On a wide screen the menu hangs off the row it belongs to.
+		// The menu hangs off the row it belongs to, on every screen: the same
+		// gesture should put it in the same place. Measured, it is not clipped
+		// by the list's scrollport at either width.
 		Part(PartOptions,
 			style.Stack(style.SpaceNone),
 			style.As(style.Panel),
 			style.Raise(style.Floating),
 			style.HideOverflow(),
 			style.Flyout(style.SideEnd),
-		).
-		// On a phone it becomes an action sheet fixed to the screen instead.
-		// Six ancestors between the row and the viewport carry overflow — the
-		// list's own <ul>, crudview's list and aside, the platform panel and
-		// stage, the shell root — and on a narrow screen there is no room to
-		// hang a panel off a row without it landing outside one of them. Only
-		// `fixed` escapes. Leading corner, because the trailing one is where a
-		// host's floating action button sits.
-		On(css.Mobile, PartOptions,
-			style.Stack(style.SpaceNone),
-			style.Docked(style.Viewport, style.EdgeBottom, style.SideStart, style.Space4),
 		).
 		// Square: the items are flush rows inside the panel, not buttons floating
 		// in it. An explicit Round overrides the radius As(Panel) would default
