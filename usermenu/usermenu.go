@@ -43,7 +43,7 @@ var (
 // can land mid-character. Role names are short labels in practice.
 const roleChars = 14
 
-// menuGroup makes every UserMenu on a page part of one native "exclusive
+// menuGroup makes each UserMenu on a page part of one native "exclusive
 // accordion": opening one closes any other. A shell renders two — one for the
 // header and one for the drawer — and without this, opening either would leave
 // the other open behind a viewport change.
@@ -138,11 +138,17 @@ func (m *UserMenu) Render() *Element {
 			return ""
 		})
 
+	// Order matters and is not cosmetic. The backdrop and the panel both sit on
+	// the widget's stacking level, so among equals the LATER one paints on top:
+	// with the backdrop last it covered the panel and swallowed every click
+	// meant for the controls inside. Backdrop before panel — the order
+	// targetlist already uses. The <summary> stays first because that is what
+	// makes it the disclosure control.
 	menu := Details().Set(clsRoot.AsAttr()).
 		Attr("name", menuGroup).
 		Child(trigger).
-		Child(panel).
-		Child(backdrop)
+		Child(backdrop).
+		Child(panel)
 
 	menu.On("toggle", func(Event) {
 		if ref, ok := Get(menu.GetID()); ok {

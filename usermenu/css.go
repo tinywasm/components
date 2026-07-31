@@ -15,7 +15,6 @@ func (m *UserMenu) RenderCSS() *css.Stylesheet {
 		// pin needs a positioned ancestor to hang from.
 		Root(
 			style.Anchor(),
-			style.KeepSize(),
 		).
 		// The resting state: avatar and name, nothing else. Whatever a shell
 		// puts here has to have a bounded width, and a name does.
@@ -36,17 +35,16 @@ func (m *UserMenu) RenderCSS() *css.Stylesheet {
 			style.FontWeight(style.WeightBold),
 			style.KeepSize(),
 		).
-		// Flyout, not flow: an inline panel would push the header's row open
-		// and shove the content under it down every time someone looked at who
-		// they were logged in as.
+		// In flow by default, which is what a phone wants: the menu lives inside
+		// a drawer there, and a flyout sized to its content is wider than the
+		// drawer — it would hang off the side as a second floating panel over
+		// the content. Opening it should expand the drawer entry instead.
 		Part(PartPanel,
 			style.Stack(style.Space2),
 			style.As(style.Panel),
 			style.Round(style.RadiusMd),
-			style.Raise(style.Floating),
 			style.Pad(style.Space2),
-			style.Width(style.Content),
-			style.Flyout(style.SideEnd),
+			style.Width(style.Full),
 		).
 		Part(PartRoles,
 			style.Row(style.Space1),
@@ -63,9 +61,37 @@ func (m *UserMenu) RenderCSS() *css.Stylesheet {
 		Part(PartActions,
 			style.Row(style.Space1),
 		).
-		// Transparent and only present while the menu is open: it exists to
-		// catch the click that closes it, not to dim anything.
-		Part(PartBackdrop,
+		// Keeping its size is a HEADER concern: there the menu shares a row with
+		// a message slot that will happily squeeze it. On a phone the menu sits
+		// in a drawer narrower than its own content, and refusing to shrink
+		// there makes it size to its widest role chip and hang out over the
+		// content as a panel of its own.
+		On(css.Tablet, "", style.KeepSize()).
+		On(css.Desktop, "", style.KeepSize()).
+		// From a tablet up the menu sits in a header row, where an inline panel
+		// would push that row open and shove the content beneath it down every
+		// time someone looked at who they were logged in as. There it hangs —
+		// and a hanging panel needs a backdrop to catch the click that dismisses
+		// it. Both are one mechanism, so both are gated on the same viewports:
+		// on a phone the menu is an accordion inside the drawer, the drawer's
+		// own overlay already dismisses it, and a viewport-sized backdrop there
+		// would sit ON TOP of an in-flow panel and eat every tap meant for the
+		// controls inside it.
+		On(css.Tablet, PartPanel,
+			style.Width(style.Content),
+			style.Raise(style.Floating),
+			style.Flyout(style.SideEnd),
+		).
+		On(css.Tablet, PartBackdrop,
+			style.Backdrop(style.Viewport),
+			style.RevealedBy(widget.Open),
+		).
+		On(css.Desktop, PartPanel,
+			style.Width(style.Content),
+			style.Raise(style.Floating),
+			style.Flyout(style.SideEnd),
+		).
+		On(css.Desktop, PartBackdrop,
 			style.Backdrop(style.Viewport),
 			style.RevealedBy(widget.Open),
 		).
