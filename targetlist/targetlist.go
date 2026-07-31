@@ -151,14 +151,8 @@ func (t *TargetList) closeAllMenus() {
 }
 
 func (t *TargetList) Render() *Element {
-	attrOpen := widget.Open.Attr()
 	backdrop := Div().Set(clsMenuBackdrop.AsAttr()).
-		BindAttrFunc(attrOpen.Key, func() string {
-			if t.menuOpen.Get() {
-				return attrOpen.Value
-			}
-			return ""
-		})
+		BindStateFunc(widget.Open, func() bool { return t.menuOpen.Get() })
 	backdrop.On("click", func(Event) { t.closeAllMenus() })
 
 	list := Ul().Set(clsList.AsAttr()).Attr("role", "listbox").BindChildren(t.rows)
@@ -182,7 +176,7 @@ func (t *TargetList) buildRow(it Item) *Element {
 		Key(key).
 		Attr("role", "option").
 		BindAttrBool("aria-selected", isSelSig).
-		BindAttrBool("data-selected", isSelSig)
+		BindState(widget.Selected, isSelSig)
 
 	row.On("click", func(Event) {
 		if t.OnSelect != nil {

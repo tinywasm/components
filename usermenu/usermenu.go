@@ -95,7 +95,6 @@ func (m *UserMenu) WidgetKind() widget.Kind { return widget.Menu }
 
 func (m *UserMenu) Render() *Element {
 	m.ensure()
-	attrOpen := widget.Open.Attr()
 
 	trigger := Summary().Set(clsTrigger.AsAttr()).
 		Attr("aria-label", m.Name)
@@ -131,12 +130,7 @@ func (m *UserMenu) Render() *Element {
 	// select on it — the state has to be mirrored into a signal the sheet can
 	// reach. Same mechanism targetlist uses for its row menus.
 	backdrop := Div().Set(clsBackdrop.AsAttr()).
-		BindAttrFunc(attrOpen.Key, func() string {
-			if m.open.Get() {
-				return attrOpen.Value
-			}
-			return ""
-		})
+		BindStateFunc(widget.Open, func() bool { return m.open.Get() })
 
 	// Order matters and is not cosmetic. The backdrop and the panel both sit on
 	// the widget's stacking level, so among equals the LATER one paints on top:
