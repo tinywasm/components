@@ -8,7 +8,7 @@ require (
 	github.com/tinywasm/fmt v0.25.5
 	github.com/tinywasm/html v0.0.6
 	github.com/tinywasm/svg v0.1.8
-	github.com/tinywasm/widget v0.5.0
+	github.com/tinywasm/widget v0.5.1
 )
 
 require (
@@ -19,4 +19,3 @@ require (
 // ── replaces de desarrollo local ─────────────────────────────────────────────
 // PLAN v0.2.0 — the widget/style EdgeToEdge fix is exercised here before it is
 // published. Revert when the work lands.
-replace github.com/tinywasm/widget => ../widget
