@@ -42,10 +42,16 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 			style.StartContent(),
 			style.PadInline(style.Space2),
 		).
-		// Red text in the field's top-right corner, growing leftward — not a
-		// filled bar across the whole field. Docked against the Root's Anchor.
+		// Red text growing leftward from the field's trailing edge — not a filled
+		// bar across the whole field, and not riding the border either: OnEdge
+		// straddled the input's top line and the message came out cut by it.
+		// It sits inside the box with equal air above and to the right.
+		// Space4, not Space2: an absolute box is laid out against the Root's
+		// PADDING box, so the first Space2 only buys back the Root's own Pad and
+		// leaves the text flush with the input's border. Space4 spends that Space2
+		// and puts a real Space2 between the message and both edges.
 		Part(widget.PartError,
-			style.Docked(style.Parent, style.EdgeTop, style.SideEnd, style.Space2),
+			style.Docked(style.Parent, style.EdgeTop, style.SideEnd, style.Space4),
 			style.Glyph(style.Danger),
 			style.FontSize(style.TextXs),
 		).

@@ -18,6 +18,7 @@ import (
 	"github.com/tinywasm/components/datatable"
 	"github.com/tinywasm/components/fieldset"
 	"github.com/tinywasm/components/modaldialog"
+	"github.com/tinywasm/components/searchbar"
 	"github.com/tinywasm/components/selectsearch"
 	"github.com/tinywasm/components/targetlist"
 	"github.com/tinywasm/components/themetoggle"
@@ -323,6 +324,7 @@ func TestEveryPackageEmits(t *testing.T) {
 		&datatable.DataTable{},
 		&fieldset.Fieldset{},
 		&modaldialog.ModalDialog{},
+		&searchbar.SearchBar{},
 		&selectsearch.SelectSearch{},
 		&targetlist.TargetList{},
 		&themetoggle.ThemeToggle{},
@@ -348,6 +350,7 @@ func TestKindAllowsEveryState(t *testing.T) {
 		"datatable":    &datatable.DataTable{},
 		"fieldset":     &fieldset.Fieldset{},
 		"modaldialog":  &modaldialog.ModalDialog{},
+		"searchbar":    &searchbar.SearchBar{},
 		"selectsearch": &selectsearch.SelectSearch{},
 		"targetlist":   &targetlist.TargetList{},
 		"themetoggle":  &themetoggle.ThemeToggle{},

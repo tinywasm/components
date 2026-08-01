@@ -61,6 +61,15 @@ Signal-driven searchable dropdown with static options, live filtering, and optio
 
 ---
 
+## [SearchBar](../searchbar/README.md) — ✅ Slot-ready
+One-control filter bar: a magnifier cap and a text field sized by
+`--control-height`. Reports each keystroke through `OnFilterChange(term)` and
+knows nothing about what it filters, so a host can swap it for a calendar or a
+select in the same slot.
+[Detailed Documentation →](../searchbar/README.md)
+
+---
+
 ## [ThemeToggle](../themetoggle/README.md) — ✅ Slot-ready
 Signal-driven floating button that cycles between `auto → dark → light` theme modes. Persists preference in `localStorage` via `Init`. Uses derived signals for labels and icon updates.
 [Detailed Documentation →](../themetoggle/README.md)

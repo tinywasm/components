@@ -25,8 +25,11 @@ func (m *UserMenu) RenderCSS() *css.Stylesheet {
 			style.Round(style.RadiusFull),
 			style.KeepSize(),
 		).
+		// IconMd, not IconLg: the trigger lives in the platform header, and a
+		// 40px avatar inflated the bar past 65px. At 24px the header settles
+		// near 40px. The brand mark mirrors this box — change both or neither.
 		Part(PartAvatar,
-			style.IconBox(style.IconLg),
+			style.IconBox(style.IconMd),
 			style.Round(style.RadiusFull),
 			style.HideOverflow(),
 		).

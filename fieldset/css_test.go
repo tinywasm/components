@@ -52,6 +52,35 @@ func TestFieldset_LabelChip(t *testing.T) {
 	}
 }
 
+func TestFieldset_ErrorClearsTheInputEdges(t *testing.T) {
+	// The error message sits inside the input's top-right with matching air on
+	// both edges. An absolute box lays out against the Root's PADDING box, so a
+	// Space2 pin only buys back the Root's own Pad and left the text flush with
+	// the input's border; and straddling the border cut the text in half.
+	css := (&Fieldset{}).RenderCSS().String()
+	i := strings.Index(css, ".tw-field__error {")
+	if i == -1 {
+		t.Fatal("expected a rule for .tw-field__error")
+	}
+	body := css[i:]
+	end := strings.Index(body, "}")
+	if end == -1 {
+		t.Fatal("malformed rule block")
+	}
+	b := body[:end]
+	for _, want := range []string{
+		"inset-inline-end: var(--space-4,",
+		"inset-block-start: var(--space-4,",
+	} {
+		if !contains(b, want) {
+			t.Errorf("error text needs %q to clear the input's border, block:\n%s", want, b)
+		}
+	}
+	if contains(b, "transform: translateY(") {
+		t.Errorf("error text must sit inside the box, not straddle the input's top line, block:\n%s", b)
+	}
+}
+
 func TestPairMarkupAndStylesheet(t *testing.T) {
 	extractCSSClasses := func(css string) map[string]bool {
 		classes := make(map[string]bool)
