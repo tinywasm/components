@@ -37,8 +37,8 @@ func TestSelectSearch_Render(t *testing.T) {
 	if !fmt.Contains(html, "Choose category") {
 		t.Error("expected placeholder text")
 	}
-	// Note: options are in the dropdown, which is wrapped in Show(c.isOpen)
-	// Since isOpen is false, options won't be in the initial static HTML
+	// With build-once Show, the dropdown is always serialized; the container carries
+	// display:none when isOpen is false so options are present in the SSR HTML.
 }
 
 func TestSelectSearch_SelectedValue(t *testing.T) {

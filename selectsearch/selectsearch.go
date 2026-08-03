@@ -93,7 +93,13 @@ func (c *SelectSearch) Render() *Element {
 		ID("ss-toggle").
 		BindAttrBool("checked", c.isOpen).
 		On("change", func(e Event) {
-			c.isOpen.Set(e.TargetChecked())
+			checked := e.TargetChecked()
+			c.isOpen.Set(checked)
+			if checked {
+				if ref, ok := Get("ss-search"); ok {
+					ref.Focus()
+				}
+			}
 		})
 
 	// BindText sets textContent which would erase child elements.
@@ -113,7 +119,6 @@ func (c *SelectSearch) Render() *Element {
 		BindAttrBool("aria-expanded", c.isOpen).
 		Attr("aria-controls", "ss-options").
 		Bind(c.query).
-		Autofocus().
 		On("input", func(e Event) {
 			term := e.TargetValue()
 			// query is already updated by Bind(c.query) in WASM,
@@ -141,16 +146,14 @@ func (c *SelectSearch) Render() *Element {
 		Attr("role", "listbox").
 		BindChildren(c.rows)
 
-	dropdown := Show(c.isOpen, func() *Element {
-		return Div().Set(ClsSsDropdown.AsAttr()).
-			Child(searchInput).
-			Child(optList)
-	})
+	dropdown := Div().Set(ClsSsDropdown.AsAttr()).
+		Child(searchInput).
+		Child(optList)
 
 	return Div().Set(ClsSsBox.AsAttr()).
 		Child(toggle).
 		Child(header).
-		Child(dropdown)
+		Child(Show(c.isOpen, dropdown))
 }
 
 func (c *SelectSearch) buildRows(term string) []*Element {

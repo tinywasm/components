@@ -65,14 +65,13 @@ func (m *ModalDialog) Render() *Element {
 			Div().Set(clsModalBody.AsAttr()).Child(m.Content),
 		)
 
-	return Show(m.visible, func() *Element {
-		return Div().Set(clsModal.AsAttr()).
-			Attr("role", "dialog").
-			Attr("aria-modal", "true").
-			Child(Div().Set(clsModalBackdrop.AsAttr()).
-				On("click", func(e Event) { m.visible.Set(false) })).
-			Child(modalContent)
-	})
+	modal := Div().Set(clsModal.AsAttr()).
+		Attr("role", "dialog").
+		Attr("aria-modal", "true").
+		Child(Div().Set(clsModalBackdrop.AsAttr()).
+			On("click", func(e Event) { m.visible.Set(false) })).
+		Child(modalContent)
+	return Show(m.visible, modal)
 }
 
 func (m *ModalDialog) Open() {

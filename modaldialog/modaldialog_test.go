@@ -49,15 +49,14 @@ func TestModal_Render(t *testing.T) {
 		t.Error("expected content")
 	}
 
-	// Test hidden
+	// Test hidden — content is still serialized, container carries display:none.
 	m.visible.Set(false)
 	htmlHidden := m.Render().String()
-	// Show returns a placeholder node when the condition is false
 	if htmlHidden == "" {
-		t.Error("expected placeholder node string when not visible (Show condition), not empty string")
+		t.Error("expected container in DOM when not visible, not empty string")
 	}
-	if Contains(htmlHidden, "modaldialog") {
-		t.Error("should not contain modaldialog when Visible=false")
+	if !Contains(htmlHidden, "display:none") {
+		t.Error("expected display:none when not visible")
 	}
 }
 
