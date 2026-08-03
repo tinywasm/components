@@ -12,8 +12,8 @@ require (
 )
 
 require (
-	github.com/tinywasm/json v0.5.11 // indirect
-	github.com/tinywasm/model v0.1.0 // indirect
+	github.com/tinywasm/json v0.5.17 // indirect
+	github.com/tinywasm/model v0.1.2 // indirect
 )
 
 // ── replaces de desarrollo local ─────────────────────────────────────────────
