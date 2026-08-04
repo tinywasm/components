@@ -12,7 +12,7 @@ require (
 )
 
 require (
-	github.com/tinywasm/font v0.0.3 // indirect
+	github.com/tinywasm/font v0.0.4 // indirect
 	github.com/tinywasm/json v0.5.17 // indirect
 	github.com/tinywasm/model v0.1.2 // indirect
 )
