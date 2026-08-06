@@ -97,5 +97,32 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 		When(widget.Selected, PartRow,
 			style.As(style.Accent),
 		).
+		// AccentWash, not Interactive(Panel)'s own grey mix: a hover that
+		// leans toward the same amber the selected state commits to reads as
+		// "on the way to selected" -- a grey hover reads as unrelated chrome
+		// with no connection to what clicking it does.
+		Cue(widget.Hover, PartRow,
+			style.As(style.AccentWash),
+		).
+		// Same treatment as Hover above, on purpose: a keyboard user tabbing
+		// through the list gets no :hover at all, so leaving Focus on
+		// Interactive(Panel)'s default grey would give mouse/touch users the
+		// amber preview and strand keyboard users on the old unrelated color
+		// -- the exact inconsistency pairing Hover with Focus exists to rule
+		// out.
+		Cue(widget.Focus, PartRow,
+			style.As(style.AccentWash),
+		).
+		// Same Accent as When(Selected) above, not Interactive(Panel)'s own
+		// grey press mix: a tap is :active for the whole time the finger is
+		// down, which outlasts the click handler that sets data-selected —
+		// same specificity, same layer, :active declared later, so it wins
+		// for that whole window. A grey Press painted during exactly that
+		// window is what read as "select, flash grey, THEN turn amber" on a
+		// phone. Matching Press to Selected's own color makes the two
+		// indistinguishable, so there is nothing left to flash.
+		Cue(widget.Press, PartRow,
+			style.As(style.Accent),
+		).
 		Stylesheet()
 }

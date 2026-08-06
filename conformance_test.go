@@ -465,7 +465,19 @@ func TestNoRemovedSymbols(t *testing.T) {
 	}
 }
 
+// TestNoHoverCuePairs enforces the thing its name says: Hover and Focus come
+// in pairs. A hand-rolled Cue(widget.Hover, X, ...) with no matching
+// Cue(widget.Focus, X, ...) in the same file gives a mouse/touch user a
+// preview that a keyboard user tabbing to X never sees -- the gap this test
+// exists to catch. It used to enforce this by banning Cue(widget.Hover
+// outright and pushing everyone onto Interactive(), which derives hover,
+// focus and press together from one call and can't drift apart by
+// construction. That blanket ban stopped being the whole story once a widget
+// legitimately needs a hover/focus treatment Interactive()'s own derived mix
+// cannot express (e.g. a preview of an amber selection color, not a generic
+// darken) -- the real invariant was always the pairing, not the API.
 func TestNoHoverCuePairs(t *testing.T) {
+	cueRe := regexp.MustCompile(`Cue\(widget\.(Hover|Focus),\s*([^,\n]+),`)
 	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
@@ -484,11 +496,21 @@ func TestNoHoverCuePairs(t *testing.T) {
 		if err != nil {
 			return err
 		}
-		str := string(content)
 
-		// Check for Cue(widget.Hover
-		if strings.Contains(strings.ReplaceAll(str, " ", ""), "Cue(widget.Hover") {
-			t.Errorf("%s: contains forbidden Cue(widget.Hover)", path)
+		hovered := map[string]bool{}
+		focused := map[string]bool{}
+		for _, m := range cueRe.FindAllStringSubmatch(string(content), -1) {
+			part := strings.TrimSpace(m[2])
+			if m[1] == "Hover" {
+				hovered[part] = true
+			} else {
+				focused[part] = true
+			}
+		}
+		for part := range hovered {
+			if !focused[part] {
+				t.Errorf("%s: Cue(widget.Hover, %s, ...) has no matching Cue(widget.Focus, %s, ...) -- a keyboard user tabbing to it gets none of the preview a mouse hover gives", path, part, part)
+			}
 		}
 
 		return nil
