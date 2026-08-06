@@ -37,12 +37,26 @@ const defaultTheme = TsThemeLight
 type ThemeToggle struct {
 	Element
 	theme *SignalString // "dark" | "light"
+
+	// supported es falso solo cuando el navegador no puede resolver
+	// light-dark() (ver dom.SupportsLightDark): en ese caso el toggle no
+	// tiene nada que hacer — el color ya está fijo en modo claro por el
+	// fallback de tinywasm/css — y un botón que no responde al pulsarlo se
+	// lee como un bug, no como una limitación del dispositivo. Calculado una
+	// sola vez en Init, antes del primer Render (ver themeswitch_wasm.go).
+	// SSR (themeswitch_backend.go) no puede saberlo — no hay navegador — así
+	// que asume true; es el WASM real quien corrige si hace falta.
+	supported bool
 }
 
 func (t *ThemeToggle) WidgetName() widget.Name { return NameThemeToggle }
 func (t *ThemeToggle) WidgetKind() widget.Kind { return widget.Region }
 
 func (t *ThemeToggle) Render() *Element {
+	if !t.supported {
+		return Span()
+	}
+
 	// labelSig is used twice (title + aria-label) → a named shared computed. Auto-tracked: no deps list.
 	labelSig := DeriveString(func() string { return label(TsTheme(t.theme.Get())) })
 

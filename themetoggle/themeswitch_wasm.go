@@ -6,6 +6,7 @@ import . "github.com/tinywasm/dom"
 
 func (t *ThemeToggle) Init(_ Ctx) {
 	t.theme = NewString(string(defaultTheme))
+	t.supported = SupportsLightDark() // before the first Render — see the field's doc comment
 	if LocalStorageAvailable() {
 		if s, err := LocalStorageGet(storageKey); err == nil && valid(TsTheme(s)) {
 			t.theme.Set(s) // value ready before first paint → correct icon, no flash
