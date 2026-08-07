@@ -21,30 +21,36 @@ const badgeChars = 16
 const NameTargetList = widget.Name("targetlist")
 
 const (
-	PartRow      = widget.Part("row")
-	PartMenu     = widget.Part("menu")
-	PartOptions  = widget.Part("options")
-	PartBadge    = widget.Part("badge")
-	PartLabel    = widget.Part("label")
-	PartList     = widget.Part("list")
-	PartBackdrop = widget.Part("backdrop")
-	PartButton   = widget.Part("button")
-	PartIcon     = widget.Part("icon")
-	PartItem     = widget.Part("item")
+	PartRow        = widget.Part("row")
+	PartMenu       = widget.Part("menu")
+	PartOptions    = widget.Part("options")
+	PartBadge      = widget.Part("badge")
+	PartLabel      = widget.Part("label")
+	PartList       = widget.Part("list")
+	PartBackdrop   = widget.Part("backdrop")
+	PartButton     = widget.Part("button")
+	PartIcon       = widget.Part("icon")
+	PartItem       = widget.Part("item")
+	PartItemDanger = widget.Part("item-danger")
+	PartItemIcon   = widget.Part("item-icon")
+	PartItemLabel  = widget.Part("item-label")
 )
 
 var (
-	clsListWrap     = NameTargetList.Root()
-	clsList         = NameTargetList.Class(PartList)
-	clsRow          = NameTargetList.Class(PartRow)
-	clsLabel        = NameTargetList.Class(PartLabel)
-	clsBadge        = NameTargetList.Class(PartBadge)
-	clsMenu         = NameTargetList.Class(PartMenu)
-	clsMenuBtn      = NameTargetList.Class(PartButton)
-	clsMenuIcon     = NameTargetList.Class(PartIcon)
-	clsMenuList     = NameTargetList.Class(PartOptions)
-	clsMenuItem     = NameTargetList.Class(PartItem)
-	clsMenuBackdrop = NameTargetList.Class(PartBackdrop)
+	clsListWrap       = NameTargetList.Root()
+	clsList           = NameTargetList.Class(PartList)
+	clsRow            = NameTargetList.Class(PartRow)
+	clsLabel          = NameTargetList.Class(PartLabel)
+	clsBadge          = NameTargetList.Class(PartBadge)
+	clsMenu           = NameTargetList.Class(PartMenu)
+	clsMenuBtn        = NameTargetList.Class(PartButton)
+	clsMenuIcon       = NameTargetList.Class(PartIcon)
+	clsMenuList       = NameTargetList.Class(PartOptions)
+	clsMenuItem       = NameTargetList.Class(PartItem)
+	clsMenuItemDanger = NameTargetList.Class(PartItemDanger)
+	clsMenuItemIcon   = NameTargetList.Class(PartItemIcon)
+	clsMenuItemLabel  = NameTargetList.Class(PartItemLabel)
+	clsMenuBackdrop   = NameTargetList.Class(PartBackdrop)
 )
 
 // menuGroup makes every row's ⋮ <details> part of one native HTML "exclusive
@@ -52,6 +58,16 @@ var (
 const menuGroup = "tl-menu-group"
 
 const iconDots = svg.Icon("tl-dots")
+
+// iconEdit and iconDelete back the ⋮ menu's two options. Rendered in the
+// markup on every device — desktop keeps them alongside the text label,
+// hidden by CSS; mobile is where they become the visible affordance and the
+// label hides instead, so the item reads as an icon button matching
+// crudview's own floating action button rather than a dropdown row.
+const (
+	iconEdit   = svg.Icon("tl-edit")
+	iconDelete = svg.Icon("tl-delete")
+)
 
 // Item is one selectable record: an id, a visible label, and an optional badge.
 type Item struct {
@@ -150,6 +166,18 @@ func (t *TargetList) closeAllMenus() {
 	t.menuOpen.Set(false)
 }
 
+// CloseMenus is closeAllMenus, exported for a host that shares Selected (see
+// crudview) to call when ITS OWN cancel path clears the selection. The ⋮
+// summary's click handler sets Selected directly (see buildRow) so the
+// floating options menu reads as belonging to a highlighted row, but native
+// <details> open state is not tracked by that signal — clearing Selected
+// elsewhere does not, by itself, close a menu left open on some row. A host
+// that lets a row's ⋮ drive its own "active" state is responsible for
+// closing it back up when that state resets.
+func (t *TargetList) CloseMenus() {
+	t.closeAllMenus()
+}
+
 func (t *TargetList) Render() *Element {
 	backdrop := Div().Set(clsMenuBackdrop.AsAttr()).
 		BindStateFunc(widget.Open, func() bool { return t.menuOpen.Get() })
@@ -160,6 +188,11 @@ func (t *TargetList) Render() *Element {
 	// backdrop is a plain sibling of the (BindChildren-managed) <ul>, never a
 	// static child mixed into it — the keyed reconcile assumes it owns every
 	// child of the element it's bound to.
+	//
+	// Order is part of the stacking contract: the backdrop and a row's open
+	// options both sit on the widget overlay level (var(--z-dropdown)), and
+	// among equals the LATER sibling paints on top — the backdrop is first so
+	// the options never end up underneath it. Do not reorder.
 	return Div().Set(clsListWrap.AsAttr()).Child(backdrop, list)
 }
 
@@ -187,13 +220,30 @@ func (t *TargetList) buildRow(it Item) *Element {
 	row.Child(Span().Set(clsLabel.AsAttr()).Text(it.Label))
 
 	// ⋮ options menu — native <details> so open/close is CSS-only. The clicks
-	// stopPropagation so opening the menu or picking an option never selects the
-	// row underneath.
+	// stopPropagation so the row's own OnSelect (full select-and-navigate,
+	// see crudview's selectAction) never fires from a ⋮ tap — opening the
+	// menu must not also jump the mobile strip to the form panel.
+	//
+	// It still sets Selected directly, though: with the mobile row menu now
+	// docked to the viewport corner (crudview/rightpanel PLAN.md) rather than
+	// anchored to the row, there is nothing else on screen linking the
+	// floating Editar/Eliminar icons back to the row they act on. Highlighting
+	// the row is that link. This also flips crudview's own active()/Open
+	// state for free — Selected is the same *SignalString crudview binds its
+	// action button's icon to — so the button reads "cancel" the instant the
+	// menu opens, with no separate wiring needed here.
 	summary := Summary().Set(clsMenuBtn.AsAttr()).
 		Child(iconDots.Render(string(clsMenuIcon)))
-	summary.On("click", func(e Event) { e.StopPropagation() })
+	summary.On("click", func(e Event) {
+		e.StopPropagation()
+		if t.Selected != nil {
+			t.Selected.Set(id)
+		}
+	})
 
-	edit := Button().Set(clsMenuItem.AsAttr()).Text("Editar")
+	edit := Button().Set(clsMenuItem.AsAttr()).
+		Child(iconEdit.Render(string(clsMenuItemIcon))).
+		Child(Span().Set(clsMenuItemLabel.AsAttr()).Text("Editar"))
 	edit.On("click", func(e Event) {
 		e.StopPropagation()
 		t.closeAllMenus()
@@ -201,7 +251,9 @@ func (t *TargetList) buildRow(it Item) *Element {
 			t.OnEdit(id)
 		}
 	})
-	del := Button().Set(clsMenuItem.AsAttr()).Text("Eliminar")
+	del := Button().Set(clsMenuItemDanger.AsAttr()).
+		Child(iconDelete.Render(string(clsMenuItemIcon))).
+		Child(Span().Set(clsMenuItemLabel.AsAttr()).Text("Eliminar"))
 	del.On("click", func(e Event) {
 		e.StopPropagation()
 		t.closeAllMenus()

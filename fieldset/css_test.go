@@ -26,10 +26,11 @@ func TestRenderCSS_StylesFieldset(t *testing.T) {
 }
 
 func TestFieldset_LabelChip(t *testing.T) {
-	// PLAN v0.2.0 item 4: the label chip matches the list badge's height
-	// (no vertical padding — ChipBox alone) and packs its text at the leading
-	// edge. Inline padding is the one exemption: it leaves the height alone
-	// and keeps the text off the chip's filled edges.
+	// PLAN v0.2.0 item 4 + the shared-token refactor: the label chip matches
+	// the list badge's height because both are built on the declared
+	// --chip-height (no vertical padding — ChipBox alone) and packs its text
+	// at the leading edge. Inline padding is the one exemption: it leaves the
+	// height alone and keeps the text off the chip's filled edges.
 	css := (&Fieldset{}).RenderCSS().String()
 	i := strings.Index(css, ".tw-field__label {")
 	if i == -1 {
@@ -49,6 +50,19 @@ func TestFieldset_LabelChip(t *testing.T) {
 	}
 	if !contains(b, "justify-content: flex-start") {
 		t.Errorf("label chip must pack text at the leading edge, block:\n%s", b)
+	}
+}
+
+// TestFieldset_NoOutline is the net for PLAN.md Stage 3: the Locked ring is a
+// box-shadow, never an outline — an outline ignores border-radius and paints
+// over the OnEdge legend chip. No rule in the whole sheet may use it.
+func TestFieldset_NoOutline(t *testing.T) {
+	css := (&Fieldset{}).RenderCSS().String()
+	if contains(css, "outline") {
+		t.Errorf("fieldset must not emit outline (the Locked ring is a box-shadow), got:\n%s", css)
+	}
+	if !contains(css, "box-shadow") {
+		t.Errorf("expected the Locked ring to be a box-shadow, got:\n%s", css)
 	}
 }
 

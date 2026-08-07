@@ -33,8 +33,8 @@ func TestModal_Render(t *testing.T) {
 	}
 
 	// Check internal structure
-	if !Contains(html, "class='modaldialog__backdrop'") {
-		t.Error("expected backdrop")
+	if Contains(html, "class='modaldialog__backdrop'") {
+		t.Error("unexpected click-catcher backdrop: the root is the wash and the click target")
 	}
 	if !Contains(html, "class='modaldialog__panel'") {
 		t.Error("expected content container")
@@ -65,8 +65,11 @@ func TestModal_CSSContent(t *testing.T) {
 	md.Init(nil)
 	css := md.RenderCSS().String()
 
-	if !strings.Contains(css, "position: absolute") {
-		t.Errorf("expected modal backdrop to be position: absolute, got CSS: %s", css)
+	if !strings.Contains(css, "position: fixed") {
+		t.Errorf("expected the wash (root) to be position: fixed, got CSS: %s", css)
+	}
+	if strings.Contains(css, "modaldialog__backdrop") {
+		t.Errorf("expected no click-catcher backdrop rule, got CSS: %s", css)
 	}
 	if !strings.Contains(css, "background-color: color-mix") {
 		t.Errorf("expected modal backdrop to use background-color: color-mix, got CSS: %s", css)

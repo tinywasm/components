@@ -10,17 +10,15 @@ import (
 const NameModalDialog = widget.Name("modaldialog")
 
 const (
-	PartBackdrop = widget.Part("backdrop")
-	PartPanel    = widget.Part("panel")
-	PartHeader   = widget.Part("header")
-	PartBody     = widget.Part("body")
-	PartActions  = widget.Part("actions")
-	PartClose    = widget.Part("close")
+	PartPanel   = widget.Part("panel")
+	PartHeader  = widget.Part("header")
+	PartBody    = widget.Part("body")
+	PartActions = widget.Part("actions")
+	PartClose   = widget.Part("close")
 )
 
 var (
 	clsModal         = NameModalDialog.Root()
-	clsModalBackdrop = NameModalDialog.Class(PartBackdrop)
 	clsModalContent  = NameModalDialog.Class(PartPanel)
 	clsModalHeader   = NameModalDialog.Class(PartHeader)
 	clsModalBody     = NameModalDialog.Class(PartBody)
@@ -36,7 +34,7 @@ type ModalDialog struct {
 	// HideClose drops the "×" from the header. Set it when the dialog's own
 	// content already offers an explicit way out — a confirmation with
 	// Cancel/Confirm buttons, where a third exit is one more thing to read and
-	// says nothing Cancel does not. Clicking the backdrop still closes.
+	// says nothing Cancel does not. Clicking outside the panel still closes.
 	HideClose bool
 
 	visible *SignalBool
@@ -65,12 +63,22 @@ func (m *ModalDialog) Render() *Element {
 			Div().Set(clsModalBody.AsAttr()).Child(m.Content),
 		)
 
+	// The root IS the wash, and it is also the click target: a click that
+	// reaches it landed outside the panel, so it closes the dialog. The panel
+	// stops the click first — its whole subtree, close button included — so
+	// interacting with the dialog never closes it. There is deliberately no
+	// separate click-catcher element: a positioned sibling would have to
+	// paint BELOW the panel, and the DSL has no level that puts an in-flow
+	// element above a positioned one. The panel instead wins by being the
+	// wash's own in-flow child — a child always paints above its parent's
+	// background — so the click model needs no stacking at all.
 	modal := Div().Set(clsModal.AsAttr()).
 		Attr("role", "dialog").
 		Attr("aria-modal", "true").
-		Child(Div().Set(clsModalBackdrop.AsAttr()).
-			On("click", func(e Event) { m.visible.Set(false) })).
+		On("click", func(e Event) { m.visible.Set(false) }).
 		Child(modalContent)
+
+	modalContent.On("click", func(e Event) { e.StopPropagation() })
 	return Show(m.visible, modal)
 }
 
