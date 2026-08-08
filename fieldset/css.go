@@ -88,14 +88,22 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 			style.Row(style.Space3),
 			style.Pad(style.Space1),
 		).
-		// Locked repaints the INPUT, not the field root. Painting the root was
-		// what produced the "barrier": a state rule emits its border as an
-		// outline (so the box cannot resize mid-hover), outlines paint last in
-		// a stacking context — above positioned descendants — and the legend
-		// straddles exactly that top border line, so the barrier drew a grey
-		// rule straight across the chip. Nothing about "this field is
-		// read-only" needs a second box around the pair; the control itself is
-		// what is locked, so the control is what changes.
+		// Locked repaints the INPUT, not the field root — historically the
+		// wrapper got the treatment and the resulting ring crossed the legend
+		// chip straddling the top border line. Nothing about a locked field
+		// needs a second box around the pair; the control itself is what is
+		// locked, so the control is what changes. (Today the state paints
+		// fill only: Secondary carries no border, so no ring at all — the
+		// only box-shadow in this sheet is the label chip's Raise elevation.)
+		//
+		// This gate is PER FIELD, not per form. dom writes data-locked on the
+		// wrapper whenever form's isDisabledOrLocked() says so, and that check
+		// ORs the whole-form lock (SetLocked — no longer called by crudview,
+		// but still public API) with the field's OWN
+		// fc.Input.IsDisabled(), a per-field property declared on the model.
+		// Without this rule, a genuinely disabled field would be
+		// indistinguishable from an editable one — which is why the rule
+		// survives the form-lock's retirement.
 		//
 		// Secondary is Panel's fill with no border: the control stops reading
 		// as a writing area and settles back into the card, which is what a

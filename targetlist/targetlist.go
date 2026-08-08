@@ -32,7 +32,6 @@ const (
 	// backdrop to dismiss.
 	PartButton     = widget.Part("button")
 	PartIcon       = widget.Part("icon")
-	PartItem       = widget.Part("item")
 	PartItemDanger = widget.Part("item-danger")
 	PartItemIcon   = widget.Part("item-icon")
 	PartItemLabel  = widget.Part("item-label")
@@ -47,7 +46,6 @@ var (
 	clsMenuBtn        = NameTargetList.Class(PartButton)
 	clsMenuIcon       = NameTargetList.Class(PartIcon)
 	clsMenuList       = NameTargetList.Class(PartOptions)
-	clsMenuItem       = NameTargetList.Class(PartItem)
 	clsMenuItemDanger = NameTargetList.Class(PartItemDanger)
 	clsMenuItemIcon   = NameTargetList.Class(PartItemIcon)
 	clsMenuItemLabel  = NameTargetList.Class(PartItemLabel)
@@ -67,15 +65,13 @@ var (
 
 const iconDots = svg.Icon("tl-dots")
 
-// iconEdit and iconDelete back the ⋮ menu's two options. Rendered in the
-// markup on every device — desktop keeps them alongside the text label,
-// hidden by CSS; mobile is where they become the visible affordance and the
-// label hides instead, so the item reads as an icon button matching
-// crudview's own floating action button rather than a dropdown row.
-const (
-	iconEdit   = svg.Icon("tl-edit")
-	iconDelete = svg.Icon("tl-delete")
-)
+// iconDelete backs the ⋮ menu's only option. Rendered in the markup on every
+// device — desktop keeps it alongside the text label, hidden by CSS; mobile
+// is where it becomes the visible affordance and the label hides instead, so
+// the item reads as an icon button matching crudview's own floating action
+// button rather than a dropdown row. (Editar's pencil left the menu with the
+// lock it existed to undo — see crudview's Stage-3 comment in targetlist.go.)
+const iconDelete = svg.Icon("tl-delete")
 
 // Item is one selectable record: an id, a visible label, and an optional badge.
 type Item struct {
@@ -93,8 +89,7 @@ type TargetList struct {
 	Selected *SignalString
 
 	// Row callbacks. All optional.
-	OnSelect func(it Item)   // row body clicked
-	OnEdit   func(id string) // ⋮ → Editar
+	OnSelect func(it Item) // row body clicked
 	OnDelete func(id string) // ⋮ → Eliminar
 
 	items    []Item
@@ -200,7 +195,7 @@ func (t *TargetList) buildRow(it Item) *Element {
 	// must not also jump the mobile strip to the form panel.
 	//
 	// It still sets Selected directly: the amber highlight is what ties the
-	// expanded Editar/Eliminar to the record they act on. This also flips
+	// expanded Eliminar to the record it acts on. This also flips
 	// crudview's own active()/Open state for free — Selected is the same
 	// *SignalString crudview binds its action button's icon to — so the button
 	// reads "cancel" the instant the menu opens, with no separate wiring here.
@@ -219,16 +214,6 @@ func (t *TargetList) buildRow(it Item) *Element {
 		}
 	})
 
-	edit := Button().Set(clsMenuItem.AsAttr()).
-		Child(iconEdit.Render(string(clsMenuItemIcon))).
-		Child(Span().Set(clsMenuItemLabel.AsAttr()).Text("Editar"))
-	edit.On("click", func(e Event) {
-		e.StopPropagation()
-		t.closeAllMenus()
-		if t.OnEdit != nil {
-			t.OnEdit(id)
-		}
-	})
 	del := Button().Set(clsMenuItemDanger.AsAttr()).
 		Child(iconDelete.Render(string(clsMenuItemIcon))).
 		Child(Span().Set(clsMenuItemLabel.AsAttr()).Text("Eliminar"))
@@ -247,7 +232,7 @@ func (t *TargetList) buildRow(it Item) *Element {
 	// the one in openMenu.
 	options := Div().Set(clsMenuList.AsAttr()).
 		BindStateFunc(widget.Open, func() bool { return t.openMenu.Get() == id }).
-		Child(edit, del)
+		Child(del)
 
 	// The trigger is the row's FIRST child, on purpose: as the first flex item
 	// it sits at the row's leading edge — the only edge the mobile

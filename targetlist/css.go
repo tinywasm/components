@@ -34,20 +34,16 @@ func (t *TargetList) sheet() *style.Sheet {
 			style.Scroll(),
 			style.PadInline(style.Space1),
 		).
-		// Flush on mobile, not Space1: this is INSIDE the crudview card
-		// (between its Inset border and the row content), unlike rightpanel's
-		// aside gutter which stays put on every breakpoint specifically so
-		// that outer border keeps a buffer against the screen edge. Reclaiming
-		// space here instead of there is what makes the ⋮ menu's clearance in
-		// the mobile sliver not cost the card its own visible frame — see
-		// rightpanel/css.go's partAside comment for the two sides of this
-		// trade.
-		//
-		// Inline only, like the base rule: the block edges belong to the seam,
-		// so the flush reclaims the sliver without clobbering the bottom
-		// reservation of a FloatingChrome host.
+		// Mobile keeps the same inline gutter as desktop — no more reclaiming
+		// space for the ⋮ in the master-detail sliver. That budget died with
+		// the decision that the list's indent must match the form's 16px
+		// (crudview card 4 + list 4 + this 8, see crudview/css.go's cardInset):
+		// the ⋮ is simply not reachable from the sliver anymore, and deleting
+		// a record means returning to the list. Inline only, like the base
+		// rule: the block edges belong to the seam, so nothing here clobbers
+		// the bottom reservation of a FloatingChrome host.
 		On(css.Mobile, PartList,
-			style.PadInline(style.SpaceNone),
+			style.PadInline(style.Space2),
 		).
 		// The row wraps, and KeepSize is what lets it GROW. Row(Space2) already
 		// sets flex-wrap, which is what puts the open options on their own line
@@ -63,7 +59,14 @@ func (t *TargetList) sheet() *style.Sheet {
 			style.Row(style.Space2),
 			style.KeepSize(),
 			style.ControlBox(),
-			style.Interactive(style.Panel),
+			// Page, not Panel: the row gets the whitest surface — the same
+			// one the form's inputs wear — so the list reads as equal in
+			// weight to the fields it parallels. Panel's grey was darker
+			// than the inputs it sat beside, which is what made the list
+			// feel like the "background" of the form. Page also drops the
+			// Panel border: the row floats on the card's transparent
+			// container instead of being framed by it.
+			style.Interactive(style.Page),
 			style.Pad(style.Space3),
 			style.Round(style.RadiusMd),
 		).
@@ -104,20 +107,25 @@ func (t *TargetList) sheet() *style.Sheet {
 		// (rightpanel's MasterDetail(Most)) selecting a row navigates to the
 		// form panel and leaves only a 10% sliver of the list showing — the
 		// row's LEADING edge, by construction (Size.Most: "leaves a sliver of
-		// what sits behind it"). A trailing-edge menu is the one part of the
-		// row that sliver can never show, which strands the only control that
-		// unlocks the now-read-only form on the panel the user just left. Do
-		// not move this back to the trailing edge without re-solving that.
+		// what sits behind it"). The leading edge is simply the edge the list
+		// always shows first, on every device; the trailing edge is the one
+		// part of the row a phone user cannot reach without going back to the
+		// list. Do not move this back to the trailing edge without re-solving
+		// that.
 		//
-		// In flow the icon starts at the row's own Pad(Space3) = 12px instead
-		// of the old Docked Space1 = 4px inset. Measured in the browser: the
-		// ~37.5px sliver at a 375px viewport still fits the 24px icon with
-		// 1.5px to spare (see layout/docs/PLAN.md for the budget).
+		// Pad(Space1) + CenterContent give the trigger a symmetric box: 4px
+		// on every side of the 24px glyph, which centres the ⋮ in its 32px
+		// hit area instead of letting it drift. The asymmetry that reported
+		// (⋮ inset ~19px left vs ~14px top) was the UA button padding — 6px
+		// inline, 1px block — surviving the reset (css/css.reset.go now kills
+		// it with padding: 0) and mixing with this part's own paddings.
 		Part(PartButton,
 			style.As(style.Subtle),
 			style.KeepSize(),
 			style.Interactive(style.Subtle),
 			style.Round(style.RadiusSm),
+			style.Pad(style.Space1),
+			style.CenterContent(),
 		).
 		// IconBox is not optional: a bare <svg> with no width or height falls
 		// back to the replaced-element default of 300x150 and drags the whole
@@ -164,44 +172,27 @@ func (t *TargetList) sheet() *style.Sheet {
 			style.KeepSize(),
 			style.RevealedBy(widget.Open),
 		).
-		// Square: the items are flush rows inside the panel, not buttons floating
 		// Content-width buttons side by side, not full-width flush rows: the
 		// options are a line INSIDE the row now, not a card of their own, so
 		// two stretched bars would read as a second list rather than as this
 		// row's two actions. Rounded for the same reason — RadiusNone only
 		// made sense when a panel's HideOverflow was clipping the outer
-		// corners, and there is no panel left.
-		Part(PartItem,
-			style.Interactive(style.Panel),
-			style.Round(style.RadiusSm),
-			style.Pad(style.Space2),
-			style.Width(style.Content),
-		).
-		// Danger, not Panel: mirrors crudview's own delconfirm-btn/
-		// delconfirm-btn-danger split — same base shape, Eliminar alone tinted
-		// for a destructive action. Desktop/Tablet keep this identical to
-		// PartItem apart from color; see the mobile override below for why.
+		// corners, and there is no panel left. PartItem itself is gone: it
+		// was Editar's shape, and Editar left the menu with the lock it
+		// existed to undo.
 		Part(PartItemDanger,
 			style.Interactive(style.Danger),
 			style.Round(style.RadiusSm),
 			style.Pad(style.Space2),
 			style.Width(style.Content),
 		).
-		// Mobile: both options become floating icon buttons matching
+		// Mobile: Eliminar becomes a floating icon button matching
 		// crudview's own action button exactly (As, Round, Pad, Raise(Floating),
 		// CenterContent — same recipe, see crudview/css.go's mobile "action"
-		// override) instead of a text dropdown row. Primary for Editar, the
-		// chassis' default "this is a control" color; Danger for Eliminar,
+		// override) instead of a text dropdown row. Danger for Eliminar,
 		// matching the destructive-action color already used elsewhere in this
-		// same component set.
-		On(css.Mobile, PartItem,
-			style.As(style.Primary),
-			style.Round(style.RadiusMd),
-			style.Pad(style.Space2),
-			style.Width(style.Content),
-			style.Raise(style.Floating),
-			style.CenterContent(),
-		).
+		// same component set. (Editar used to be the Primary half of this
+		// pair; it left the menu with the lock — see targetlist.go.)
 		On(css.Mobile, PartItemDanger,
 			style.As(style.Danger),
 			style.Round(style.RadiusMd),
@@ -238,7 +229,7 @@ func (t *TargetList) sheet() *style.Sheet {
 		When(widget.Selected, PartRow,
 			style.As(style.Accent),
 		).
-		// AccentWash, not Interactive(Panel)'s own grey mix: a hover that
+		// AccentWash, not Interactive(Page)'s own grey mix: a hover that
 		// leans toward the same amber the selected state commits to reads as
 		// "on the way to selected" -- a grey hover reads as unrelated chrome
 		// with no connection to what clicking it does.
@@ -247,14 +238,14 @@ func (t *TargetList) sheet() *style.Sheet {
 		).
 		// Same treatment as Hover above, on purpose: a keyboard user tabbing
 		// through the list gets no :hover at all, so leaving Focus on
-		// Interactive(Panel)'s default grey would give mouse/touch users the
+		// Interactive(Page)'s default grey would give mouse/touch users the
 		// amber preview and strand keyboard users on the old unrelated color
 		// -- the exact inconsistency pairing Hover with Focus exists to rule
 		// out.
 		Cue(widget.Focus, PartRow,
 			style.As(style.AccentWash),
 		).
-		// Same Accent as When(Selected) above, not Interactive(Panel)'s own
+		// Same Accent as When(Selected) above, not Interactive(Page)'s own
 		// grey press mix: a tap is :active for the whole time the finger is
 		// down, which outlasts the click handler that sets data-selected —
 		// same specificity, same layer, :active declared later, so it wins

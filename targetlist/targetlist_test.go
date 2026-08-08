@@ -20,10 +20,19 @@ func TestTargetList_RowHasLabelBadgeAndMenu(t *testing.T) {
 
 	html := tl.buildRow(Item{ID: "7", Label: "Alpha", Description: "192.168.0.7"}).String()
 
-	for _, want := range []string{"targetlist__row", "Alpha", "targetlist__badge", "192.168.0.7", "targetlist__button", "targetlist__options", "Editar", "Eliminar"} {
+	for _, want := range []string{"targetlist__row", "Alpha", "targetlist__badge", "192.168.0.7", "targetlist__button", "targetlist__options", "Eliminar"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("buildRow output missing %q\ngot: %s", want, html)
 		}
+	}
+	// Editar left the menu with the lock it existed to undo: the ⋮ opens a
+	// single-option accordion now, and tapping a row already leaves the form
+	// editable. Neither the label nor the pencil glyph may come back.
+	if strings.Contains(html, "Editar") {
+		t.Errorf("buildRow must not render an Editar option (the lock is gone)\ngot: %s", html)
+	}
+	if strings.Contains(html, "tl-edit") {
+		t.Errorf("buildRow must not reference the tl-edit icon\ngot: %s", html)
 	}
 }
 
@@ -162,7 +171,8 @@ func TestTargetList_ListGutterDoesNotClobberTheScrollSeam(t *testing.T) {
 		t.Errorf("the base rule must not clobber the seam's block edges, block:\n%s", baseBody)
 	}
 
-	// Mobile media rule: the flush reclaims the sliver inline, never the seam.
+	// Mobile media rule: the inline gutter stays inline on mobile too — the
+	// two-column indent budget (see crudview's cardInset) — never the seam.
 	mediaIdx := strings.Index(css, "@media (max-width")
 	if mediaIdx == -1 {
 		t.Fatal("expected a mobile media query")
@@ -179,8 +189,8 @@ func TestTargetList_ListGutterDoesNotClobberTheScrollSeam(t *testing.T) {
 	if end := strings.Index(mobileBody, "}"); end != -1 {
 		mobileBody = mobileBody[:end]
 	}
-	if !strings.Contains(mobileBody, "padding-inline: 0;") {
-		t.Errorf("expected the mobile flush to be inline-only, block:\n%s", mobileBody)
+	if !strings.Contains(mobileBody, "padding-inline: var(--space-2") {
+		t.Errorf("expected the mobile gutter to be the Space2 inline pad, block:\n%s", mobileBody)
 	}
 	if strings.Contains(mobileBody, "padding: ") || strings.Contains(mobileBody, "padding-block") {
 		t.Errorf("the mobile rule must not clobber the seam's block edges, block:\n%s", mobileBody)
@@ -213,10 +223,9 @@ func TestTargetList_BadgeStraddlesWithoutTransform(t *testing.T) {
 // stages): the ⋮ trigger is the row's FIRST in-flow child, so it sits at the
 // row's leading edge by flex order — no Docked. On the mobile master-detail
 // strip, selecting a row leaves only a sliver of the list's LEADING edge
-// visible; a menu that is not the row's first child is the one part that
-// sliver can never show, stranding the only control that unlocks the
-// now-read-only form on the panel the user just left tapping the row
-// navigated away from.
+// visible — the leading edge is simply the edge the list always shows first,
+// so a menu anywhere else is the one part of the row a phone user cannot
+// reach without going back to the list.
 func TestMenuLeadsTheRow(t *testing.T) {
 	tl := &TargetList{}
 	tl.Init(nil)
