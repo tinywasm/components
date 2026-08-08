@@ -21,13 +21,15 @@ const badgeChars = 16
 const NameTargetList = widget.Name("targetlist")
 
 const (
-	PartRow        = widget.Part("row")
-	PartMenu       = widget.Part("menu")
-	PartOptions    = widget.Part("options")
-	PartBadge      = widget.Part("badge")
-	PartLabel      = widget.Part("label")
-	PartList       = widget.Part("list")
-	PartBackdrop   = widget.Part("backdrop")
+	PartRow     = widget.Part("row")
+	PartOptions = widget.Part("options")
+	PartBadge   = widget.Part("badge")
+	PartLabel   = widget.Part("label")
+	PartList    = widget.Part("list")
+	// PartMenu (the <details> wrapper) and PartBackdrop are gone with the
+	// overlay: the trigger is a plain button and the options are an in-flow
+	// accordion, so there is no wrapper to style and nothing floating for a
+	// backdrop to dismiss.
 	PartButton     = widget.Part("button")
 	PartIcon       = widget.Part("icon")
 	PartItem       = widget.Part("item")
@@ -42,7 +44,6 @@ var (
 	clsRow            = NameTargetList.Class(PartRow)
 	clsLabel          = NameTargetList.Class(PartLabel)
 	clsBadge          = NameTargetList.Class(PartBadge)
-	clsMenu           = NameTargetList.Class(PartMenu)
 	clsMenuBtn        = NameTargetList.Class(PartButton)
 	clsMenuIcon       = NameTargetList.Class(PartIcon)
 	clsMenuList       = NameTargetList.Class(PartOptions)
@@ -50,12 +51,19 @@ var (
 	clsMenuItemDanger = NameTargetList.Class(PartItemDanger)
 	clsMenuItemIcon   = NameTargetList.Class(PartItemIcon)
 	clsMenuItemLabel  = NameTargetList.Class(PartItemLabel)
-	clsMenuBackdrop   = NameTargetList.Class(PartBackdrop)
 )
 
-// menuGroup makes every row's ⋮ <details> part of one native HTML "exclusive
-// accordion" group: opening one auto-closes any other that's open, with no JS.
-const menuGroup = "tl-menu-group"
+// openMenu holds the id of the row whose ⋮ options are expanded, or "" when
+// none is. One signal instead of one per row is what makes the accordion
+// exclusive by construction: only one id can be in it, so opening a row closes
+// whichever was open with no bookkeeping and no DOM walk.
+//
+// This replaced a native <details name="…"> group. The native element gave the
+// exclusivity for free but owned the open state in the DOM, which meant Go had
+// to read it back out (GetAttr("open") != "<null>") and force it closed by
+// removing the attribute — and the options had to live INSIDE the <details> to
+// be hidden by it, which is exactly the nesting that made them an overlay
+// trapped in the list's Scroll() region. See css.go's PartOptions comment.
 
 const iconDots = svg.Icon("tl-dots")
 
@@ -91,7 +99,7 @@ type TargetList struct {
 
 	items    []Item
 	rows     *SignalNodes
-	menuOpen *SignalBool
+	openMenu *SignalString
 }
 
 func (t *TargetList) WidgetName() widget.Name { return NameTargetList }
@@ -106,8 +114,8 @@ func (t *TargetList) ensure() {
 	if t.Selected == nil {
 		t.Selected = NewString("")
 	}
-	if t.menuOpen == nil {
-		t.menuOpen = NewBool(false)
+	if t.openMenu == nil {
+		t.openMenu = NewString("")
 	}
 }
 
@@ -131,69 +139,34 @@ func (t *TargetList) Items() []Item { return t.items }
 // Count reports how many rows are currently rendered (used by hosts/tests).
 func (t *TargetList) Count() int { return len(t.items) }
 
-// menuID is the DOM id of a row's ⋮ <details> — used to close it
-// programmatically (closeAllMenus) since native <details> only closes on a
-// summary click or an explicit attribute removal, never on an outside click.
-func menuID(key string) string { return key + ".menu" }
-
-// anyMenuOpen informa si alguna fila tiene su ⋮ <details> abierto. El navegador
-// posee ese estado; esto lo refleja en Go para que la hoja pueda seleccionarlo.
-//
-// GetAttr wraps js.Value.String(): a present attribute (even "<details open>",
-// whose value is "") returns its string value; a missing one returns the
-// stringified JS null, "<null>" — that's the only case treated as closed.
-func (t *TargetList) anyMenuOpen() bool {
-	for _, it := range t.items {
-		if ref, ok := Get(menuID("tl-" + it.ID)); ok {
-			if ref.GetAttr("open") != "<null>" {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// closeAllMenus force-closes every row's ⋮ menu. Wired to: picking Editar/
-// Eliminar (native <details> does not close itself on that), and a full-page
-// backdrop that is shown while any menu is open, so a click anywhere outside
-// a menu closes it too.
+// closeAllMenus collapses whichever row is expanded. One assignment: the open
+// state is a single id in Go now, not an `open` attribute spread across the
+// DOM, so there is nothing to walk and nothing to remove.
 func (t *TargetList) closeAllMenus() {
-	for _, it := range t.items {
-		if ref, ok := Get(menuID("tl-" + it.ID)); ok {
-			ref.RemoveAttr("open")
-		}
-	}
-	t.menuOpen.Set(false)
+	t.openMenu.Set("")
 }
 
 // CloseMenus is closeAllMenus, exported for a host that shares Selected (see
 // crudview) to call when ITS OWN cancel path clears the selection. The ⋮
-// summary's click handler sets Selected directly (see buildRow) so the
-// floating options menu reads as belonging to a highlighted row, but native
-// <details> open state is not tracked by that signal — clearing Selected
-// elsewhere does not, by itself, close a menu left open on some row. A host
-// that lets a row's ⋮ drive its own "active" state is responsible for
+// trigger sets Selected directly (see buildRow) so the expanded options read
+// as belonging to a highlighted row, but the two are separate signals —
+// clearing Selected elsewhere does not, by itself, collapse a row left open. A
+// host that lets a row's ⋮ drive its own "active" state is responsible for
 // closing it back up when that state resets.
 func (t *TargetList) CloseMenus() {
 	t.closeAllMenus()
 }
 
 func (t *TargetList) Render() *Element {
-	backdrop := Div().Set(clsMenuBackdrop.AsAttr()).
-		BindStateFunc(widget.Open, func() bool { return t.menuOpen.Get() })
-	backdrop.On("click", func(Event) { t.closeAllMenus() })
-
+	// No backdrop. It existed to catch the outside-tap that dismissed a
+	// floating options panel; the options are in the row now, so there is
+	// nothing floating to dismiss — and a viewport-sized element over an
+	// in-flow accordion would eat every tap meant for the controls inside it,
+	// which is the same trap usermenu already documents for its own mobile
+	// accordion.
 	list := Ul().Set(clsList.AsAttr()).Attr("role", "listbox").BindChildren(t.rows)
 
-	// backdrop is a plain sibling of the (BindChildren-managed) <ul>, never a
-	// static child mixed into it — the keyed reconcile assumes it owns every
-	// child of the element it's bound to.
-	//
-	// Order is part of the stacking contract: the backdrop and a row's open
-	// options both sit on the widget overlay level (var(--z-dropdown)), and
-	// among equals the LATER sibling paints on top — the backdrop is first so
-	// the options never end up underneath it. Do not reorder.
-	return Div().Set(clsListWrap.AsAttr()).Child(backdrop, list)
+	return Div().Set(clsListWrap.AsAttr()).Child(list)
 }
 
 func (t *TargetList) buildRow(it Item) *Element {
@@ -217,25 +190,30 @@ func (t *TargetList) buildRow(it Item) *Element {
 		}
 	})
 
-	row.Child(Span().Set(clsLabel.AsAttr()).Text(it.Label))
-
-	// ⋮ options menu — native <details> so open/close is CSS-only. The clicks
-	// stopPropagation so the row's own OnSelect (full select-and-navigate,
-	// see crudview's selectAction) never fires from a ⋮ tap — opening the
-	// menu must not also jump the mobile strip to the form panel.
+	// ⋮ trigger. A plain button, not a <summary>: the options it expands are a
+	// sibling further down this row, not its children, so there is no <details>
+	// left for a summary to belong to. Toggling one id in openMenu keeps the
+	// accordion exclusive without touching any other row.
 	//
-	// It still sets Selected directly, though: with the mobile row menu now
-	// docked to the viewport corner (crudview/rightpanel PLAN.md) rather than
-	// anchored to the row, there is nothing else on screen linking the
-	// floating Editar/Eliminar icons back to the row they act on. Highlighting
-	// the row is that link. This also flips crudview's own active()/Open
-	// state for free — Selected is the same *SignalString crudview binds its
-	// action button's icon to — so the button reads "cancel" the instant the
-	// menu opens, with no separate wiring needed here.
-	summary := Summary().Set(clsMenuBtn.AsAttr()).
+	// StopPropagation so the row's own OnSelect (full select-and-navigate, see
+	// crudview's selectAction) never fires from a ⋮ tap — expanding the options
+	// must not also jump the mobile strip to the form panel.
+	//
+	// It still sets Selected directly: the amber highlight is what ties the
+	// expanded Editar/Eliminar to the record they act on. This also flips
+	// crudview's own active()/Open state for free — Selected is the same
+	// *SignalString crudview binds its action button's icon to — so the button
+	// reads "cancel" the instant the menu opens, with no separate wiring here.
+	trigger := Button().Set(clsMenuBtn.AsAttr()).
+		Attr("aria-label", "Opciones").
 		Child(iconDots.Render(string(clsMenuIcon)))
-	summary.On("click", func(e Event) {
+	trigger.On("click", func(e Event) {
 		e.StopPropagation()
+		if t.openMenu.Get() == id {
+			t.openMenu.Set("")
+		} else {
+			t.openMenu.Set(id)
+		}
 		if t.Selected != nil {
 			t.Selected.Set(id)
 		}
@@ -262,24 +240,28 @@ func (t *TargetList) buildRow(it Item) *Element {
 		}
 	})
 
-	menu := Details().Set(clsMenu.AsAttr()).
-		ID(menuID(key)).
-		Attr("name", menuGroup).
-		Child(summary).
-		Child(Div().Set(clsMenuList.AsAttr()).Child(edit, del))
+	// The options are a sibling of the trigger, not its child, and the LAST
+	// child of the row: Width(Full)+KeepSize makes them take a wrapped line of
+	// their own beneath the label, which only works if nothing follows them on
+	// that line. RevealedBy(Open) in css.go hides them until this row's id is
+	// the one in openMenu.
+	options := Div().Set(clsMenuList.AsAttr()).
+		BindStateFunc(widget.Open, func() bool { return t.openMenu.Get() == id }).
+		Child(edit, del)
 
-	menu.On("toggle", func(e Event) {
-		t.menuOpen.Set(t.anyMenuOpen())
-	})
-
-	// The menu sits on the label's line and the badge after it, so a row that
-	// runs out of width wraps the badge rather than the affordance.
-	row.Child(menu)
+	// The trigger is the row's FIRST child, on purpose: as the first flex item
+	// it sits at the row's leading edge — the only edge the mobile
+	// master-detail sliver shows (see the PartButton comment in css.go). The
+	// label takes the free space after it and the badge after that, so a
+	// row that runs out of width wraps the badge rather than the affordance.
+	row.Child(trigger)
+	row.Child(Span().Set(clsLabel.AsAttr()).Text(it.Label))
 	if it.Description != "" {
 		row.Child(Span().Set(clsBadge.AsAttr()).
 			Attr("title", it.Description). // the untruncated text stays reachable
 			Text(fmt.Convert(it.Description).Truncate(badgeChars).String()))
 	}
+	row.Child(options)
 
 	return row
 }

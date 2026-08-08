@@ -20,7 +20,7 @@ func TestTargetList_RowHasLabelBadgeAndMenu(t *testing.T) {
 
 	html := tl.buildRow(Item{ID: "7", Label: "Alpha", Description: "192.168.0.7"}).String()
 
-	for _, want := range []string{"targetlist__row", "Alpha", "targetlist__badge", "192.168.0.7", "targetlist__menu", "Editar", "Eliminar"} {
+	for _, want := range []string{"targetlist__row", "Alpha", "targetlist__badge", "192.168.0.7", "targetlist__button", "targetlist__options", "Editar", "Eliminar"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("buildRow output missing %q\ngot: %s", want, html)
 		}
@@ -37,30 +37,48 @@ func TestTargetList_SetItemsPopulatesRows(t *testing.T) {
 	}
 }
 
-func TestTargetList_MenuOpenStateBackdrop(t *testing.T) {
+// The accordion is exclusive by construction: openMenu holds ONE id, so there
+// is no state in which two rows are expanded. This replaced a native
+// <details name="…"> group, whose open state lived in the DOM and had to be
+// read back out of it — see the openMenu comment in targetlist.go.
+func TestTargetList_OnlyOneRowExpandsAtATime(t *testing.T) {
 	tl := &TargetList{}
 	tl.Init(nil)
-	tl.SetItems([]Item{{ID: "1", Label: "One"}})
+	tl.SetItems([]Item{{ID: "1", Label: "One"}, {ID: "2", Label: "Two"}})
 
-	// Initially, with no open menus, backdrop shouldn't have data-open="true"
-	htmlInit := tl.Render().String()
-	t.Logf("htmlInit: %s", htmlInit)
-	if strings.Contains(htmlInit, `data-open='true'`) {
-		t.Error("expected backdrop NOT to have data-open='true' initially")
+	// buildRow, not Render(): the rows are cached in a SignalNodes that the
+	// wrapper only reconciles in the browser, but each row's own state binding
+	// evaluates on String(), which is what this is about.
+	expanded := func() []string {
+		var open []string
+		for _, it := range tl.Items() {
+			if strings.Contains(tl.buildRow(it).String(), `data-open='true'`) {
+				open = append(open, it.ID)
+			}
+		}
+		return open
 	}
 
-	// Mocking menu open
-	tl.menuOpen.Set(true)
-	htmlOpen := tl.Render().String()
-	t.Logf("htmlOpen: %s", htmlOpen)
-	if !strings.Contains(htmlOpen, `data-open='true'`) {
-		t.Error("expected backdrop to have data-open='true' when a menu is open")
+	if got := expanded(); len(got) != 0 {
+		t.Errorf("no row may be expanded initially, got %v", got)
 	}
 
-	// Verify closeAllMenus clears it
+	tl.openMenu.Set("1")
+	if got := expanded(); len(got) != 1 || got[0] != "1" {
+		t.Errorf("expanding row 1 must expand exactly row 1, got %v", got)
+	}
+
+	tl.openMenu.Set("2")
+	if got := expanded(); len(got) != 1 || got[0] != "2" {
+		t.Errorf("expanding row 2 must collapse row 1, got %v", got)
+	}
+
 	tl.closeAllMenus()
-	if tl.menuOpen.Get() {
-		t.Error("expected menuOpen to be false after closeAllMenus")
+	if tl.openMenu.Get() != "" {
+		t.Errorf("closeAllMenus must clear openMenu, got %q", tl.openMenu.Get())
+	}
+	if got := expanded(); len(got) != 0 {
+		t.Errorf("closeAllMenus must collapse every row, got %v", got)
 	}
 }
 
@@ -72,14 +90,17 @@ func TestTargetList_CSSDoesNotContainHas(t *testing.T) {
 	if strings.Contains(css, ":has(") {
 		t.Error("expected CSS not to contain forbidden :has( selector")
 	}
+	// The options are hidden until their own row's id is the one in openMenu:
+	// RevealedBy(Open) is the whole open/close mechanism now that no native
+	// <details> is doing it.
 	if !strings.Contains(css, "display: none") {
-		t.Error("expected CSS to have display: none under normal condition for backdrop")
+		t.Error("expected CSS to hide the options by default")
 	}
 	if !strings.Contains(css, "[data-open=\"true\"]") {
 		t.Error("expected CSS to contain selector matching [data-open=\"true\"]")
 	}
-	if !strings.Contains(css, "display: block") {
-		t.Error("expected CSS to have display: block under open condition")
+	if !strings.Contains(css, "display: flex") {
+		t.Error("expected the revealed options to get a real flow back")
 	}
 }
 
@@ -188,96 +209,116 @@ func TestTargetList_BadgeStraddlesWithoutTransform(t *testing.T) {
 	}
 }
 
-// TestMenuDocksToLeadingEdge is the net for PLAN.md Stage A1: on the mobile
-// master-detail strip, selecting a row leaves only a sliver of the list's
-// LEADING edge visible. A row menu anchored to the trailing edge is the one
-// part of the row that sliver can never show, stranding the only control that
-// unlocks the now-read-only form on the panel the user just left tapping the
-// row navigated away from.
-func TestMenuDocksToLeadingEdge(t *testing.T) {
-	css := (&TargetList{}).RenderCSS().String()
-	// Leading newline: without it this also matches the substring
-	// ".targetlist__menu {" inside the primitives-layer combined selector
-	// ".targetlist__badge, .targetlist__menu {", which appears earlier in the
-	// sheet and carries no inset declarations at all.
-	i := strings.Index(css, "\n.targetlist__menu {")
-	if i == -1 {
-		t.Fatal("expected a standalone rule for .targetlist__menu")
+// TestMenuLeadsTheRow is the net for the 2a construction (PLAN.md, both
+// stages): the ⋮ trigger is the row's FIRST in-flow child, so it sits at the
+// row's leading edge by flex order — no Docked. On the mobile master-detail
+// strip, selecting a row leaves only a sliver of the list's LEADING edge
+// visible; a menu that is not the row's first child is the one part that
+// sliver can never show, stranding the only control that unlocks the
+// now-read-only form on the panel the user just left tapping the row
+// navigated away from.
+func TestMenuLeadsTheRow(t *testing.T) {
+	tl := &TargetList{}
+	tl.Init(nil)
+	markup := tl.buildRow(Item{ID: "7", Label: "Alpha"}).String()
+
+	// The row's first child must be the ⋮ trigger: in a Row() flow, order is
+	// the position. The label (the row's other in-flow child) must come after
+	// it, not before.
+	first, best := "", -1
+	if i := strings.Index(markup, "targetlist__row"); i != -1 {
+		if j := strings.Index(markup[i:], ">"); j != -1 {
+			rest := markup[i+j+1:]
+			for _, c := range []string{"targetlist__button", "targetlist__label", "targetlist__badge"} {
+				if k := strings.Index(rest, c); k != -1 && (best == -1 || k < best) {
+					best = k
+					first = c
+				}
+			}
+		}
 	}
-	body := css[i:]
-	end := strings.Index(body, "}")
-	if end == -1 {
-		t.Fatal("malformed rule block")
+	if first != "targetlist__button" {
+		t.Errorf("expected the ⋮ trigger to be the row's FIRST child (leading edge by flex order), got first=%q\nmarkup: %s", first, markup)
 	}
-	b := body[:end]
-	if !strings.Contains(b, "inset-inline-start:") {
-		t.Errorf("expected the menu docked to the leading edge (inset-inline-start), block:\n%s", b)
+
+	// And it must be in flow: no position declarations on its own base rule.
+	cssStr := tl.RenderCSS().String()
+	block := baseRuleBlock(cssStr, string(clsMenuBtn))
+	if block == "" {
+		t.Fatal("expected a base rule for .targetlist__button")
 	}
-	if !strings.Contains(b, "inset-inline-end: auto;") {
-		t.Errorf("expected the trailing edge left auto, block:\n%s", b)
+	for _, prop := range []string{"position", "inset-block-start", "inset-block-end", "inset-inline-start"} {
+		if declValue(block, prop) != "" {
+			t.Errorf("expected .targetlist__button to be in flow (no %s), block:\n%s", prop, block)
+		}
 	}
 }
 
-// TestOptionsPanelStaysOnScreenOnMobile is the net for PLAN.md Stage A2: once
-// the menu trigger sits at the row's leading edge (~372px into a 375-400px
-// viewport, itself already only a 10% sliver in from the panel edge), a
-// row-anchored Flyout for the dropdown overflows the screen by roughly its
-// own width. Mobile must anchor it to the viewport instead; desktop keeps the
-// row-anchored Flyout, now matching the trigger's own leading-edge side.
-func TestOptionsPanelStaysOnScreenOnMobile(t *testing.T) {
-	css := (&TargetList{}).RenderCSS().String()
+func TestSheetValidates(t *testing.T) {
+	tl := &TargetList{}
+	tl.Init(nil)
+	if errs := tl.sheet().Validate(); len(errs) > 0 {
+		t.Errorf("targetlist sheet must validate, got:\n%v", errs)
+	}
+}
 
-	// Desktop (ungated) rule: a row-anchored Flyout, SideStart to match the
-	// trigger — not the SideEnd it used before Stage A1 moved the trigger.
-	// Anchored to start searching after "@layer widgets {": the primitives
-	// layer emits its OWN standalone ".targetlist__options {" rule (just
-	// HideOverflow's "overflow: hidden;"), which a bare or newline-anchored
-	// search finds first and which carries no position/inset declarations at
-	// all.
-	widgetsIdx := strings.Index(css, "@layer widgets {")
-	if widgetsIdx == -1 {
-		t.Fatal("expected an @layer widgets block")
-	}
-	di := strings.Index(css[widgetsIdx:], "\n.targetlist__options {")
-	if di == -1 {
-		t.Fatal("expected a widgets-layer rule for .targetlist__options")
-	}
-	di += widgetsIdx
-	desktopBody := css[di:]
-	if end := strings.Index(desktopBody, "}"); end != -1 {
-		desktopBody = desktopBody[:end]
-	}
-	if !strings.Contains(desktopBody, "position: absolute;") {
-		t.Errorf("expected the desktop options panel to stay a row-anchored Flyout, block:\n%s", desktopBody)
-	}
-	if !strings.Contains(desktopBody, "inset-inline-start: 0;") {
-		t.Errorf("expected the desktop Flyout on the leading (start) side, block:\n%s", desktopBody)
+// TestOptionsNeverLeaveTheFlow is the regression net for BOTH shipped bugs of
+// this panel, which had one root: an out-of-flow options panel cannot coexist
+// with the list's own Scroll() region.
+//
+//  1. As a Flyout it resolved inset-block-start: 100% against the nearest
+//     POSITIONED ancestor. Measured at 1440x900: the panel opened 21.2px inside
+//     its own row and covered 8.2px of the row's label.
+//  2. Anchored correctly to the row, it was then clipped by the scroller: on
+//     the last row, 10px of an 84.8px panel survived.
+//  3. The mobile Docked(Viewport, …) escape hatch from (2) landed the buttons
+//     502px from their row, over two unrelated rows, which then needed a
+//     Veil()'d backdrop that blurred the very row being acted on.
+//
+// In flow there is no clipper to escape and nothing to disambiguate. Measured
+// after: the same last row shows 41.6px of 41.6px.
+//
+// So: no positioning on the options, on ANY device. A future device override
+// that reaches for absolute/fixed to "get more room" is re-entering the loop.
+func TestOptionsNeverLeaveTheFlow(t *testing.T) {
+	tl := &TargetList{}
+	tl.Init(nil)
+	cssStr := tl.RenderCSS().String()
+
+	for _, blk := range strings.Split(cssStr, "}") {
+		if !strings.Contains(blk, ".targetlist__options") {
+			continue
+		}
+		for _, banned := range []string{"position: absolute;", "position: fixed;"} {
+			if strings.Contains(blk, banned) {
+				t.Errorf("the options must stay in flow (found %q); an out-of-flow "+
+					"panel is clipped by the list's Scroll() region, and escaping "+
+					"that clipper is what detached it from its row.\nblock:%s",
+					banned, blk)
+			}
+		}
 	}
 
-	// Mobile media query: viewport-docked, not row-anchored. The device rule
-	// emits TWO consecutive blocks for the same selector — one for Stack's
-	// flow decls (display/flex-direction/gap), one for Docked's position/inset
-	// decls — so LastIndex, not the first match, is the one carrying
-	// "position: fixed".
-	mediaIdx := strings.Index(css, "@media (max-width")
-	if mediaIdx == -1 {
-		t.Fatal("expected a mobile media query")
+	// And the row must be able to grow to hold them: inside a Scroll() column a
+	// flex item defaults to flex-shrink: 1, which pins the row at its
+	// min-height and lets the options paint outside its box.
+	if b := baseRuleBlock(cssStr, string(clsRow)); !strings.Contains(b, "flex-shrink: 0") {
+		if p := ruleContaining(cssStr, ".targetlist__row", "flex-shrink"); !strings.Contains(p, "flex-shrink: 0") {
+			t.Errorf("the row must not shrink, or it cannot grow to contain the expanded options; got:\n%s%s", b, p)
+		}
 	}
-	mobileRegion := css[mediaIdx:]
-	if next := strings.Index(mobileRegion[1:], "@media"); next != -1 {
-		mobileRegion = mobileRegion[:next+1]
+}
+
+// ruleContaining returns the first rule block whose selector list mentions sel
+// and whose body mentions prop. The primitives layer groups shared flags across
+// selectors, so a per-part lookup can legitimately miss them.
+func ruleContaining(cssStr, sel, prop string) string {
+	for _, blk := range strings.Split(cssStr, "}") {
+		if strings.Contains(blk, sel) && strings.Contains(blk, prop) {
+			return blk
+		}
 	}
-	mi := strings.LastIndex(mobileRegion, "\n.targetlist__options {")
-	if mi == -1 {
-		t.Fatal("expected a mobile rule for .targetlist__options")
-	}
-	mobileBody := mobileRegion[mi:]
-	if end := strings.Index(mobileBody, "}"); end != -1 {
-		mobileBody = mobileBody[:end]
-	}
-	if !strings.Contains(mobileBody, "position: fixed;") {
-		t.Errorf("expected the mobile options panel docked to the viewport (position: fixed), block:\n%s", mobileBody)
-	}
+	return ""
 }
 
 func TestPairMarkupAndStylesheet(t *testing.T) {

@@ -1,153 +1,221 @@
 ---
-PLAN: "refactor(components): adoptar el apilamiento declarado y retirar los parches de espacio"
-EXECUTOR: jules
-REVIEWER: none
+PLAN: "fix(targetlist): el desplegable ⋮ deja de abrirse encima de su propia fila"
+TAG: v0.5.0
 ---
 
-> Este plan se despacha con el flujo CodeJob. Ver skill: agents-workflow.
+> **NO DESPACHAR TODAVÍA.** Este plan espera revisión, y además **depende de que
+> la etapa A esté publicada**.
 >
-> Es la **etapa 3 de 4**. Orden obligatorio: **css → widget → components →
-> layout**. Requiere `--chip-height` (`tinywasm/css`) y las etapas 1-5 de
-> `tinywasm/widget` publicadas. No empezar antes: casi todo este plan consiste en
-> **borrar** cosas que dejan de hacer falta.
+> **Etapa B de un cambio en 2 repos.**
+>
+> | | Repo | Plan | Qué |
+> |---|---|---|---|
+> | A | `widget` | `widget/docs/PLAN.md` | el sheet aprende el árbol de partes; `Validate()` deja de callarse |
+> | **B** | **`components`** | **este plan** | `targetlist` adopta la construcción legal; `usermenu` gana el test que nunca tuvo |
 
-# Plan — quitar los parches que el DSL ya no obliga a escribir
+# Plan — `components`: `targetlist`, `usermenu` y el contenedor de bloque
 
-## 1. Por qué
+## El bug, medido
 
-Depurando una vista CRUD en móvil aparecieron cuatro defectos visuales. Tres se
-resolvieron **en este repo, a mano**, porque el DSL no ofrecía otra cosa:
+En desktop (1440x900), abrir el menú `⋮` de una fila pinta Editar/Eliminar
+**encima de la fila que lo abrió**, tapándole la etiqueta.
 
-| Parche actual | Dónde | Qué compensaba |
-|---|---|---|
-| `PadEdge(EdgeBottom, Space12)` en `PartList` (solo móvil) | `targetlist/css.go` | Que un botón flotante de otro widget se solapaba con el badge de la última fila. |
-| `PadInline(Space8)` en `PartLabel` | `targetlist/css.go` | Que el ⋮ `Docked` se pinta *dentro* de la caja y pisaba el texto. |
-| Comentario "la leyenda debe medir lo mismo que el badge, por eso no lleva padding vertical" | `fieldset/css.go` | Que la altura de un chip era emergente y las dos coincidían por casualidad. |
+```
+row      top 113.2   bottom 163.2   (alto 50)
+summary  top 118.0   bottom 142.0   (alto 24)
+options  top 142.0                  → 21.2px POR ENCIMA del fondo de su fila
+label    top 126.2   bottom 150.2   → el desplegable le come 8.2px de texto
 
-Ninguno es un error de quien los escribió: eran la única salida. Con las etapas
-de `tinywasm/widget` publicadas dejan de serlo, y **un parche que sobrevive a su
-causa se convierte en deuda**: el siguiente que lo lea no sabrá si sigue haciendo
-falta.
-
-La regla del harness que aplica aquí es explícita: *un consumidor nunca recrea
-localmente lo que falta arriba; si la librería no expone lo que necesitas, se
-para y se reporta*. Esto es el paso de vuelta — una vez arreglado arriba, el
-parche de abajo se retira.
-
-## 2. Contexto del repo para un agente sin contexto previo
-
-- Módulo: `github.com/tinywasm/components`. `docs/PLAN.md` va junto a `go.mod`.
-- Un componente = un paquete. Los relevantes: `targetlist/`, `fieldset/`.
-- **Separación SSR por extensión**: el CSS va en `css.go` con `//go:build !wasm`,
-  los iconos en `svg.go`. Nunca CSS ni SVG en el `.go` principal.
-- **Sin `front.go`**: la interactividad WASM va en el archivo del componente vía
-  `OnMount()`.
-- Todo el estilo sale del DSL de `tinywasm/widget/style`. **No hay escotilla de
-  CSS crudo y no se debe añadir.**
-- Nada de librería estándar en paquetes WASM: `tinywasm/fmt`.
-- Empotrado por valor: `dom.Element` como valor, nunca `*dom.Element`.
-- Prohibidas las cadenas repetidas en la lógica: constante con nombre.
-- `conformance_test.go` en la raíz aplica reglas transversales a todos los
-  componentes; leerlo antes de tocar nada, porque **falla por cosas que parecen
-  correctas** (por ejemplo, exige que `Cue(Hover, X)` tenga su `Cue(Focus, X)`
-  emparejado, para que quien navega con teclado no se quede sin la señal que sí
-  recibe quien usa ratón).
-
-## 3. Etapas
-
-### Etapa 1 — `targetlist`: retirar la reserva de espacio manual
-
-En `targetlist/css.go`, la regla móvil de `PartList` lleva hoy:
-
-```go
-On(css.Mobile, PartList,
-    style.Pad(style.SpaceNone),
-    style.PadEdge(style.EdgeBottom, style.Space12), // ← retirar
-).
+options.offsetParent === .targetlist__menu     ← no es la fila
 ```
 
-Con la etapa 5 de `widget`, `Scroll()` ya emite
-`padding-block-end: var(--floating-bottom, 0px)`, y el host que flota el botón
-declara cuánto ocupa. La reserva deja de ser asunto de este componente.
+En móvil el mismo desplegable **no** sufre esto: allí `PartOptions` es
+`Docked(Viewport, …)` → `position: fixed`, que se resuelve contra la pantalla y
+no consulta esta cadena. (El solape que se veía en móvil era otro: el
+`Backdrop` sin `Veil()`, ya arreglado.)
 
-Retirar **solo** el `PadEdge`. El `Pad(SpaceNone)` se queda: responde a otra cosa
-(recuperar milímetros para que el ⋮ quepa en la franja visible de la lista en
-móvil) y está documentado en su comentario.
+## Por qué el arreglo no vive aquí
 
-Actualizar el comentario para que no quede describiendo algo que ya no está.
+La causa es que `Docked(Parent, …)` en `PartMenu` convierte al `<details>` en el
+contenedor de bloque del `Flyout`, desplazando al `Anchor()` de la fila. El
+`100%` del `Flyout` mide 24px (el disparador) en vez de 50px (la fila).
 
-**Aceptación:** `grep -n "PadEdge" targetlist/css.go` no devuelve nada; el badge
-de la última fila deja de solaparse con un botón flotante del host cuando el host
-declara su `FloatingChrome` (se verifica en el plan de `layout`).
+Este repositorio **no puede arreglarlo bien**, sólo compensarlo. Cualquier
+número que pusiéramos aquí sería un parche sobre un contrato que `widget` no
+expresa — que es justo el bucle que
+`app-releases/docs/CONSTRUCTION_HARNESS.md` describe:
 
-### Etapa 2 — `targetlist`: revisar la holgura del texto tras `OnEdge` sin transform
+> *Un hueco de API siempre aparece en la hoja (la aplicación), donde el agente no
+> tiene autoridad para publicar aguas arriba — así que parchea en local. La deuda
+> técnica no es entonces un accidente: el flujo la garantiza.*
 
-`PartLabel` lleva `PadInline(Space8)` para librarse del ⋮ `Docked` en el borde
-inicial. `Docked` mantiene el elemento **dentro** de la caja, así que esa holgura
-sigue siendo necesaria y **no se retira**.
+Y la regla directa:
 
-Lo que sí hay que volver a medir es `PartBadge`: con la etapa 2 de `widget`,
-`OnEdge` ya no usa `transform`, así que el badge pasa a ocupar espacio real y
-puede empujar la altura de la fila. Comprobar que la fila sigue midiendo
-`--control-height` y que el badge sigue montado sobre la línea inferior.
+> *Un contrato que falta en una frontera es un defecto de la librería, no del
+> consumidor.*
 
-Si la fila crece, la causa será que la mitad inferior del chip ahora cuenta:
-compensarlo en `PartRow` y dejarlo escrito, **no** volviendo a meter un
-`transform` por la puerta de atrás.
+La prueba de que la regla ya se filtró a este repo está escrita a mano en
+`targetlist/css.go`:
 
-**Aceptación:** todas las filas miden lo mismo con y sin badge, y con etiquetas de
-distinta longitud.
+> *No `Anchor()` aquí — `Docked` ya lo hace contenedor de bloque, y los dos se
+> pelean por `position`.*
 
-### Etapa 3 — `fieldset`: la leyenda deja de coincidir por casualidad
+Ese comentario es una regla memorizada. Cuando la etapa A cierre el hueco, **se
+borra**: pasa a ser algo que el compilador/`Validate()` dice, no algo que el
+próximo lector tiene que recordar.
 
-Con `--chip-height` publicado, la altura del chip es un valor declarado. El
-comentario de `PartLabel` que explica que **no** lleva padding vertical para
-igualar al badge de `targetlist` describe un acuerdo verbal entre dos repos:
-reemplazarlo por la referencia al token, que es lo que ahora garantiza la
-igualdad por construcción.
+## El test ya está escrito y en rojo
 
-Verificar además, con la etapa 4 de `widget` (anillos con `box-shadow` en vez de
-`outline`):
-- el borde del estado `Locked` **ya no** pinta por encima de la leyenda;
-- ese borde respeta el `border-radius` — el anillo cuadrado que se veía en un
-  iPhone 7 (iOS 15, Safari sin `border-radius` en outlines) debe haber
-  desaparecido;
-- la caja **no** cambia de tamaño al entrar en `Locked` (era la razón de usar
-  `outline`; `box-shadow` la conserva).
+`targetlist/anchor_contract_test.go` (nuevo, ya en el repo).
+**`TestFlyoutHangsFromTheRowNotFromTheTrigger`** — hoy 🔴:
 
-**Aceptación:** ninguna regla emitida por `fieldset` contiene `outline`; la
-leyenda es legible en el estado `Locked`.
+```
+.targetlist__menu sits between the Anchor (.targetlist__row) and the Flyout
+(.targetlist__options) and is position: absolute pinned on one block edge only
+(inset-block-start: "var(--space-1,0.25rem)", inset-block-end: "auto").
+```
 
-### Etapa 4 — retirar los z-index implícitos
+Cómo está construido, y por qué así:
 
-Con la etapa 3 de `widget`, el apilamiento lo decide el DSL. Revisar que ningún
-componente de este repo dependa de orden de DOM para quedar por encima de un
-hermano. Si aparece alguno, se declara — no se reordena el marcado.
+- **Deriva la anidación del markup real**, recorriendo la salida de `buildRow()`
+  con una pila de etiquetas. No lleva la cadena `row > menu > options` escrita a
+  mano: si alguien reestructura la fila, el test **re-deriva** en vez de quedarse
+  validando una suposición que ya no es cierta.
+- **Lee el CSS real emitido**, no una expectativa.
+- **La aserción es agnóstica al arreglo.** No dice "el ancestro posicionado más
+  cercano debe ser el Anchor" — esa frase prohibiría la opción 2b de la etapa A.
+  Dice lo que **toda** solución correcta cumple: entre el `Flyout` y su `Anchor`,
+  ningún elemento posicionado puede estar fijado a un solo borde de bloque (con
+  el otro en `auto`), porque entonces lo dimensiona su propio contenido y el
+  `100%` nunca llega al fondo de la fila.
+- **Móvil queda exento a propósito**, y el test sólo mira las reglas base
+  (fuera de `@media`), con el motivo escrito en el propio comentario.
 
-### Etapa 5 — tests
+---
 
-1. `targetlist`: la regla móvil de `PartList` **no** emite `padding-block-end`
-   propio, y la regla base sigue emitiendo el `padding` normal.
-2. `targetlist`: `PartBadge` no emite `transform`.
-3. `fieldset`: el estado `Locked` no emite `outline`.
-4. Ejecutar `conformance_test.go` completo: es el que atrapa las reglas
-   transversales.
+## Etapa 1 — dependencia: verificar antes de escribir nada
 
-Ejecutar `go build ./... && go test ./... -count=1` en la raíz. Deben pasar
-**todos** los paquetes, no solo los dos tocados.
+```sh
+go doc github.com/tinywasm/widget/style Within
+```
 
-| Etapa | Archivos | Puerta |
+Si eso falla, **parar**. La etapa A no está publicada.
+
+> ⚠️ **No declarar aquí una versión local de `Within`, ni un helper que
+> reproduzca lo que hace.** Recrear aguas abajo un símbolo que falta aguas
+> arriba es el defecto exacto que este cambio existe para eliminar.
+>
+> ⚠️ **No "arreglar" el solape con un `PadEdge`, un margen negativo, ni un
+> `Space` inventado en `PartOptions`.** Cualquier número que compense 21.2px es
+> un parche que se romperá en cuanto cambie el alto de la fila o del disparador.
+
+## Etapa 2 — adoptar la construcción elegida
+
+La etapa A deja tres candidatas. **La decisión se cierra aquí, con medidas**,
+porque el dato que falta es de este repo: cuánto *sliver* móvil queda.
+
+### 2a — el disparador vuelve al flujo *(la que hay que medir primero)*
+
+Quitar `Docked` de `PartMenu` y dejar el `<details>` como primer hijo en flujo de
+la fila.
+
+- El ancestro posicionado más cercano del `Flyout` pasa a ser **la fila**, y
+  `Flyout` cumple su documentación por construcción.
+- Se puede quitar el `PadInline(Space8)` de `PartLabel`: existía **sólo** para
+  esquivar el icono `Docked`.
+- El comentario de `PartMenu` que justifica el `Docked` dice que menú y badge
+  salen del flujo *"así que la etiqueta es lo único que dimensiona la fila"*.
+  Revisar ese razonamiento: la fila ya tiene `min-height: var(--control-height)`
+  = 50px y el menú mide 24px, así que **en flujo tampoco la dimensiona**. El que
+  sí necesita salir del flujo es el badge, que envuelve a su propia línea.
+
+**Medir, no suponer:** la fila tiene `Pad(Space3)` = 12px, así que en flujo el
+icono arranca a 12px en vez de los 4px de `Docked(Space1)`. En el *sliver* de
+~37.5px que deja `MasterDetail(Most)` a 375px de viewport eso son 36px contra
+28px. Entra, pero sin margen.
+
+**Comprobar en el navegador, en móvil, con la tira desplazada al panel de
+formulario, que el `⋮` sigue siendo alcanzable.** Ese es el requisito que el
+comentario de `PartMenu` protege — *"la única palanca que desbloquea el
+formulario ahora de sólo lectura, en el panel que el usuario acaba de dejar"* —
+y no se puede sacrificar por arreglar el desktop. Si no entra, esta opción cae y
+se pasa a 2b/2c.
+
+### 2b / 2c — alternativas
+
+Sólo si 2a no pasa la medida. Están descritas con sus costes en
+`widget/docs/PLAN.md`; ninguna de las dos se implementa en este repo sin que la
+primitiva correspondiente exista ya publicada en `widget`.
+
+## Etapa 3 — declarar la anidación
+
+Independientemente de cuál gane, `targetlist` declara explícitamente la relación
+que hoy sólo existe en el markup:
+
+```go
+Within(PartMenu, PartOptions, style.Flyout(style.SideStart))
+```
+
+Es lo que permite a `Validate()` comprobar la cadena en vez de adivinarla. Y si
+alguien vuelve a meter un `Docked` en medio, ahora **falla en `Validate()`**, no
+en el navegador de un usuario.
+
+## Etapa 4 — borrar la regla memorizada
+
+Quitar de `targetlist/css.go` el comentario *"No `Anchor()` aquí — `Docked` ya lo
+hace contenedor de bloque, y los dos se pelean por `position`"*, y todo lo que
+haya quedado explicando cómo esquivar el problema. Si la etapa A hizo su
+trabajo, esa prosa ya no es información: es ruido que sobrevivió a su causa.
+
+## Etapa 5 — `usermenu` gana los tests que nunca tuvo
+
+```
+?   github.com/tinywasm/components/usermenu   [no test files]
+```
+
+`usermenu` es **el caso que funciona**: `Root(Anchor())` → `PartPanel` con
+`Flyout(SideEnd)`, sin nada posicionado en medio. Es la forma que el DSL
+documenta, es la referencia contra la que se contrasta el bug de `targetlist`…
+y no la vigila nadie.
+
+Añadir `usermenu/anchor_contract_test.go` con la **misma** comprobación que
+`targetlist` (los helpers de recorrido de markup se pueden compartir o duplicar;
+son ~40 líneas). Debe pasar **desde el primer día, sin tocar `usermenu`**: si no
+pasa, o el helper está mal o `usermenu` tiene el mismo bug sin que nadie lo haya
+visto todavía. Las dos posibilidades merecen saberse.
+
+---
+
+## Orden de ejecución
+
+| # | Etapa | Verde cuando |
 |---|---|---|
-| 1 | `targetlist/css.go` | tras publicar `widget` |
-| 2 | `targetlist/css.go` | tras 1 |
-| 3 | `fieldset/css.go` | tras publicar `widget` |
-| 4 | todo `*/css.go` | tras 1 y 3 |
-| 5 | `*/*_test.go` | tras 4 |
+| 1 | verificar dependencia A | `go doc … Within` responde |
+| 2 | adoptar 2a (o 2b/2c) | `TestFlyoutHangsFromTheRowNotFromTheTrigger` pasa |
+| 3 | `Within(PartMenu, PartOptions, …)` | `Validate()` sin errores |
+| 4 | borrar el comentario memorizado | revisión |
+| 5 | tests de `usermenu` | pasan sin tocar `usermenu` |
 
-## 4. Lo que este plan NO hace
+Verificación final **en navegador**, las dos que importan:
 
-- **No toca el desplegable del ⋮ anclado al viewport en móvil.** Esa decisión
-  (anclar al viewport en vez de a la fila) responde a que el disparador se mueve
-  ~340px entre los dos estados del scroll-snap y CSS no puede observarlo. Sigue
-  siendo una elección explícita del consumidor y es correcta.
-- No cambia el marcado de ningún componente, solo su hoja.
+- **Desktop:** `options.top >= row.bottom` y
+  `options.offsetParent === .targetlist__row`.
+- **Móvil, tira desplazada al formulario:** el `⋮` sigue visible y pulsable
+  dentro del *sliver*.
+
+---
+
+## Lo que este plan NO hace
+
+- **No toca `usermenu` ni `fieldset` ni `selectsearch`.** `fieldset` usa
+  `Anchor` + `Docked(Parent)` pero **no tiene `Flyout`**, así que la composición
+  que rompe no existe ahí. Comprobado, no supuesto.
+- **No cambia el comportamiento móvil de `PartOptions`.** El
+  `Docked(Viewport, …)` de móvil es correcto y está justificado en su comentario
+  (el disparador se mueve entre ~10px y ~370px según cómo esté desplazada la
+  tira); no depende de esta cadena y no se toca.
+- **No revisa el `Veil()` del `Backdrop`.** Ya está arreglado y verificado en
+  navegador.
+- **No persigue el solape residual de ~4.4px entre badge y botón flotante** en
+  móvil. Es interno de `targetlist`, no tiene que ver con este contenedor de
+  bloque, y sigue aparcado.

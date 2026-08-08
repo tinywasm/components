@@ -10,6 +10,12 @@ import (
 
 // RenderCSS defines the targetlist visual contract using the style DSL.
 func (t *TargetList) RenderCSS() *css.Stylesheet {
+	return t.sheet().Stylesheet()
+}
+
+// sheet builds the style Sheet. Split from RenderCSS so Validate() can check
+// the declared part tree — the containment Without the StyleSheet round-trip.
+func (t *TargetList) sheet() *style.Sheet {
 	return style.For(t).
 		Root(
 			style.Fill(),
@@ -43,35 +49,32 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 		On(css.Mobile, PartList,
 			style.PadInline(style.SpaceNone),
 		).
-		Part(PartBackdrop,
-			style.Backdrop(style.Viewport),
-			style.RevealedBy(widget.Open),
-		).
-		// One line per row: the label takes the free space and pushes the badge
-		// and the menu affordance to the trailing edge. Without a flow the <li>
-		// falls back to display:list-item and the menu, a block-level <details>,
-		// drops onto a second full-width line.
+		// The row wraps, and KeepSize is what lets it GROW. Row(Space2) already
+		// sets flex-wrap, which is what puts the open options on their own line
+		// under the trigger. But this <li> is a flex item of the list's own
+		// column, and a flex item defaults to flex-shrink: 1 — inside a
+		// Scroll() column whose height is constrained, that shrinks every row
+		// back to its min-height and the options render OUTSIDE the row's box.
+		// Measured: the row stayed at 50px while its own options painted from
+		// 228 to 269.6, past a bottom edge of 225.2. With KeepSize the row goes
+		// to 107.2px and contains them.
 		Part(PartRow,
 			style.Anchor(),
 			style.Row(style.Space2),
+			style.KeepSize(),
 			style.ControlBox(),
 			style.Interactive(style.Panel),
 			style.Pad(style.Space3),
 			style.Round(style.RadiusMd),
 		).
-		// PadInline(Space8), not the row's own Pad(Space3): the label is the
-		// row's only in-flow child, so its text starts flush at the row's own
-		// padding edge -- exactly where the leading-edge ⋮ (Docked, IconMd
-		// ~24px + Space1 inset) now also sits, since Docked keeps the whole
-		// element INSIDE the box rather than straddling the border the way
-		// PartBadge's OnEdge does below. Space8 (32px) clears the icon's own
-		// footprint with room to spare. The same clearance lands on the
-		// trailing edge too -- harmless, the badge lives in a separate
-		// vertical zone below the text line.
+		// No PadInline: the label is the row's second in-flow child, after the
+		// menu, so the row's own Row(Space2) gap is what clears the leading-edge
+		// ⋮ (IconMd, ~24px). The PadInline(Space8) this part used to carry
+		// existed only to dodge the icon when PartMenu was Docked on top of it —
+		// with the trigger back in the flow there is nothing to dodge.
 		Part(PartLabel,
 			style.FontWeight(style.WeightBold),
 			style.Grow(),
-			style.PadInline(style.Space8),
 		).
 		// PushEnd because the badge wraps onto its own line under the label:
 		// nothing is left beside it to push it, so the free space goes in front.
@@ -93,10 +96,9 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.KeepSize(),
 			style.OnEdge(style.EdgeBottom, style.SideEnd, style.SpaceNone, style.Space3),
 		).
-		// Both the menu and the badge leave the flow, so the label is the only
-		// thing sizing the row: every row ends up the same height regardless of
-		// how long its title or its badge is. No Anchor() here — Docked already
-		// makes this a containing block, and the two fight over `position`.
+		// The trigger in flow, the row's FIRST child: as a flex item it sits at
+		// the row's leading edge by order alone — no Docked, no Anchor, nothing
+		// positioned anywhere on this row's menu chain.
 		//
 		// Leading edge, not trailing: on the mobile master-detail strip
 		// (rightpanel's MasterDetail(Most)) selecting a row navigates to the
@@ -106,14 +108,14 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 		// row that sliver can never show, which strands the only control that
 		// unlocks the now-read-only form on the panel the user just left. Do
 		// not move this back to the trailing edge without re-solving that.
-		// Space1, not Space2: the sliver is ~37.5px at a 375px viewport and
-		// every pixel of inset is budgeted (see layout/docs/PLAN.md).
-		Part(PartMenu,
+		//
+		// In flow the icon starts at the row's own Pad(Space3) = 12px instead
+		// of the old Docked Space1 = 4px inset. Measured in the browser: the
+		// ~37.5px sliver at a 375px viewport still fits the 24px icon with
+		// 1.5px to spare (see layout/docs/PLAN.md for the budget).
+		Part(PartButton,
 			style.As(style.Subtle),
 			style.KeepSize(),
-			style.Docked(style.Parent, style.EdgeTop, style.SideStart, style.Space1),
-		).
-		Part(PartButton,
 			style.Interactive(style.Subtle),
 			style.Round(style.RadiusSm),
 		).
@@ -124,67 +126,66 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 			style.As(style.Subtle),
 			style.IconBox(style.IconMd),
 		).
-		// The menu hangs off the row it belongs to on desktop: the same
-		// gesture should put it in the same place. SideStart, matching
-		// PartMenu's own leading-edge trigger above — a SideEnd flyout hanging
-		// off a SideStart trigger would open backwards, away from the finger
-		// that opened it.
+		// An accordion INSIDE the row, not an overlay hanging off it. This is
+		// the second time this part's positioning caused a shipped bug, and
+		// both had the same root: an out-of-flow panel cannot coexist with the
+		// list's own Scroll().
 		//
-		// As(Panel)/Raise/HideOverflow are Tablet+Desktop only, not base: on
-		// mobile the two options stop being flush rows inside one shared card
-		// and become their own independent floating icon buttons (see PartItem/
-		// PartItemDanger below) — a bordered, shadowed panel wrapped around
-		// two things that already float on their own would double the chrome.
-		// Mirrors the same base/device split rightpanel already uses for its
-		// aside and article cards.
+		//   1. As a Flyout it resolved `inset-block-start: 100%` against the
+		//      nearest POSITIONED ancestor. With the trigger Docked that was
+		//      the 24px <details>, so the panel opened over its own row's
+		//      label (measured: 21.2px inside the row, 8.2px of text covered).
+		//   2. Anchored correctly to the row instead, it then hit the OTHER
+		//      wall: .targetlist__list is a Scroll() region, and an absolutely
+		//      positioned descendant is clipped by it. On the last row only
+		//      10px of an 84.8px panel survived.
+		//
+		// The mobile Docked(Viewport, …) that used to be here was the escape
+		// hatch from (2) — it left the clipper by leaving the row entirely, and
+		// landed 502px away in a screen corner, on top of two unrelated rows.
+		// That detachment is what then needed a Veil()'d Backdrop to explain
+		// itself, and the veil blurred the very row the user was acting on.
+		// A patch on a patch on a patch.
+		//
+		// In flow there is no clipper to escape: the content grows the row,
+		// the row grows the scroller, and the browser can scroll to it. Same
+		// last row, measured after: 41.6px of 41.6px visible. The target stays
+		// on screen, wearing its own Selected amber, with its actions inside
+		// it — so nothing has to be dimmed to explain what acts on what.
+		//
+		// Width(Full) + KeepSize is what puts it on its own line: Row(Space2)
+		// on PartRow already wraps, and a flex item with basis 100% that
+		// cannot shrink has to take a line of its own. RevealedBy(Open) is the
+		// open/close — a per-row signal, since the options are no longer a
+		// child of a native <details> that could hide them itself.
 		Part(PartOptions,
-			style.Stack(style.SpaceNone),
-			style.Flyout(style.SideStart),
-		).
-		On(css.Tablet, PartOptions,
-			style.As(style.Panel),
-			style.Raise(style.Floating),
-			style.HideOverflow(),
-		).
-		On(css.Desktop, PartOptions,
-			style.As(style.Panel),
-			style.Raise(style.Floating),
-			style.HideOverflow(),
-		).
-		// On mobile the row-anchored Flyout above is measured from the
-		// trigger's own position — which swings between ~10px and ~370px into
-		// a 375px viewport depending on which side of the master-detail strip
-		// is scrolled into view (the row's own leading edge, wherever that
-		// currently sits on screen). A panel anchored there can overflow either
-		// edge. Docked to the viewport corner instead, it always has the full
-		// screen to render in regardless of where the trigger is.
-		// PartBackdrop (Backdrop(Viewport) + RevealedBy(Open)) already
-		// dismisses it on an outside tap; this does not need a second one.
-		// Space2 gap: the two options are now independent floating squares,
-		// not flush rows in a card, so the stack needs real air between them.
-		On(css.Mobile, PartOptions,
-			style.Stack(style.Space2),
-			style.Docked(style.Viewport, style.EdgeBottom, style.SideStart, style.Space4),
+			style.Row(style.Space2),
+			style.Width(style.Full),
+			style.KeepSize(),
+			style.RevealedBy(widget.Open),
 		).
 		// Square: the items are flush rows inside the panel, not buttons floating
-		// in it. An explicit Round overrides the radius As(Panel) would default
-		// to; the panel's own HideOverflow is what rounds the outer corners.
-		// (Desktop/Tablet only in effect — see the mobile override below.)
+		// Content-width buttons side by side, not full-width flush rows: the
+		// options are a line INSIDE the row now, not a card of their own, so
+		// two stretched bars would read as a second list rather than as this
+		// row's two actions. Rounded for the same reason — RadiusNone only
+		// made sense when a panel's HideOverflow was clipping the outer
+		// corners, and there is no panel left.
 		Part(PartItem,
 			style.Interactive(style.Panel),
-			style.Round(style.RadiusNone),
+			style.Round(style.RadiusSm),
 			style.Pad(style.Space2),
-			style.Width(style.Full),
+			style.Width(style.Content),
 		).
 		// Danger, not Panel: mirrors crudview's own delconfirm-btn/
 		// delconfirm-btn-danger split — same base shape, Eliminar alone tinted
 		// for a destructive action. Desktop/Tablet keep this identical to
 		// PartItem apart from color; see the mobile override below for why.
 		Part(PartItemDanger,
-			style.Interactive(style.Panel),
-			style.Round(style.RadiusNone),
+			style.Interactive(style.Danger),
+			style.Round(style.RadiusSm),
 			style.Pad(style.Space2),
-			style.Width(style.Full),
+			style.Width(style.Content),
 		).
 		// Mobile: both options become floating icon buttons matching
 		// crudview's own action button exactly (As, Round, Pad, Raise(Floating),
@@ -263,6 +264,5 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 		// indistinguishable, so there is nothing left to flash.
 		Cue(widget.Press, PartRow,
 			style.As(style.Accent),
-		).
-		Stylesheet()
+		)
 }
