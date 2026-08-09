@@ -56,7 +56,7 @@ Data table for structured information with headers and rows.
 ---
 
 ## [SelectSearch](../selectsearch/README.md) — ✅ Slot-ready
-Signal-driven searchable dropdown with static options, live filtering, and optional DB search callback. Uses `BindChildren` for efficient list updates and `Show` for the dropdown.
+Signal-driven searchable dropdown with static options, live filtering, and optional DB search callback. Satisfies `widget.Filterable` — drop-in for any host slot that accepts a filter control (same seam `searchbar.SearchBar` fills). Uses `BindChildren` for efficient list updates and `Show` for the dropdown.
 [Detailed Documentation →](../selectsearch/README.md)
 
 ---

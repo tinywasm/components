@@ -42,3 +42,12 @@ ss := &selectsearch.SelectSearch{
 - `ID string`: Unique identifier for the option.
 - `Label string`: Visible text for the option.
 - `Description string`: Optional secondary text (badge).
+
+## Filterable
+
+`SelectSearch` implements `widget.Filterable`: picking an option calls the
+registered sink with the option's `ID`. This is in addition to `OnSelect`
+(which also gets `Description`) — a host that only needs the generic
+narrowing contract (e.g. `tinywasm/layout/crudview`'s `Filter` slot) can drop
+a `*SelectSearch` in without any bespoke wiring, the same way it accepts a
+`*searchbar.SearchBar` today.
