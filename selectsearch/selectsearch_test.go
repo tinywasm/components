@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/tinywasm/fmt"
+	"github.com/tinywasm/widget"
 )
 
 var (
@@ -155,5 +156,51 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 		if !cssClasses[cls] {
 			t.Errorf("SelectSearch HTML class %q is unstyled in CSS", cls)
 		}
+	}
+}
+
+func TestSelectSearch_SatisfiesFilterable(t *testing.T) {
+	var _ widget.Filterable = (*SelectSearch)(nil)
+}
+
+func TestSelectSearch_OnFilterChange_FiresOnSelection(t *testing.T) {
+	c := &SelectSearch{Options: []SsOption{
+		{ID: "p1", Label: "Juan Pérez", Description: "09:00"},
+	}}
+	c.Init(nil)
+
+	var got string
+	fired := 0
+	c.OnFilterChange(func(term string) {
+		got = term
+		fired++
+	})
+
+	c.selectOption(c.Options[0])
+
+	if fired != 1 {
+		t.Fatalf("expected OnFilterChange to fire exactly once, got %d", fired)
+	}
+	if got != "p1" {
+		t.Fatalf("expected OnFilterChange term %q, got %q", "p1", got)
+	}
+}
+
+func TestSelectSearch_OnSelect_StillFiresAlongsideFilterable(t *testing.T) {
+	c := &SelectSearch{Options: []SsOption{
+		{ID: "p1", Label: "Juan Pérez", Description: "09:00"},
+	}}
+	c.Init(nil)
+
+	var gotID, gotDesc string
+	c.OnSelect = func(id, description string) {
+		gotID, gotDesc = id, description
+	}
+	c.OnFilterChange(func(string) {}) // both sinks registered — neither must suppress the other
+
+	c.selectOption(c.Options[0])
+
+	if gotID != "p1" || gotDesc != "09:00" {
+		t.Fatalf("expected OnSelect(%q, %q), got (%q, %q)", "p1", "09:00", gotID, gotDesc)
 	}
 }

@@ -57,10 +57,27 @@ type SelectSearch struct {
 	query         *SignalString
 	isOpen        *SignalBool
 	rows          *SignalNodes
+
+	onFilter func(term string) // set via OnFilterChange — satisfies widget.Filterable
 }
 
 func (c *SelectSearch) WidgetName() widget.Name { return NameSelectSearch }
 func (c *SelectSearch) WidgetKind() widget.Kind { return widget.Combobox }
+
+var _ widget.Filterable = (*SelectSearch)(nil)
+
+// OnFilterChange implements widget.Filterable: it registers the sink called
+// with the picked option's ID whenever a selection is made. This is a
+// SEPARATE, additive wiring path from OnSelect — OnSelect still gets
+// (id, description) for a consumer that needs both; OnFilterChange exists so
+// a host that only knows the generic Filterable contract (e.g.
+// tinywasm/layout/crudview's Filter slot) can drop a *SelectSearch into the
+// same seam a *searchbar.SearchBar fills today, with no bespoke glue.
+//
+// The signature is fixed by widget.Filterable — do not add a parameter, do
+// not return anything, do not add a companion getter (see searchbar.go's
+// OnFilterChange for the same rule stated for SearchBar).
+func (c *SelectSearch) OnFilterChange(fn func(term string)) { c.onFilter = fn }
 
 func (c *SelectSearch) Init(_ Ctx) {
 	c.selectedLabel = NewString("")
@@ -156,6 +173,23 @@ func (c *SelectSearch) Render() *Element {
 		Child(Show(c.isOpen, dropdown))
 }
 
+// selectOption is the single place an option becomes "chosen" — today only
+// a mouse click reaches it, but every future input path (keyboard, a future
+// OnSearch auto-pick) commits through here too, so OnSelect and the
+// Filterable sink can never fire out of step with each other.
+func (c *SelectSearch) selectOption(o SsOption) {
+	c.selectedLabel.Set(o.Label)
+	c.isOpen.Set(false)
+	c.query.Set("")
+	c.rows.Set(c.buildRows(""))
+	if c.OnSelect != nil {
+		c.OnSelect(o.ID, o.Description)
+	}
+	if c.onFilter != nil {
+		c.onFilter(o.ID)
+	}
+}
+
 func (c *SelectSearch) buildRows(term string) []*Element {
 	var rows []*Element
 	for _, opt := range c.Options {
@@ -169,15 +203,7 @@ func (c *SelectSearch) buildRows(term string) []*Element {
 			ID("ss-opt-"+opt.ID). // required for wirePendingEvents to attach the click handler
 			Attr("role", "option").
 			Child(Span().Set(ClsSsLabel.AsAttr()).Text(opt.Label)).
-			On("click", func(e Event) {
-				c.selectedLabel.Set(o.Label)
-				c.isOpen.Set(false)
-				c.query.Set("")
-				c.rows.Set(c.buildRows(""))
-				if c.OnSelect != nil {
-					c.OnSelect(o.ID, o.Description)
-				}
-			})
+			On("click", func(e Event) { c.selectOption(o) })
 
 		if opt.Description != "" {
 			item.Child(Span().Set(ClsSsDesc.AsAttr()).Text(opt.Description))
