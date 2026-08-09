@@ -3,6 +3,8 @@ PLAN: "feat(selectsearch): satisfy widget.Filterable + fix mobile/desktop dropdo
 TAG: v0.5.0
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 7226293707427292253
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
