@@ -137,7 +137,7 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 	ss := &SelectSearch{}
 	ss.Init(nil)
 	ss.isOpen.Set(true)
-	ss.SetOptions([]SsOption{{ID: "1", Label: "A", Description: "B"}})
+	ss.SetOptions([]SsOption{{ID: "1", Label: "A", Sublabel: "C", Description: "B"}})
 	html := ss.Render().String()
 	// Render option row too
 	html += ss.buildRows("")[0].String()

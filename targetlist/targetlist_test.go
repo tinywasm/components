@@ -14,6 +14,33 @@ var (
 	htmlClassRegex2 = regexp.MustCompile(`class="([^"]*)"`)
 )
 
+// selectorBodies concatenates the body of every top-level "selector { ... }"
+// block found in region, in order. A style.Sheet can legally emit the same
+// selector more than once within one @layer (e.g. a flow shape block ahead
+// of a value-carrying one — see On()'s handling of a breakpoint override
+// that sets its own flow primitive), so a test asserting on "the" rule for a
+// selector needs every block, not just the first.
+func selectorBodies(region, selector string) string {
+	var out strings.Builder
+	needle := "\n" + selector + " {"
+	rest := region
+	for {
+		i := strings.Index(rest, needle)
+		if i == -1 {
+			break
+		}
+		rest = rest[i+len(needle):]
+		end := strings.Index(rest, "}")
+		if end == -1 {
+			break
+		}
+		out.WriteString(rest[:end])
+		out.WriteString("\n")
+		rest = rest[end+1:]
+	}
+	return out.String()
+}
+
 func TestTargetList_RowHasLabelBadgeAndMenu(t *testing.T) {
 	tl := &TargetList{}
 	tl.Init(nil)
@@ -181,13 +208,17 @@ func TestTargetList_ListGutterDoesNotClobberTheScrollSeam(t *testing.T) {
 	if next := strings.Index(mobileRegion[1:], "@media"); next != -1 {
 		mobileRegion = mobileRegion[:next+1]
 	}
-	mi := strings.Index(mobileRegion, "\n.targetlist__list {")
-	if mi == -1 {
+	// Mobile now also overrides Stack's gap (to match PadInline's own bump —
+	// see listgap.GapMobile), so On() emits the part's full flow shape
+	// (display/flex-direction/gap:var(--gap)/min-height) as its own block
+	// ahead of the value-carrying one (--gap/padding-inline) — the same
+	// two-block pattern platformd's own On(Mobile, …, Stack(...)) parts
+	// already produce. Collect every .targetlist__list block in the region,
+	// not just the first, or this assertion would inspect the shape block
+	// and never see padding-inline at all.
+	mobileBody := selectorBodies(mobileRegion, ".targetlist__list")
+	if mobileBody == "" {
 		t.Fatal("expected a mobile rule for .targetlist__list")
-	}
-	mobileBody := mobileRegion[mi:]
-	if end := strings.Index(mobileBody, "}"); end != -1 {
-		mobileBody = mobileBody[:end]
 	}
 	if !strings.Contains(mobileBody, "padding-inline: var(--space-2") {
 		t.Errorf("expected the mobile gutter to be the Space2 inline pad, block:\n%s", mobileBody)
@@ -219,35 +250,37 @@ func TestTargetList_BadgeStraddlesWithoutTransform(t *testing.T) {
 	}
 }
 
-// TestMenuLeadsTheRow is the net for the 2a construction (PLAN.md, both
-// stages): the ⋮ trigger is the row's FIRST in-flow child, so it sits at the
-// row's leading edge by flex order — no Docked. On the mobile master-detail
-// strip, selecting a row leaves only a sliver of the list's LEADING edge
-// visible — the leading edge is simply the edge the list always shows first,
-// so a menu anywhere else is the one part of the row a phone user cannot
-// reach without going back to the list.
-func TestMenuLeadsTheRow(t *testing.T) {
+// TestMenuTrailsTheRow supersedes an earlier net that required the OPPOSITE
+// placement (the ⋮ trigger as the row's FIRST child, leading edge, for the
+// mobile master-detail sliver's sake — see git history for that version's
+// full rationale). The trigger is now DOM-LAST, on purpose: PartLabel's
+// Grow() already claims 100% of the row's free space during flex
+// resolution, so a margin-auto push on a leading trigger had nothing left
+// to distribute — trailing placement is the only one that actually lands
+// at the row's trailing edge (see css.go's PartButton comment). The
+// trade-off — the ⋮ is no longer reachable from the mobile sliver — is
+// accepted, not overlooked.
+func TestMenuTrailsTheRow(t *testing.T) {
 	tl := &TargetList{}
 	tl.Init(nil)
 	markup := tl.buildRow(Item{ID: "7", Label: "Alpha"}).String()
 
-	// The row's first child must be the ⋮ trigger: in a Row() flow, order is
-	// the position. The label (the row's other in-flow child) must come after
-	// it, not before.
-	first, best := "", -1
+	// The row's LAST in-flow child (before the options panel) must be the
+	// ⋮ trigger: in a Row() flow, order is the position.
+	last, bestIdx := "", -1
 	if i := strings.Index(markup, "targetlist__row"); i != -1 {
 		if j := strings.Index(markup[i:], ">"); j != -1 {
 			rest := markup[i+j+1:]
 			for _, c := range []string{"targetlist__button", "targetlist__label", "targetlist__badge"} {
-				if k := strings.Index(rest, c); k != -1 && (best == -1 || k < best) {
-					best = k
-					first = c
+				if k := strings.Index(rest, c); k != -1 && k > bestIdx {
+					bestIdx = k
+					last = c
 				}
 			}
 		}
 	}
-	if first != "targetlist__button" {
-		t.Errorf("expected the ⋮ trigger to be the row's FIRST child (leading edge by flex order), got first=%q\nmarkup: %s", first, markup)
+	if last != "targetlist__button" {
+		t.Errorf("expected the ⋮ trigger to be the row's LAST child (trailing edge by flex order), got last=%q\nmarkup: %s", last, markup)
 	}
 
 	// And it must be in flow: no position declarations on its own base rule.

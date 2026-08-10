@@ -3,6 +3,7 @@
 package targetlist
 
 import (
+	"github.com/tinywasm/components/listgap"
 	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
 	"github.com/tinywasm/widget/style"
@@ -30,9 +31,9 @@ func (t *TargetList) sheet() *style.Sheet {
 		// gutter is the seam's business now: flush by default, the host's
 		// strip when one is declared.
 		Part(PartList,
-			style.Stack(style.Space3),
+			style.Stack(listgap.Gap),
 			style.Scroll(),
-			style.PadInline(style.Space1),
+			style.PadInline(listgap.Gap),
 		).
 		// Mobile keeps the same inline gutter as desktop — no more reclaiming
 		// space for the ⋮ in the master-detail sliver. That budget died with
@@ -43,7 +44,8 @@ func (t *TargetList) sheet() *style.Sheet {
 		// rule: the block edges belong to the seam, so nothing here clobbers
 		// the bottom reservation of a FloatingChrome host.
 		On(css.Mobile, PartList,
-			style.PadInline(style.Space2),
+			style.Stack(listgap.GapMobile),
+			style.PadInline(listgap.GapMobile),
 		).
 		// The row wraps, and KeepSize is what lets it GROW. Row(Space2) already
 		// sets flex-wrap, which is what puts the open options on their own line
@@ -99,26 +101,25 @@ func (t *TargetList) sheet() *style.Sheet {
 			style.KeepSize(),
 			style.OnEdge(style.EdgeBottom, style.SideEnd, style.SpaceNone, style.Space3),
 		).
-		// The trigger in flow, the row's FIRST child: as a flex item it sits at
-		// the row's leading edge by order alone — no Docked, no Anchor, nothing
-		// positioned anywhere on this row's menu chain.
-		//
-		// Leading edge, not trailing: on the mobile master-detail strip
-		// (rightpanel's MasterDetail(Most)) selecting a row navigates to the
-		// form panel and leaves only a 10% sliver of the list showing — the
-		// row's LEADING edge, by construction (Size.Most: "leaves a sliver of
-		// what sits behind it"). The leading edge is simply the edge the list
-		// always shows first, on every device; the trailing edge is the one
-		// part of the row a phone user cannot reach without going back to the
-		// list. Do not move this back to the trailing edge without re-solving
-		// that.
+		// The trigger is now the row's LAST in-flow child (see
+		// targetlist.go's buildRow) so it lands at the trailing edge - it
+		// used to lead for the mobile master-detail sliver's sake (the
+		// sliver shows only the row's leading edge; rightpanel's
+		// MasterDetail(Most) leaves a phone only a 10% strip), a trade-off
+		// this row now makes the other way: reaching the options menu on a
+		// phone means returning to the full list, same as any other
+		// off-sliver control. PushEnd (margin-inline-start: auto) was tried
+		// first and does nothing here - PartLabel's Grow() already claims
+		// 100% of the row's free space during flex resolution, before an
+		// auto margin gets a share, so only DOM order actually moves it.
 		//
 		// Pad(Space1) + CenterContent give the trigger a symmetric box: 4px
-		// on every side of the 24px glyph, which centres the ⋮ in its 32px
-		// hit area instead of letting it drift. The asymmetry that reported
-		// (⋮ inset ~19px left vs ~14px top) was the UA button padding — 6px
-		// inline, 1px block — surviving the reset (css/css.reset.go now kills
-		// it with padding: 0) and mixing with this part's own paddings.
+		// on every side of the 24px glyph, which centres the icon in its
+		// 32px hit area instead of letting it drift. The asymmetry that
+		// reported (inset ~19px left vs ~14px top) was the UA button
+		// padding - 6px inline, 1px block - surviving the reset
+		// (css/css.reset.go now kills it with padding: 0) and mixing with
+		// this part's own paddings.
 		Part(PartButton,
 			style.As(style.Subtle),
 			style.KeepSize(),

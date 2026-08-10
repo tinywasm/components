@@ -28,8 +28,12 @@ func (c *SelectSearch) sheet() *style.Sheet {
 			style.As(style.Panel),
 			style.Round(style.RadiusMd),
 		).
+		// The checkbox drives PartDropdown's open state via the label's `for`
+		// attribute (see selectsearch.go) — it is the CSS-only toggle
+		// mechanism, never meant to be seen. A label still activates a
+		// display:none checkbox natively, so Hide() loses nothing.
 		Part(PartToggle,
-			style.As(style.Panel),
+			style.Hide(),
 		).
 		// Mobile-first base: the dropdown is a plain IN-FLOW block here — no
 		// Raise, no Flyout. Same choice usermenu's PartPanel makes for a phone:
@@ -42,12 +46,44 @@ func (c *SelectSearch) sheet() *style.Sheet {
 			style.As(style.Panel),
 			style.HideOverflow(),
 		).
+		// SpaceNone, not Space2: the gap between the icon and the text comes
+		// from PartHeaderText's own left padding below, same as searchbar's
+		// root uses a zero gap and lets PartInput's own Pad(Space2) make the
+		// space — a Row gap here would ADD to that, pushing the icon away
+		// from the header's own edge instead of leaving it flush.
+		// Round+HideOverflow (not on Root, where the floating PartDropdown
+		// lives — clipping there would cut the dropdown off) is what makes
+		// PartIcon's own square corners read as the header's rounded ones:
+		// the icon carries no radius of its own, the header clips it to
+		// match.
 		Part(PartHeader,
-			style.Row(style.Space2),
+			style.Row(style.SpaceNone),
+			style.Round(style.RadiusMd),
+			style.HideOverflow(),
+		).
+		// The padded text — see PartHeader above for why the padding lives
+		// here and not on the header itself.
+		Part(PartHeaderText,
+			style.Grow(),
 			style.Pad(style.Space2),
 		).
+		// The filled square cap around the arrow, FIRST child of the header
+		// (see selectsearch.go) — searchbar's own PartIcon recipe
+		// (MediaBox(AspectSquare) sized off the same --control-height
+		// ControlBox answers to, so the cap is a true square), As(Primary)
+		// so it reads as part of the same chrome the rest of the chassis
+		// uses instead of a bare mark floating in the header. No Round of
+		// its own — PartHeader's clip above is what rounds its visible
+		// corners.
 		Part(PartIcon,
-			style.As(style.Panel),
+			style.As(style.Primary),
+			style.MediaBox(style.AspectSquare),
+			style.ControlBox(),
+		).
+		// A bare <svg> with no box falls back to 300x150 — same gotcha
+		// searchbar/css.go's PartGlyph documents; IconBox pins it.
+		Part(PartGlyph,
+			style.IconBox(style.IconSm),
 		).
 		Part(PartSearch,
 			style.Pad(style.Space2),
@@ -62,8 +98,24 @@ func (c *SelectSearch) sheet() *style.Sheet {
 			style.Pad(style.Space2),
 			style.Interactive(style.Panel),
 		).
+		// The Label/Sublabel column: Grow() takes the row's free width so
+		// PartDesc's badge lands at the trailing edge instead of hugging
+		// straight after the name — same reasoning as targetlist's own
+		// PartLabel.
+		Part(PartText,
+			style.Stack(style.SpaceNone),
+			style.Grow(),
+		).
 		Part(PartLabel,
-			style.As(style.Panel),
+			style.FontWeight(style.WeightBold),
+		).
+		// Muted and small — a second line under the name, not competing with
+		// it for attention. Glyph, not As(Inset): a tinted color reads as
+		// secondary text, a filled box reads as its own control — a plain
+		// two-line name+id has no control to be.
+		Part(PartSublabel,
+			style.Glyph(style.Subtle),
+			style.FontSize(style.TextXs),
 		).
 		Part(PartDesc,
 			style.As(style.Inset),

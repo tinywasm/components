@@ -6,6 +6,7 @@ import (
 	"github.com/tinywasm/fmt"
 	. "github.com/tinywasm/html"
 	"github.com/tinywasm/svg"
+	"github.com/tinywasm/view"
 	"github.com/tinywasm/widget"
 )
 
@@ -73,12 +74,12 @@ const iconDots = svg.Icon("tl-dots")
 // lock it existed to undo — see crudview's Stage-3 comment in targetlist.go.)
 const iconDelete = svg.Icon("tl-delete")
 
-// Item is one selectable record: an id, a visible label, and an optional badge.
-type Item struct {
-	ID          string
-	Label       string
-	Description string
-}
+// Item is view.Item, not a copy: a shared shape means crudview.filter's
+// []view.Item flows straight into SetItems, and a host swapping this widget
+// for targethour (also view.Item-based) needs no re-mapping either. TargetList
+// itself only ever reads ID/Label/Description — LeadTop/Main/Bottom are
+// targethour's slot, ignored here.
+type Item = view.Item
 
 // TargetList is a selectable list of records with a per-row options menu.
 type TargetList struct {
@@ -89,7 +90,7 @@ type TargetList struct {
 	Selected *SignalString
 
 	// Row callbacks. All optional.
-	OnSelect func(it Item) // row body clicked
+	OnSelect func(it Item)   // row body clicked
 	OnDelete func(id string) // ⋮ → Eliminar
 
 	items    []Item
@@ -234,18 +235,25 @@ func (t *TargetList) buildRow(it Item) *Element {
 		BindStateFunc(widget.Open, func() bool { return t.openMenu.Get() == id }).
 		Child(del)
 
-	// The trigger is the row's FIRST child, on purpose: as the first flex item
-	// it sits at the row's leading edge — the only edge the mobile
-	// master-detail sliver shows (see the PartButton comment in css.go). The
-	// label takes the free space after it and the badge after that, so a
-	// row that runs out of width wraps the badge rather than the affordance.
-	row.Child(trigger)
+	// The trigger is the row's LAST in-flow child (before options), not the
+	// first: it used to lead so the mobile master-detail sliver (which shows
+	// only the row's leading edge) could still reach it — see the PartButton
+	// comment in css.go for the measured history. That placement is gone
+	// because it also meant the ⋮ could never sit at the trailing edge on a
+	// wide screen: PartLabel's Grow() already claims 100% of the row's free
+	// space during flex resolution, so a margin-auto push on a DOM-leading
+	// trigger has nothing left to distribute — a DOM-trailing trigger is the
+	// only placement that actually lands at the trailing edge. The sliver
+	// trade-off is conscious, not overlooked: a phone user loses one-tap ⋮
+	// access from the sliver and returns to the full list to delete, same
+	// as reaching any other off-sliver control.
 	row.Child(Span().Set(clsLabel.AsAttr()).Text(it.Label))
 	if it.Description != "" {
 		row.Child(Span().Set(clsBadge.AsAttr()).
 			Attr("title", it.Description). // the untruncated text stays reachable
 			Text(fmt.Convert(it.Description).Truncate(badgeChars).String()))
 	}
+	row.Child(trigger)
 	row.Child(options)
 
 	return row

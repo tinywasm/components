@@ -12,28 +12,36 @@ import (
 const NameSelectSearch = widget.Name("selectsearch")
 
 const (
-	PartToggle   = widget.Part("toggle")
-	PartDropdown = widget.Part("dropdown")
-	PartHeader   = widget.Part("header")
-	PartIcon     = widget.Part("icon")
-	PartSearch   = widget.Part("search")
-	PartOptions  = widget.Part("options")
-	PartOption   = widget.Part("option")
-	PartLabel    = widget.Part("label")
-	PartDesc     = widget.Part("desc")
+	PartToggle     = widget.Part("toggle")
+	PartDropdown   = widget.Part("dropdown")
+	PartHeader     = widget.Part("header")
+	PartHeaderText = widget.Part("header-text")
+	PartIcon       = widget.Part("icon")
+	PartGlyph      = widget.Part("glyph")
+	PartSearch     = widget.Part("search")
+	PartOptions    = widget.Part("options")
+	PartOption     = widget.Part("option")
+	PartText       = widget.Part("text")
+	PartLabel      = widget.Part("label")
+	PartSublabel   = widget.Part("sublabel")
+	PartDesc       = widget.Part("desc")
 )
 
 var (
-	ClsSsBox      = NameSelectSearch.Root()
-	ClsSsToggle   = NameSelectSearch.Class(PartToggle)
-	ClsSsDropdown = NameSelectSearch.Class(PartDropdown)
-	ClsSsHeader   = NameSelectSearch.Class(PartHeader)
-	ClsSsIcon     = NameSelectSearch.Class(PartIcon)
-	ClsSsSearch   = NameSelectSearch.Class(PartSearch)
-	ClsSsOptions  = NameSelectSearch.Class(PartOptions)
-	ClsSsOption   = NameSelectSearch.Class(PartOption)
-	ClsSsLabel    = NameSelectSearch.Class(PartLabel)
-	ClsSsDesc     = NameSelectSearch.Class(PartDesc)
+	ClsSsBox        = NameSelectSearch.Root()
+	ClsSsToggle     = NameSelectSearch.Class(PartToggle)
+	ClsSsDropdown   = NameSelectSearch.Class(PartDropdown)
+	ClsSsHeader     = NameSelectSearch.Class(PartHeader)
+	ClsSsHeaderText = NameSelectSearch.Class(PartHeaderText)
+	ClsSsIcon       = NameSelectSearch.Class(PartIcon)
+	ClsSsGlyph      = NameSelectSearch.Class(PartGlyph)
+	ClsSsSearch     = NameSelectSearch.Class(PartSearch)
+	ClsSsOptions    = NameSelectSearch.Class(PartOptions)
+	ClsSsOption     = NameSelectSearch.Class(PartOption)
+	ClsSsText       = NameSelectSearch.Class(PartText)
+	ClsSsLabel      = NameSelectSearch.Class(PartLabel)
+	ClsSsSublabel   = NameSelectSearch.Class(PartSublabel)
+	ClsSsDesc       = NameSelectSearch.Class(PartDesc)
 )
 
 const iconArrowDown = svg.Icon("ss-arrow-down")
@@ -42,6 +50,7 @@ const iconArrowDown = svg.Icon("ss-arrow-down")
 type SsOption struct {
 	ID          string // unique identifier, returned in OnSelect
 	Label       string // visible text
+	Sublabel    string // optional second line under Label — position only, no assumed content
 	Description string // optional badge shown on the right
 }
 
@@ -119,13 +128,24 @@ func (c *SelectSearch) Render() *Element {
 			}
 		})
 
-	// BindText sets textContent which would erase child elements.
-	// Wrap header text in a Span so the SVG icon survives as a sibling.
+	// The icon is a filled square cap around a white glyph, FIRST child —
+	// searchbar's own PartIcon/PartGlyph layout (that package's Render puts
+	// its cap before its input too; see its css.go for the flush-square
+	// recipe PartHeader below mirrors), not a bare svg trailing the text:
+	// a bare <svg> painted straight onto the header read as an unstyled
+	// stray mark, disconnected from the rest of the chassis, and trailing
+	// it put the cap on the wrong edge for this chassis' own convention.
+	//
+	// BindText sets textContent which would erase child elements, so the
+	// text gets its own Span — and that Span carries the header's padding
+	// (see PartHeaderText in css.go): the icon must NOT be padded away
+	// from the header's edges, or it stops reading as a flush cap.
+	icon := Div().Set(ClsSsIcon.AsAttr()).Child(iconArrowDown.Render(string(ClsSsGlyph)))
 	header := Label().Set(ClsSsHeader.AsAttr()).
 		Attr("for", "ss-toggle").
 		Child(
-			Span().BindText(headerTextSig),
-			iconArrowDown.Render(string(ClsSsIcon)),
+			icon,
+			Span().Set(ClsSsHeaderText.AsAttr()).BindText(headerTextSig),
 		)
 
 	searchInput := Input("search").
@@ -198,11 +218,21 @@ func (c *SelectSearch) buildRows(term string) []*Element {
 		}
 
 		o := opt // capture loop variable
+
+		// text stacks Label over the optional Sublabel — a second line under
+		// the name, not a sibling beside it, which is why it is its own Grow()
+		// column instead of two more spans loose in the row's own Row().
+		text := Div().Set(ClsSsText.AsAttr()).
+			Child(Span().Set(ClsSsLabel.AsAttr()).Text(opt.Label))
+		if opt.Sublabel != "" {
+			text.Child(Span().Set(ClsSsSublabel.AsAttr()).Text(opt.Sublabel))
+		}
+
 		item := Li().Set(ClsSsOption.AsAttr()).
 			Key(opt.ID).
 			ID("ss-opt-"+opt.ID). // required for wirePendingEvents to attach the click handler
 			Attr("role", "option").
-			Child(Span().Set(ClsSsLabel.AsAttr()).Text(opt.Label)).
+			Child(text).
 			On("click", func(e Event) { c.selectOption(o) })
 
 		if opt.Description != "" {
