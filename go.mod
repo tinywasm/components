@@ -9,7 +9,7 @@ require (
 	github.com/tinywasm/html v0.0.12
 	github.com/tinywasm/svg v0.1.8
 	github.com/tinywasm/view v0.1.13
-	github.com/tinywasm/widget v0.6.5
+	github.com/tinywasm/widget v0.6.6
 )
 
 require (
@@ -19,3 +19,5 @@ require (
 	github.com/tinywasm/model v0.1.2 // indirect
 	github.com/tinywasm/router v0.1.13 // indirect
 )
+
+// widget.PartSubmit (fieldset's submit button styling hook) — not published yet.
