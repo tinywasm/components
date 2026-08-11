@@ -88,6 +88,20 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 			style.Row(style.Space3),
 			style.Pad(style.Space1),
 		).
+		// Filled and full-width, matching crudview's own primary action
+		// button exactly (As(Primary), Pad(Space3), ControlBox) -- a form's
+		// submit is the same weight of commitment as crudview's own save
+		// action, and a bare unstyled <button> next to a skinned field stack
+		// was the one piece of every form (login included) that still read
+		// as unfinished.
+		Part(widget.PartSubmit,
+			style.As(style.Primary),
+			style.Pad(style.Space3),
+			style.Round(style.RadiusMd),
+			style.Width(style.Full),
+			style.ControlBox(),
+			style.CenterContent(),
+		).
 		// Locked repaints the INPUT, not the field root — historically the
 		// wrapper got the treatment and the resulting ring crossed the legend
 		// chip straddling the top border line. Nothing about a locked field

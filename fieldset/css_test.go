@@ -127,6 +127,7 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 		"tw-field__input":       true,
 		"tw-field__error":       true,
 		"tw-field__radio-group": true,
+		"tw-field__submit":      true,
 	}
 
 	for cls := range cssClasses {
