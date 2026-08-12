@@ -14,6 +14,7 @@ import (
 	"testing"
 
 	"github.com/tinywasm/components/actionbutton"
+	"github.com/tinywasm/components/calendarslider"
 	"github.com/tinywasm/components/contentcard"
 	"github.com/tinywasm/components/datatable"
 	"github.com/tinywasm/components/fieldset"
@@ -320,6 +321,7 @@ func TestEveryPackageEmits(t *testing.T) {
 		RenderCSS() *css.Stylesheet
 	}{
 		&actionbutton.ActionButton{},
+		&calendarslider.CalendarSlider{},
 		&contentcard.ContentCard{},
 		&datatable.DataTable{},
 		&fieldset.Fieldset{},
@@ -346,6 +348,7 @@ func TestKindAllowsEveryState(t *testing.T) {
 		WidgetKind() widget.Kind
 	}{
 		"actionbutton": &actionbutton.ActionButton{},
+		"calendarslider": &calendarslider.CalendarSlider{},
 		"contentcard":  &contentcard.ContentCard{},
 		"datatable":    &datatable.DataTable{},
 		"fieldset":     &fieldset.Fieldset{},

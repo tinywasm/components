@@ -41,6 +41,16 @@ Container with header, body, and footer sections.
 
 ---
 
+## [CalendarSlider](../calendarslider/README.md) — ✅ Slot-ready
+Declarative month calendar (zero JS): a window of `NumMonths` months centered
+on the current month, rebuilt by ‹ › via `BindChildren`. Holidays (red),
+occupation percentage (selectable days with `N%` bar), today marker, and
+single-day selection through a `*dom.SignalString` (`YYYY-MM-DD`) with
+`BindState(widget.Selected, ...)` — the DOM patches in place, never re-renders.
+[Detailed Documentation →](../calendarslider/README.md)
+
+---
+
 ## [ModalDialog](../modaldialog/README.md) — ✅ Slot-ready
 Centered modal overlay with backdrop and close button. Named for its specific
 style (centered/backdrop) so other dialog styles (e.g. a drawer or a confirm

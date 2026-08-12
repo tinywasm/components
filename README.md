@@ -128,6 +128,7 @@ See [Component Skill Guide](docs/SKILL.md) for the full standard.
 See [Component Catalog](docs/CATALOG.md) for full documentation.
 
 -   **ActionButton**: Primary/secondary actions with variants.
+-   **CalendarSlider**: Declarative month calendar (holidays, occupation %, selection).
 -   **ContentCard**: Content container with header/body/footer.
 -   **DataTable**: Data tables with headers and rows.
 -   **ModalDialog**: Centered modal overlay with backdrop.
