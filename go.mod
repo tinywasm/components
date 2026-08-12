@@ -4,12 +4,14 @@ go 1.25.2
 
 require (
 	github.com/tinywasm/css v0.4.12
+	github.com/tinywasm/date v0.0.2
 	github.com/tinywasm/dom v0.13.5
 	github.com/tinywasm/fmt v0.25.5
-	github.com/tinywasm/html v0.0.12
+	github.com/tinywasm/html v0.0.16
 	github.com/tinywasm/svg v0.1.8
+	github.com/tinywasm/time v0.5.2
 	github.com/tinywasm/view v0.1.15
-	github.com/tinywasm/widget v0.6.6
+	github.com/tinywasm/widget v0.6.8
 )
 
 require (
