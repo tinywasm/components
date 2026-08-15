@@ -18,9 +18,13 @@ import (
 	"github.com/tinywasm/components/contentcard"
 	"github.com/tinywasm/components/datatable"
 	"github.com/tinywasm/components/fieldset"
+	"github.com/tinywasm/components/herobanner"
+	"github.com/tinywasm/components/infobar"
 	"github.com/tinywasm/components/modaldialog"
 	"github.com/tinywasm/components/searchbar"
 	"github.com/tinywasm/components/selectsearch"
+	"github.com/tinywasm/components/sitenav"
+	"github.com/tinywasm/components/statgrid"
 	"github.com/tinywasm/components/targetlist"
 	"github.com/tinywasm/components/themetoggle"
 	"github.com/tinywasm/css"
@@ -325,9 +329,13 @@ func TestEveryPackageEmits(t *testing.T) {
 		&contentcard.ContentCard{},
 		&datatable.DataTable{},
 		&fieldset.Fieldset{},
+		&herobanner.HeroBanner{},
+		&infobar.InfoBar{},
 		&modaldialog.ModalDialog{},
 		&searchbar.SearchBar{},
 		&selectsearch.SelectSearch{},
+		&sitenav.SiteNav{},
+		&statgrid.StatGrid{},
 		&targetlist.TargetList{},
 		&themetoggle.ThemeToggle{},
 	}
@@ -347,16 +355,20 @@ func TestKindAllowsEveryState(t *testing.T) {
 	packageComponents := map[string]interface {
 		WidgetKind() widget.Kind
 	}{
-		"actionbutton": &actionbutton.ActionButton{},
+		"actionbutton":   &actionbutton.ActionButton{},
 		"calendarslider": &calendarslider.CalendarSlider{},
-		"contentcard":  &contentcard.ContentCard{},
-		"datatable":    &datatable.DataTable{},
-		"fieldset":     &fieldset.Fieldset{},
-		"modaldialog":  &modaldialog.ModalDialog{},
-		"searchbar":    &searchbar.SearchBar{},
-		"selectsearch": &selectsearch.SelectSearch{},
-		"targetlist":   &targetlist.TargetList{},
-		"themetoggle":  &themetoggle.ThemeToggle{},
+		"contentcard":    &contentcard.ContentCard{},
+		"datatable":      &datatable.DataTable{},
+		"fieldset":       &fieldset.Fieldset{},
+		"herobanner":     &herobanner.HeroBanner{},
+		"infobar":        &infobar.InfoBar{},
+		"modaldialog":    &modaldialog.ModalDialog{},
+		"searchbar":      &searchbar.SearchBar{},
+		"selectsearch":   &selectsearch.SelectSearch{},
+		"sitenav":        &sitenav.SiteNav{},
+		"statgrid":       &statgrid.StatGrid{},
+		"targetlist":     &targetlist.TargetList{},
+		"themetoggle":    &themetoggle.ThemeToggle{},
 	}
 
 	stateMap := map[string]widget.State{
