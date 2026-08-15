@@ -1,5 +1,7 @@
 ---
 PLAN: "feat: componentes de sitio público — infobar, sitenav, herobanner, statgrid"
+STATUS: running
+SESSION: 15129426777814571399
 ---
 
 > Este plan se despacha con el flujo CodeJob. Ver skill: agents-workflow.
