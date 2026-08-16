@@ -26,7 +26,10 @@ var (
 	clsHeroActions  = NameHeroBanner.Class(PartActions)
 )
 
-// HeroBanner displays a prominent header banner with text, background image, and actions.
+// autoRotateLayers is the fixed number of stacked children style.AutoRotate() choreographs.
+const autoRotateLayers = 6
+
+// HeroBanner displays a prominent header banner with text, background image(s), and actions.
 type HeroBanner struct {
 	Element
 	Title    string
@@ -42,18 +45,23 @@ func (h *HeroBanner) WidgetKind() widget.Kind { return widget.Region }
 func (h *HeroBanner) Render() *Element {
 	banner := Section().Set(clsHero.AsAttr())
 
-	imgSrc := h.Image
-	if imgSrc == "" && len(h.Images) > 0 {
-		imgSrc = h.Images[0]
+	var images []string
+	if len(h.Images) > 0 {
+		images = h.Images
+	} else if h.Image != "" {
+		images = []string{h.Image}
 	}
 
-	if imgSrc != "" {
-		mediaLayer := Div().Set(clsHeroMedia.AsAttr()).Child(
-			NewElement("img").
+	if len(images) > 0 {
+		mediaLayer := Div().Set(clsHeroMedia.AsAttr())
+		for i := 0; i < autoRotateLayers; i++ {
+			imgSrc := images[i%len(images)]
+			img := NewElement("img").
 				Attr("src", imgSrc).
 				Attr("alt", "").
-				Attr("loading", "eager"),
-		)
+				Attr("loading", "eager")
+			mediaLayer.Child(img)
+		}
 		banner.Child(mediaLayer)
 	}
 

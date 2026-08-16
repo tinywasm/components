@@ -21,6 +21,7 @@ func (h *HeroBanner) RenderCSS() *css.Stylesheet {
 		Part(PartMedia,
 			style.Backdrop(style.Parent),
 			style.Fill(),
+			style.AutoRotate(),
 		).
 		Part(PartContent,
 			style.Stack(style.Space4),
