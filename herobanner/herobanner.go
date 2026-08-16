@@ -26,11 +26,12 @@ var (
 	clsHeroActions  = NameHeroBanner.Class(PartActions)
 )
 
-// HeroBanner displays a prominent header banner with text, background images, and actions.
+// HeroBanner displays a prominent header banner with text, background image, and actions.
 type HeroBanner struct {
 	Element
 	Title    string
 	Subtitle string
+	Image    string
 	Images   []string
 	Actions  []Component
 }
@@ -41,18 +42,18 @@ func (h *HeroBanner) WidgetKind() widget.Kind { return widget.Region }
 func (h *HeroBanner) Render() *Element {
 	banner := Section().Set(clsHero.AsAttr())
 
-	if len(h.Images) > 0 {
-		mediaLayer := Div().Set(clsHeroMedia.AsAttr())
-		for idx, imgURL := range h.Images {
-			img := NewElement("img").
-				Attr("src", imgURL).
+	imgSrc := h.Image
+	if imgSrc == "" && len(h.Images) > 0 {
+		imgSrc = h.Images[0]
+	}
+
+	if imgSrc != "" {
+		mediaLayer := Div().Set(clsHeroMedia.AsAttr()).Child(
+			NewElement("img").
+				Attr("src", imgSrc).
 				Attr("alt", "").
-				Attr("loading", "eager")
-			if idx == 0 {
-				img.Attr("data-active", "true")
-			}
-			mediaLayer.Child(img)
-		}
+				Attr("loading", "eager"),
+		)
 		banner.Child(mediaLayer)
 	}
 

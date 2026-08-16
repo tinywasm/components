@@ -11,7 +11,7 @@ func TestHeroBanner_PrefersReducedMotion(t *testing.T) {
 	hb := &HeroBanner{
 		Title:    "Clínica de Excelencia",
 		Subtitle: "Cuidando de tu salud",
-		Images:   []string{"/img/hero1.jpg", "/img/hero2.jpg"},
+		Image:    "/img/hero1.jpg",
 	}
 
 	sheet := hb.RenderCSS()
