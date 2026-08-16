@@ -1,7 +1,8 @@
 ---
 PLAN: "feat: componentes de sitio público — infobar, sitenav, herobanner, statgrid"
-STATUS: running
+STATUS: review
 SESSION: 15129426777814571399
+PR: https://github.com/tinywasm/components/pull/20
 ---
 
 > Este plan se despacha con el flujo CodeJob. Ver skill: agents-workflow.
