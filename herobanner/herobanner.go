@@ -26,7 +26,9 @@ var (
 	clsHeroActions  = NameHeroBanner.Class(PartActions)
 )
 
-// autoRotateLayers is the fixed number of stacked children style.AutoRotate() choreographs.
+// autoRotateLayers mirrors style.AutoRotateLayers (widget/style is !wasm-only
+// and Render() must compile for wasm, so it cannot import that package) —
+// keep this in sync if the widget-side constant ever changes.
 const autoRotateLayers = 6
 
 // HeroBanner displays a prominent header banner with text, background image(s), and actions.
@@ -34,7 +36,6 @@ type HeroBanner struct {
 	Element
 	Title    string
 	Subtitle string
-	Image    string
 	Images   []string
 	Actions  []Component
 }
@@ -45,17 +46,10 @@ func (h *HeroBanner) WidgetKind() widget.Kind { return widget.Region }
 func (h *HeroBanner) Render() *Element {
 	banner := Section().Set(clsHero.AsAttr())
 
-	var images []string
 	if len(h.Images) > 0 {
-		images = h.Images
-	} else if h.Image != "" {
-		images = []string{h.Image}
-	}
-
-	if len(images) > 0 {
 		mediaLayer := Div().Set(clsHeroMedia.AsAttr())
 		for i := 0; i < autoRotateLayers; i++ {
-			imgSrc := images[i%len(images)]
+			imgSrc := h.Images[i%len(h.Images)]
 			img := NewElement("img").
 				Attr("src", imgSrc).
 				Attr("alt", "").
