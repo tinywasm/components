@@ -113,7 +113,7 @@ right; the library cannot enforce it for you.
 ## SVG icons — name is shared, drawing is backend-only
 
 The icon's *name* is the only thing the WASM binary may carry; the geometry is
-extracted by `tinywasm/ssr` and injected inline into `<body>` by `assetmin`
+extracted by `tinywasm/ssr` and injected inline into `<body>` by `sitec`
 (no `/assets/icons.svg` URL — `href="#id"` resolves without a network request).
 
 - Declare the reference in the untagged component file:
