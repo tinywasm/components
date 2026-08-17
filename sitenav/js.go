@@ -6,6 +6,13 @@ import "github.com/tinywasm/js"
 
 // RenderJS returns the vanilla JavaScript snippet responsible for the mobile
 // menu toggle behavior and link click auto-close.
+//
+// The open state is written as data-open on the MENU, which is the attribute
+// widget.Open resolves to and the one RenderCSS selects on. It used to toggle
+// an "is-open" class instead — a name no stylesheet in the ecosystem has ever
+// matched, so the button flipped a class nothing read and the menu never
+// opened. aria-expanded stays on the button: that is the assistive-technology
+// contract, and it lives on the control, not on what it controls.
 func (sn *SiteNav) RenderJS() []*js.Script {
 	return []*js.Script{{Content: `(function() {
 	if (window.__sitenavInit) return;
@@ -21,9 +28,9 @@ func (sn *SiteNav) RenderJS() []*js.Script {
 			var menu = document.getElementById('sitenav-menu');
 			if (menu) {
 				if (nextState) {
-					menu.classList.add('is-open');
+					menu.setAttribute('data-open', 'true');
 				} else {
-					menu.classList.remove('is-open');
+					menu.removeAttribute('data-open');
 				}
 			}
 			return;
@@ -38,7 +45,7 @@ func (sn *SiteNav) RenderJS() []*js.Script {
 					btn.setAttribute('aria-expanded', 'false');
 					btn.setAttribute('aria-label', 'Abrir menú de navegación');
 				}
-				menu.classList.remove('is-open');
+				menu.removeAttribute('data-open');
 			}
 		}
 	});

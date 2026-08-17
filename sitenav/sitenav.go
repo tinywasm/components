@@ -27,12 +27,20 @@ var (
 	clsNavLogo    = NameSiteNav.Class(PartLogo)
 	clsNavToggle  = NameSiteNav.Class(PartToggle)
 	clsNavMenu    = NameSiteNav.Class(PartMenu)
+	clsNavNav     = NameSiteNav.Class(PartNav)
 	clsNavLink    = NameSiteNav.Class(PartLink)
 	clsNavActions = NameSiteNav.Class(PartActions)
 )
 
+// menuID is the element the toggle controls. Sprite symbol IDs and element
+// IDs share one document-wide namespace, and the hamburger glyph used to be
+// called "sitenav-menu" too: the sprite is injected at the top of <body>, so
+// getElementById("sitenav-menu") returned the <symbol>, and the toggle wrote
+// the open state onto an invisible SVG node while the real menu never moved.
+const menuID = "sitenav-menu"
+
 const (
-	iconMenu  = svg.Icon("sitenav-menu")
+	iconMenu  = svg.Icon("sitenav-hamburger")
 	iconClose = svg.Icon("sitenav-close")
 )
 
@@ -55,7 +63,14 @@ type SiteNav struct {
 }
 
 func (sn *SiteNav) WidgetName() widget.Name { return NameSiteNav }
-func (sn *SiteNav) WidgetKind() widget.Kind { return widget.Region }
+
+// WidgetKind is Disclosure, not Region: the markup this component already
+// emits IS the disclosure pattern — a button carrying aria-expanded and
+// aria-controls that shows and hides the region it names. Region has no
+// expandable state at all (widget.Kind.Allows), so declaring it left the
+// collapsed mobile menu inexpressible: the toggle rendered and did nothing a
+// stylesheet could react to.
+func (sn *SiteNav) WidgetKind() widget.Kind { return widget.Disclosure }
 
 func (sn *SiteNav) Render() *Element {
 	header := Header().Set(clsNav.AsAttr())
@@ -76,7 +91,7 @@ func (sn *SiteNav) Render() *Element {
 
 	// Toggle button for mobile navigation
 	toggleBtn := Button().Set(clsNavToggle.AsAttr()).
-		Attr("aria-controls", "sitenav-menu").
+		Attr("aria-controls", menuID).
 		Attr("aria-expanded", "false").
 		Attr("aria-label", "Abrir menú de navegación").
 		Child(iconMenu.Render("sitenav-icon-open")).
@@ -84,9 +99,11 @@ func (sn *SiteNav) Render() *Element {
 	header.Child(toggleBtn)
 
 	// Menu container
-	menu := Div().Set(clsNavMenu.AsAttr()).ID("sitenav-menu")
+	menu := Div().Set(clsNavMenu.AsAttr()).ID(menuID)
 
-	nav := Nav()
+	// PartNav is declared in RenderCSS; without the class here every rule it
+	// carries addressed nothing, and the links kept the menu's own layout.
+	nav := Nav().Set(clsNavNav.AsAttr())
 	for _, link := range sn.Links {
 		a := A(link.Href).Set(clsNavLink.AsAttr()).Text(link.Label)
 		if link.Active {

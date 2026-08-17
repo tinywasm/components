@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/tinywasm/js"
+	"github.com/tinywasm/widget"
 )
 
 func TestSiteNav_AccessibilityAttributes(t *testing.T) {
@@ -59,4 +60,42 @@ func TestSiteNav_RenderJSSatisfiesSSRJSProvider(t *testing.T) {
 	var _ interface {
 		RenderJS() []*js.Script
 	} = (*SiteNav)(nil)
+}
+
+// TestSiteNav_MobileMenuCollapses pins the three halves of the responsive nav
+// that have to agree for it to work at all: the hamburger exists only where
+// the links do not fit, the links are hidden on that same viewport, and the
+// open state is the one the toggle actually writes. Any one of them drifting
+// alone is silent — the button renders, the click handler runs, and nothing
+// on screen changes.
+func TestSiteNav_MobileMenuCollapses(t *testing.T) {
+	sn := &SiteNav{Links: []NavItem{{Label: "Inicio", Href: "#inicio"}}}
+
+	sheet := sn.RenderCSS().String()
+
+	if !strings.Contains(sheet, "."+clsNavMenu.String()+"["+widget.Open.Key()+`="`+widget.Open.Value()+`"]`) {
+		t.Errorf("menu is never revealed by the Open state the toggle writes:\n%s", sheet)
+	}
+
+	script := sn.RenderJS()[0].Content
+	if !strings.Contains(script, widget.Open.Key()) {
+		t.Errorf("toggle JS does not write %s, the attribute RenderCSS selects on:\n%s", widget.Open.Key(), script)
+	}
+	if strings.Contains(script, "is-open") {
+		t.Errorf("toggle JS still flips an is-open class that no stylesheet matches:\n%s", script)
+	}
+}
+
+// TestSiteNav_IconIDsDoNotCollideWithElementIDs guards the namespace the
+// sprite shares with the document. A <symbol id="x"> and an element id="x" are
+// the same id as far as getElementById is concerned, and the sprite is
+// injected first — so a collision silently hands every lookup to an invisible
+// SVG node.
+func TestSiteNav_IconIDsDoNotCollideWithElementIDs(t *testing.T) {
+	sn := &SiteNav{}
+	for _, def := range sn.IconSvg().Icons() {
+		if def.Icon.ID() == menuID {
+			t.Errorf("icon %q shares its id with the menu element; getElementById(%q) will return the sprite symbol instead of the menu", def.Icon.ID(), menuID)
+		}
+	}
 }

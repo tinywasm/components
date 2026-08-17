@@ -23,11 +23,16 @@ func (h *HeroBanner) RenderCSS() *css.Stylesheet {
 			style.Fill(),
 			style.AutoRotate(),
 		).
+		// Foreground(): PartMedia is a Backdrop(Parent), which pins it at the
+		// local stacking level. The caption is in normal flow at z-index auto
+		// and therefore paints UNDERNEATH it — invisible as soon as the
+		// photograph actually fills the banner.
 		Part(PartContent,
 			style.Stack(style.Space4),
 			style.Pad(style.Space6),
 			style.CenterContent(),
 			style.As(style.Page),
+			style.Foreground(),
 		).
 		Part(PartTitle,
 			style.FontSize(style.Text2xl),

@@ -26,6 +26,20 @@ var (
 	clsHeroActions  = NameHeroBanner.Class(PartActions)
 )
 
+// loadingFor decides the loading hint per slide. Only the first layer is
+// painted when the page opens — the rest are revealed by the rotation
+// keyframes seconds later — so marking every one eager makes the browser
+// fetch six full-size photographs before first paint, competing with the one
+// slide the visitor can actually see. The first stays eager because it IS the
+// largest contentful paint; the others can arrive while the first is on
+// screen.
+func loadingFor(layer int) string {
+	if layer == 0 {
+		return "eager"
+	}
+	return "lazy"
+}
+
 // autoRotateLayers mirrors style.AutoRotateLayers (widget/style is !wasm-only
 // and Render() must compile for wasm, so it cannot import that package) —
 // keep this in sync if the widget-side constant ever changes.
@@ -50,10 +64,16 @@ func (h *HeroBanner) Render() *Element {
 		mediaLayer := Div().Set(clsHeroMedia.AsAttr())
 		for i := 0; i < autoRotateLayers; i++ {
 			imgSrc := h.Images[i%len(h.Images)]
+			// NoCloseTag: <img> is a void element. NewElement knows nothing
+			// about HTML's content model, so without this it emits
+			// `<img ...></img>` — which browsers recover from by dropping the
+			// stray end tag, but which is invalid markup and trips any
+			// downstream consumer that parses the output strictly.
 			img := NewElement("img").
 				Attr("src", imgSrc).
 				Attr("alt", "").
-				Attr("loading", "eager")
+				Attr("loading", loadingFor(i)).
+				NoCloseTag()
 			mediaLayer.Child(img)
 		}
 		banner.Child(mediaLayer)
