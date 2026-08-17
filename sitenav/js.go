@@ -2,10 +2,12 @@
 
 package sitenav
 
+import "github.com/tinywasm/js"
+
 // RenderJS returns the vanilla JavaScript snippet responsible for the mobile
 // menu toggle behavior and link click auto-close.
-func (sn *SiteNav) RenderJS() string {
-	return `(function() {
+func (sn *SiteNav) RenderJS() []*js.Script {
+	return []*js.Script{{Content: `(function() {
 	if (window.__sitenavInit) return;
 	window.__sitenavInit = true;
 
@@ -40,5 +42,5 @@ func (sn *SiteNav) RenderJS() string {
 			}
 		}
 	});
-})();`
+})();`}}
 }

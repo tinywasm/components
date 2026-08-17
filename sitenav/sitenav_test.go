@@ -5,6 +5,8 @@ package sitenav
 import (
 	"strings"
 	"testing"
+
+	"github.com/tinywasm/js"
 )
 
 func TestSiteNav_AccessibilityAttributes(t *testing.T) {
@@ -34,11 +36,12 @@ func TestSiteNav_AccessibilityAttributes(t *testing.T) {
 
 func TestSiteNav_RenderJSIdempotentAndSafe(t *testing.T) {
 	sn := &SiteNav{}
-	jsStr := sn.RenderJS()
+	scripts := sn.RenderJS()
 
-	if jsStr == "" {
-		t.Fatal("RenderJS returned empty string")
+	if len(scripts) != 1 || scripts[0].Content == "" {
+		t.Fatal("RenderJS returned no script content")
 	}
+	jsStr := scripts[0].Content
 
 	if !strings.Contains(jsStr, "__sitenavInit") {
 		t.Errorf("RenderJS does not include idempotency guard __sitenavInit")
@@ -47,4 +50,13 @@ func TestSiteNav_RenderJSIdempotentAndSafe(t *testing.T) {
 	if !strings.Contains(jsStr, "document.addEventListener") {
 		t.Errorf("RenderJS does not use document event delegation")
 	}
+}
+
+func TestSiteNav_RenderJSSatisfiesSSRJSProvider(t *testing.T) {
+	// sitec.RegisterComponents type-asserts for RenderJS() []*js.Script at
+	// runtime; a value-slice return silently fails that assertion instead of
+	// erroring, so this pins the pointer-slice shape as a compile-time check.
+	var _ interface {
+		RenderJS() []*js.Script
+	} = (*SiteNav)(nil)
 }
