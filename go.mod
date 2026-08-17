@@ -13,7 +13,7 @@ require (
 	github.com/tinywasm/svg v0.1.21
 	github.com/tinywasm/time v0.5.2
 	github.com/tinywasm/view v0.1.15
-	github.com/tinywasm/widget v0.6.10
+	github.com/tinywasm/widget v0.6.11
 )
 
 require (
@@ -27,5 +27,3 @@ require (
 )
 
 // widget.PartSubmit (fieldset's submit button styling hook) — not published yet.
-
-replace github.com/tinywasm/widget => /home/cesar/Dev/Project/tinywasm/widget
