@@ -25,6 +25,14 @@ func (sn *SiteNav) RenderJS() []*js.Script {
 			var nextState = !isExpanded;
 			toggle.setAttribute('aria-expanded', String(nextState));
 			toggle.setAttribute('aria-label', nextState ? 'Cerrar menú de navegación' : 'Abrir menú de navegación');
+			// The button carries the state too, not just the menu: the glyph it
+			// swaps between lives inside the button, and a descendant rule can
+			// only reach it through an ancestor that holds the attribute.
+			if (nextState) {
+				toggle.setAttribute('data-open', 'true');
+			} else {
+				toggle.removeAttribute('data-open');
+			}
 			var menu = document.getElementById('sitenav-menu');
 			if (menu) {
 				if (nextState) {
@@ -44,6 +52,7 @@ func (sn *SiteNav) RenderJS() []*js.Script {
 				if (btn) {
 					btn.setAttribute('aria-expanded', 'false');
 					btn.setAttribute('aria-label', 'Abrir menú de navegación');
+					btn.removeAttribute('data-open');
 				}
 				menu.removeAttribute('data-open');
 			}

@@ -21,6 +21,11 @@ func (sn *SiteNav) RenderCSS() *css.Stylesheet {
 			style.KeepSize(),
 			style.CenterContent(),
 		).
+		// On a phone the menu — the part that normally absorbs the free space —
+		// is collapsed, so the brand and the toggle were left floating in the
+		// middle of the bar together. Growing the brand puts them back on
+		// opposite edges, which is where a header reads from.
+		On(css.Mobile, PartBrand, style.Grow()).
 		// The logo ships as whatever the site declares (WideLogoSrc/
 		// CompactLogoSrc) — often an SVG whose viewBox has nothing to do with
 		// a nav bar. KeepSize() alone only stops flex from stretching or
@@ -33,10 +38,23 @@ func (sn *SiteNav) RenderCSS() *css.Stylesheet {
 			style.LogoBox(),
 		).
 		Part(PartToggle,
-			style.IconBox(style.IconSm),
+			style.IconBox(style.IconMd),
 			style.As(style.Panel),
 			style.KeepSize(),
+			style.CenterContent(),
 		).
+		// The two glyphs the button swaps between. Without a box of their own
+		// each <svg> fell back to the replaced-element default of 300x150 and
+		// spilled out of a 16px button, dragging the close cross halfway down
+		// the hero. And with no rule choosing between them, both were painted
+		// at once — the control showed a hamburger and a cross stacked.
+		Part(PartIconOpen, style.IconBox(style.IconSm)).
+		Part(PartIconClose, style.IconBox(style.IconSm), style.Hide()).
+		// WhenWithin, not When: the open state is written on the button (and on
+		// the menu it controls), never on the glyphs themselves, so a rule that
+		// selected the glyph's own attribute would match nothing.
+		WhenWithin(widget.Open, PartToggle, PartIconOpen, style.Hide()).
+		WhenWithin(widget.Open, PartToggle, PartIconClose, style.Show()).
 		// The hamburger only exists where the links do not fit. Leaving it on
 		// every viewport put a stray button next to a nav bar that was already
 		// showing all six links.

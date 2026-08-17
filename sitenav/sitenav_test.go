@@ -99,3 +99,29 @@ func TestSiteNav_IconIDsDoNotCollideWithElementIDs(t *testing.T) {
 		}
 	}
 }
+
+// TestSiteNav_ToggleGlyphsAreSizedAndSwapped guards the control's two failure
+// modes, both of which shipped: an <svg> with no box falls back to the
+// replaced-element default of 300x150 and spills out of the button, and with
+// nothing choosing between them the hamburger and the cross paint at once.
+func TestSiteNav_ToggleGlyphsAreSizedAndSwapped(t *testing.T) {
+	sn := &SiteNav{Links: []NavItem{{Label: "Inicio", Href: "#inicio"}}}
+
+	sheet := sn.RenderCSS().String()
+
+	for _, cls := range []string{clsNavIconOpen.String(), clsNavIconClose.String()} {
+		if !strings.Contains(sheet, "."+cls+" {") {
+			t.Errorf("glyph %q has no rule at all, so it renders at the 300x150 replaced-element default:\n%s", cls, sheet)
+		}
+	}
+
+	openState := "." + clsNavToggle.String() + "[" + widget.Open.Key() + `="` + widget.Open.Value() + `"] .` + clsNavIconClose.String()
+	if !strings.Contains(sheet, openState) {
+		t.Errorf("the close glyph is never revealed while the toggle is open; the button keeps showing the hamburger:\n%s", sheet)
+	}
+
+	script := sn.RenderJS()[0].Content
+	if !strings.Contains(script, "toggle.setAttribute('"+widget.Open.Key()+"'") {
+		t.Errorf("the toggle never carries %s, so the descendant rule above matches nothing:\n%s", widget.Open.Key(), script)
+	}
+}

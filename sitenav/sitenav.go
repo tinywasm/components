@@ -12,24 +12,28 @@ import (
 const NameSiteNav = widget.Name("sitenav")
 
 const (
-	PartBrand   = widget.Part("brand")
-	PartLogo    = widget.Part("logo")
-	PartToggle  = widget.Part("toggle")
-	PartMenu    = widget.Part("menu")
-	PartNav     = widget.Part("nav")
-	PartLink    = widget.Part("link")
-	PartActions = widget.Part("actions")
+	PartBrand     = widget.Part("brand")
+	PartLogo      = widget.Part("logo")
+	PartToggle    = widget.Part("toggle")
+	PartMenu      = widget.Part("menu")
+	PartNav       = widget.Part("nav")
+	PartLink      = widget.Part("link")
+	PartActions   = widget.Part("actions")
+	PartIconOpen  = widget.Part("icon-open")
+	PartIconClose = widget.Part("icon-close")
 )
 
 var (
-	clsNav        = NameSiteNav.Root()
-	clsNavBrand   = NameSiteNav.Class(PartBrand)
-	clsNavLogo    = NameSiteNav.Class(PartLogo)
-	clsNavToggle  = NameSiteNav.Class(PartToggle)
-	clsNavMenu    = NameSiteNav.Class(PartMenu)
-	clsNavNav     = NameSiteNav.Class(PartNav)
-	clsNavLink    = NameSiteNav.Class(PartLink)
-	clsNavActions = NameSiteNav.Class(PartActions)
+	clsNav          = NameSiteNav.Root()
+	clsNavBrand     = NameSiteNav.Class(PartBrand)
+	clsNavLogo      = NameSiteNav.Class(PartLogo)
+	clsNavToggle    = NameSiteNav.Class(PartToggle)
+	clsNavMenu      = NameSiteNav.Class(PartMenu)
+	clsNavNav       = NameSiteNav.Class(PartNav)
+	clsNavLink      = NameSiteNav.Class(PartLink)
+	clsNavActions   = NameSiteNav.Class(PartActions)
+	clsNavIconOpen  = NameSiteNav.Class(PartIconOpen)
+	clsNavIconClose = NameSiteNav.Class(PartIconClose)
 )
 
 // menuID is the element the toggle controls. Sprite symbol IDs and element
@@ -94,8 +98,8 @@ func (sn *SiteNav) Render() *Element {
 		Attr("aria-controls", menuID).
 		Attr("aria-expanded", "false").
 		Attr("aria-label", "Abrir menú de navegación").
-		Child(iconMenu.Render("sitenav-icon-open")).
-		Child(iconClose.Render("sitenav-icon-close"))
+		Child(iconMenu.Render(clsNavIconOpen.String())).
+		Child(iconClose.Render(clsNavIconClose.String()))
 	header.Child(toggleBtn)
 
 	// Menu container
