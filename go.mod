@@ -10,7 +10,7 @@ require (
 	github.com/tinywasm/html v0.0.17
 	github.com/tinywasm/image v0.0.20
 	github.com/tinywasm/js v0.0.6
-	github.com/tinywasm/svg v0.1.21
+	github.com/tinywasm/svg v0.2.0
 	github.com/tinywasm/time v0.5.2
 	github.com/tinywasm/view v0.1.15
 	github.com/tinywasm/widget v0.6.12
