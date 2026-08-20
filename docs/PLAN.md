@@ -2,6 +2,8 @@
 PLAN: "feat(herobanner): srcset en las imagenes del hero"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 4439125634798363599
 ---
 
 > Este plan se despacha con el flujo CodeJob. Ver skill: agents-workflow.
