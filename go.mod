@@ -8,7 +8,7 @@ require (
 	github.com/tinywasm/dom v0.13.5
 	github.com/tinywasm/fmt v0.25.6
 	github.com/tinywasm/html v0.0.17
-	github.com/tinywasm/image v0.0.23
+	github.com/tinywasm/image v0.0.24
 	github.com/tinywasm/js v0.0.6
 	github.com/tinywasm/svg v0.2.0
 	github.com/tinywasm/time v0.5.2
