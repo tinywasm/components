@@ -3,6 +3,7 @@ package herobanner
 import (
 	. "github.com/tinywasm/dom"
 	. "github.com/tinywasm/html"
+	"github.com/tinywasm/image"
 	"github.com/tinywasm/widget"
 )
 
@@ -64,16 +65,9 @@ func (h *HeroBanner) Render() *Element {
 		mediaLayer := Div().Set(clsHeroMedia.AsAttr())
 		for i := 0; i < autoRotateLayers; i++ {
 			imgSrc := h.Images[i%len(h.Images)]
-			// NoCloseTag: <img> is a void element. NewElement knows nothing
-			// about HTML's content model, so without this it emits
-			// `<img ...></img>` — which browsers recover from by dropping the
-			// stray end tag, but which is invalid markup and trips any
-			// downstream consumer that parses the output strictly.
-			img := NewElement("img").
-				Attr("src", imgSrc).
-				Attr("alt", "").
+			img := image.Responsive(imgSrc, "").
 				Attr("loading", loadingFor(i)).
-				NoCloseTag()
+				AsElement()
 			mediaLayer.Child(img)
 		}
 		banner.Child(mediaLayer)

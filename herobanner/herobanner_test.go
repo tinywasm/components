@@ -59,3 +59,38 @@ func TestHeroBanner_OnlyFirstSlideIsEager(t *testing.T) {
 		t.Errorf("expected %d lazy slides, got %d:\n%s", autoRotateLayers-1, n, got)
 	}
 }
+
+func TestHeroBanner_ResponsiveImages(t *testing.T) {
+	hb := &HeroBanner{
+		Images: []string{"/img/hero.jpg"},
+	}
+
+	got := hb.Render().String()
+
+	expectedSrcset := `srcset='/img/hero.S.jpg 640w, /img/hero.M.jpg 1024w, /img/hero.L.jpg 1920w'`
+	if !strings.Contains(got, expectedSrcset) {
+		t.Errorf("expected output to contain %q, got:\n%s", expectedSrcset, got)
+	}
+
+	expectedSizes := `sizes='100vw'`
+	if !strings.Contains(got, expectedSizes) {
+		t.Errorf("expected output to contain %q, got:\n%s", expectedSizes, got)
+	}
+
+	// alt should be empty in all 6 layers
+	if n := strings.Count(got, `alt=''`); n != autoRotateLayers {
+		t.Errorf("expected %d empty alt attributes, got %d:\n%s", autoRotateLayers, n, got)
+	}
+}
+
+func TestHeroBanner_NoImages(t *testing.T) {
+	hb := &HeroBanner{
+		Title: "Banner title",
+	}
+
+	got := hb.Render().String()
+
+	if strings.Contains(got, clsHeroMedia.String()) {
+		t.Errorf("expected no media layer when Images is empty, got:\n%s", got)
+	}
+}
