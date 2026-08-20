@@ -3,8 +3,11 @@
 package herobanner
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+
+	"github.com/tinywasm/image"
 )
 
 func TestHeroBanner_AutoRotateAndReducedMotion(t *testing.T) {
@@ -67,7 +70,10 @@ func TestHeroBanner_ResponsiveImages(t *testing.T) {
 
 	got := hb.Render().String()
 
-	expectedSrcset := `srcset='/img/hero.S.jpg 640w, /img/hero.M.jpg 1024w, /img/hero.L.jpg 1920w'`
+	expectedSrcset := fmt.Sprintf(
+		"srcset='/img/hero.S.jpg %dw, /img/hero.M.jpg %dw, /img/hero.L.jpg %dw'",
+		image.VariantS.Width(), image.VariantM.Width(), image.VariantL.Width(),
+	)
 	if !strings.Contains(got, expectedSrcset) {
 		t.Errorf("expected output to contain %q, got:\n%s", expectedSrcset, got)
 	}
