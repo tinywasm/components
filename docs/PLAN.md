@@ -4,6 +4,7 @@ EXECUTOR: jules
 REVIEWER: none
 STATUS: review
 SESSION: 4439125634798363599
+PR: https://github.com/tinywasm/components/pull/21
 ---
 
 > Este plan se despacha con el flujo CodeJob. Ver skill: agents-workflow.
