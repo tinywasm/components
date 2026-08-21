@@ -20,3 +20,5 @@ hero := &herobanner.HeroBanner{
     },
 }
 ```
+
+> **Nota sobre `Images`**: El campo `Images` recibe **rutas base sin sufijo de variante** (por ejemplo, `/images/hero1.jpg`). La renderización genera automáticamente los atributos `srcset` con las tres variantes (`.S.jpg`, `.M.jpg`, `.L.jpg`) y `sizes="100vw"`.
