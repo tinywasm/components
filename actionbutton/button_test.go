@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"strings"
 	"testing"
+
+	. "github.com/tinywasm/dom"
 )
 
 var (
@@ -34,6 +36,52 @@ func TestButton_Render(t *testing.T) {
 	// Verify text
 	if !strings.Contains(html, ">Click<") {
 		t.Error("expected text 'Click', got: " + html)
+	}
+}
+
+// TestButton_RenderHref proves the consumer-shaped use case that motivated
+// Href: an OAuth login link that must work before WASM loads and with
+// JavaScript disabled, styled exactly like a primary button.
+func TestButton_RenderHref(t *testing.T) {
+	btn := &ActionButton{
+		Text:    "Sign in with Google",
+		Variant: "primary",
+		Href:    "/oauth/google",
+	}
+
+	html := btn.Render().String()
+
+	if !strings.HasPrefix(html, "<a") {
+		t.Error("expected an <a> tag for a Href button, got: " + html)
+	}
+	if !strings.Contains(html, `href='/oauth/google'`) {
+		t.Error("expected href attribute, got: " + html)
+	}
+	if !strings.Contains(html, "actionbutton") || !strings.Contains(html, "actionbutton__primary") {
+		t.Error("expected the same actionbutton classes as the button variant, got: " + html)
+	}
+	if strings.Contains(html, "<button") {
+		t.Error("expected no <button> tag when Href is set, got: " + html)
+	}
+}
+
+// TestButton_HrefWinsOverOnClick documents the precedence: Href is for
+// navigation, so it takes over even if a caller also sets OnClick.
+func TestButton_HrefWinsOverOnClick(t *testing.T) {
+	called := false
+	btn := &ActionButton{
+		Text:    "Go",
+		Href:    "/somewhere",
+		OnClick: func(Event) { called = true },
+	}
+
+	html := btn.Render().String()
+
+	if !strings.HasPrefix(html, "<a") {
+		t.Error("expected Href to win and render an <a> tag, got: " + html)
+	}
+	if called {
+		t.Error("OnClick must not fire from Render when Href is set")
 	}
 }
 

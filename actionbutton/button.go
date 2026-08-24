@@ -42,8 +42,15 @@ var (
 
 type ActionButton struct {
 	Element
-	Text    string
+	Text string
 	Variant string // "primary", "secondary", "danger"
+
+	// Href renders the button as <a href> instead of <button>: no click
+	// handler, works before WASM loads and with JavaScript disabled. Set
+	// this for navigation (e.g. an OAuth login link); OnClick is ignored
+	// when Href is non-empty.
+	Href string
+
 	OnClick func(Event)
 }
 
@@ -61,8 +68,14 @@ func (b *ActionButton) Render() *Element {
 		variantCls = clsBtnPrimary
 	}
 
+	cls := string(clsBtn) + " " + string(variantCls)
+
+	if b.Href != "" {
+		return A(b.Href).Attr("class", cls).Text(b.Text)
+	}
+
 	btn := Button().
-		Attr("class", string(clsBtn)+" "+string(variantCls)).
+		Attr("class", cls).
 		Text(b.Text)
 
 	if b.OnClick != nil {
