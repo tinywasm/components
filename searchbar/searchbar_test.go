@@ -17,6 +17,14 @@ func TestSearchBar_RendersBarAndInput(t *testing.T) {
 	}
 }
 
+func TestSearchBar_NoCustomClearButton(t *testing.T) {
+	// type="search" carries its own clear ✕; the bar must not add a second.
+	html := (&SearchBar{}).Render().String()
+	if strings.Contains(html, "searchbar__clear") || strings.Contains(html, "aria-label='Clear'") {
+		t.Errorf("the bar must not render its own clear button — the native type=search ✕ is the one:\n%s", html)
+	}
+}
+
 func TestSearchBar_DefaultPlaceholder(t *testing.T) {
 	html := (&SearchBar{}).Render().String()
 	if !strings.Contains(html, "placeholder='Search…'") {

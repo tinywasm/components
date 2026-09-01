@@ -17,36 +17,19 @@ func (t *TargetList) RenderCSS() *css.Stylesheet {
 // sheet builds the style Sheet. Split from RenderCSS so Validate() can check
 // the declared part tree — the containment Without the StyleSheet round-trip.
 func (t *TargetList) sheet() *style.Sheet {
-	return style.For(t).
-		Root(
-			style.Fill(),
-			style.Stack(style.SpaceNone),
-		).
-		// The list's own gutter is INLINE only. Scroll() already reserves the
-		// block edges through var(--floating-top|bottom, 0px) — the strip a
-		// FloatingChrome host declares over this list — and a `padding:`
-		// shorthand here would silently clobber that reservation (the widgets
-		// layer beats the seam's primitives layer), putting the last row back
-		// under the host's floating button. No block Pad means the block
-		// gutter is the seam's business now: flush by default, the host's
-		// strip when one is declared.
-		Part(PartList,
-			style.Stack(listgap.Gap),
-			style.Scroll(),
-			style.PadInline(listgap.Gap),
-		).
-		// Mobile keeps the same inline gutter as desktop — no more reclaiming
-		// space for the ⋮ in the master-detail sliver. That budget died with
-		// the decision that the list's indent must match the form's 16px
-		// (crudview card 4 + list 4 + this 8, see crudview/css.go's cardInset):
-		// the ⋮ is simply not reachable from the sliver anymore, and deleting
-		// a record means returning to the list. Inline only, like the base
-		// rule: the block edges belong to the seam, so nothing here clobbers
-		// the bottom reservation of a FloatingChrome host.
-		On(css.Mobile, PartList,
-			style.Stack(listgap.GapMobile),
-			style.PadInline(listgap.GapMobile),
-		).
+	s := style.For(t).Root(
+		style.Fill(),
+		style.Stack(style.SpaceNone),
+	)
+	// The list container — vertical row rhythm, the Scroll() seam, and the
+	// inline-only gutter — is one lego piece shared with targetdate so the two
+	// stay interchangeable. listgap owns why the gutter is inline only and why
+	// its inset tracks crudview's 16px master-detail indent budget; the mobile
+	// override rides the caller's own On() because the css breakpoint import
+	// stays in css.go.
+	listgap.Apply(s, PartList)
+	s.On(css.Mobile, PartList, listgap.MobileOpts()...)
+	return s.
 		// The row wraps, and KeepSize is what lets it GROW. Row(Space2) already
 		// sets flex-wrap, which is what puts the open options on their own line
 		// under the trigger. But this <li> is a flex item of the list's own

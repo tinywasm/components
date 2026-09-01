@@ -163,18 +163,24 @@ func TestTargetList_SelectionUsesAccent(t *testing.T) {
 	}
 }
 
-// TestTargetList_ListGutterDoesNotClobberTheScrollSeam is the net for
-// PLAN.md Stage 1: the list's own gutter is inline-only, on every breakpoint.
-// A `padding:` shorthand would land in the widgets layer and override the
-// primitives-layer seam (padding-block-end: var(--floating-bottom, 0px)),
-// silently putting the last row's badge back under a FloatingChrome host's
-// button. The seam must keep owning the block edges.
+// TestTargetList_ListGutterDoesNotClobberTheScrollSeam: the list's block gutter
+// lives ENTIRELY in the primitives layer — the FloatingChrome reservation plus,
+// since listgap.Apply adds ScrollGutter, an ambient top/bottom gutter folded
+// into the SAME calc. The widgets-layer rule must still carry no padding-block
+// of its own: a `padding:`/PadEdge() shorthand there would override the whole
+// primitives declaration and silently drop the FloatingChrome reservation,
+// putting the last row's badge back under a host's floating button.
 func TestTargetList_ListGutterDoesNotClobberTheScrollSeam(t *testing.T) {
 	css := (&TargetList{}).RenderCSS().String()
 
-	// The seam itself must be present (Scroll() emits it in primitives).
-	if !strings.Contains(css, "padding-block-end: var(--floating-bottom, 0px);") {
-		t.Errorf("expected Scroll() to emit the floating-bottom seam, got:\n%s", css)
+	// The seam is present in the primitives layer, now with the ambient gutter
+	// added to it (ScrollGutter folds both into one calc so neither can be lost
+	// to a later plain override).
+	if !strings.Contains(css, "padding-block-end: calc(var(--floating-bottom, 0px) + var(--space-1") {
+		t.Errorf("expected Scroll()+ScrollGutter to emit the additive floating-bottom seam, got:\n%s", css)
+	}
+	if !strings.Contains(css, "padding-block-start: calc(var(--floating-top, 0px) + var(--space-1") {
+		t.Errorf("expected a symmetric additive top seam, got:\n%s", css)
 	}
 
 	// Base widgets-layer rule: inline gutter only, no shorthand, no block pad.
@@ -194,12 +200,17 @@ func TestTargetList_ListGutterDoesNotClobberTheScrollSeam(t *testing.T) {
 	if !strings.Contains(baseBody, "padding-inline: var(--space-1") {
 		t.Errorf("expected the base rule to keep its inline gutter, block:\n%s", baseBody)
 	}
+	// The widgets-layer rule carries the inline gutter only. The block gutter
+	// is the primitives-layer additive calc (asserted above) — never a plain
+	// padding-block here, which would replace it outright, and never a
+	// `padding:` shorthand.
 	if strings.Contains(baseBody, "padding: ") || strings.Contains(baseBody, "padding-block") {
-		t.Errorf("the base rule must not clobber the seam's block edges, block:\n%s", baseBody)
+		t.Errorf("the widgets-layer base rule must not carry a block padding of its own, block:\n%s", baseBody)
 	}
 
-	// Mobile media rule: the inline gutter stays inline on mobile too — the
-	// two-column indent budget (see crudview's cardInset) — never the seam.
+	// Mobile: the additive seam is re-emitted for this breakpoint with the
+	// Space2 inset (matching the mobile lateral inset), and the widgets-layer
+	// mobile rule still carries the inline gutter only.
 	mediaIdx := strings.Index(css, "@media (max-width")
 	if mediaIdx == -1 {
 		t.Fatal("expected a mobile media query")
@@ -208,23 +219,20 @@ func TestTargetList_ListGutterDoesNotClobberTheScrollSeam(t *testing.T) {
 	if next := strings.Index(mobileRegion[1:], "@media"); next != -1 {
 		mobileRegion = mobileRegion[:next+1]
 	}
-	// Mobile now also overrides Stack's gap (to match PadInline's own bump —
-	// see listgap.GapMobile), so On() emits the part's full flow shape
-	// (display/flex-direction/gap:var(--gap)/min-height) as its own block
-	// ahead of the value-carrying one (--gap/padding-inline) — the same
-	// two-block pattern platformd's own On(Mobile, …, Stack(...)) parts
-	// already produce. Collect every .targetlist__list block in the region,
-	// not just the first, or this assertion would inspect the shape block
-	// and never see padding-inline at all.
-	mobileBody := selectorBodies(mobileRegion, ".targetlist__list")
-	if mobileBody == "" {
-		t.Fatal("expected a mobile rule for .targetlist__list")
+	if !strings.Contains(mobileRegion, "padding-block-end: calc(var(--floating-bottom, 0px) + var(--space-2") {
+		t.Errorf("expected the mobile additive seam with the Space2 gutter, region:\n%s", mobileRegion)
 	}
-	if !strings.Contains(mobileBody, "padding-inline: var(--space-2") {
-		t.Errorf("expected the mobile gutter to be the Space2 inline pad, block:\n%s", mobileBody)
+	// The value-carrying widgets-layer mobile block: the one with --gap. It
+	// must hold the inline gutter and nothing on the block axis.
+	widgetsMobile := ruleContaining(mobileRegion, ".targetlist__list", "--gap:")
+	if widgetsMobile == "" {
+		t.Fatal("expected a widgets-layer mobile rule for .targetlist__list carrying --gap")
 	}
-	if strings.Contains(mobileBody, "padding: ") || strings.Contains(mobileBody, "padding-block") {
-		t.Errorf("the mobile rule must not clobber the seam's block edges, block:\n%s", mobileBody)
+	if !strings.Contains(widgetsMobile, "padding-inline: var(--space-2") {
+		t.Errorf("expected the mobile widgets rule to keep the Space2 inline pad, block:\n%s", widgetsMobile)
+	}
+	if strings.Contains(widgetsMobile, "padding: ") || strings.Contains(widgetsMobile, "padding-block") {
+		t.Errorf("the mobile widgets rule must not carry a block padding of its own, block:\n%s", widgetsMobile)
 	}
 }
 

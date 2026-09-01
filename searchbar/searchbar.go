@@ -85,6 +85,11 @@ func (s *SearchBar) Render() *Element {
 	// intrinsic width made the bar wrap onto two lines inside narrow hosts. The
 	// flex Grow still sizes the rendered field; size only feeds the intrinsic
 	// measurement.
+	//
+	// type="search" carries its own clear control — the browser paints and
+	// wires the ✕. The bar does not add one: a second ✕ is the thing this
+	// note exists to prevent. Clearing it fires an "input" event, so the
+	// filter re-runs with "" through the same handler.
 	input := Input("search").Set(clsInput.AsAttr()).
 		Attr("placeholder", placeholder).
 		Attr("size", "1")

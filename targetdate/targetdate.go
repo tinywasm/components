@@ -1,4 +1,4 @@
-// Package targethour is targetlist's sibling for rows that need a prominent
+// Package targetdate is targetlist's sibling for rows that need a prominent
 // leading badge — an hour, a day, anything view.Item.LeadTop/Main/Bottom
 // carries — instead of a plain label. Same selection/⋮-menu mechanics as
 // targetlist, copied rather than shared: the two rows diverge enough in
@@ -7,7 +7,7 @@
 // save. Both satisfy crudview.ListView (see layout/crudview), so a host
 // picks whichever row shape fits its data without crudview knowing which one
 // it got.
-package targethour
+package targetdate
 
 import (
 	. "github.com/tinywasm/dom"
@@ -21,8 +21,8 @@ import (
 // badgeChars mirrors targetlist's own budget — see that package's comment.
 const badgeChars = 16
 
-// NameTargetHour is the widget identity.
-const NameTargetHour = widget.Name("targethour")
+// NameTargetDate is the widget identity.
+const NameTargetDate = widget.Name("targetdate")
 
 const (
 	PartRow        = widget.Part("row")
@@ -45,38 +45,38 @@ const (
 )
 
 var (
-	clsListWrap       = NameTargetHour.Root()
-	clsList           = NameTargetHour.Class(PartList)
-	clsRow            = NameTargetHour.Class(PartRow)
-	clsContent        = NameTargetHour.Class(PartContent)
-	clsLabel          = NameTargetHour.Class(PartLabel)
-	clsBadge          = NameTargetHour.Class(PartBadge)
-	clsLead           = NameTargetHour.Class(PartLead)
-	clsLeadStack      = NameTargetHour.Class(PartLeadStack)
-	clsLeadTop        = NameTargetHour.Class(PartLeadTop)
-	clsLeadMain       = NameTargetHour.Class(PartLeadMain)
-	clsLeadBottom     = NameTargetHour.Class(PartLeadBottom)
-	clsMenuBtn        = NameTargetHour.Class(PartButton)
-	clsMenuIcon       = NameTargetHour.Class(PartIcon)
-	clsMenuList       = NameTargetHour.Class(PartOptions)
-	clsMenuItemDanger = NameTargetHour.Class(PartItemDanger)
-	clsMenuItemIcon   = NameTargetHour.Class(PartItemIcon)
-	clsMenuItemLabel  = NameTargetHour.Class(PartItemLabel)
+	clsListWrap       = NameTargetDate.Root()
+	clsList           = NameTargetDate.Class(PartList)
+	clsRow            = NameTargetDate.Class(PartRow)
+	clsContent        = NameTargetDate.Class(PartContent)
+	clsLabel          = NameTargetDate.Class(PartLabel)
+	clsBadge          = NameTargetDate.Class(PartBadge)
+	clsLead           = NameTargetDate.Class(PartLead)
+	clsLeadStack      = NameTargetDate.Class(PartLeadStack)
+	clsLeadTop        = NameTargetDate.Class(PartLeadTop)
+	clsLeadMain       = NameTargetDate.Class(PartLeadMain)
+	clsLeadBottom     = NameTargetDate.Class(PartLeadBottom)
+	clsMenuBtn        = NameTargetDate.Class(PartButton)
+	clsMenuIcon       = NameTargetDate.Class(PartIcon)
+	clsMenuList       = NameTargetDate.Class(PartOptions)
+	clsMenuItemDanger = NameTargetDate.Class(PartItemDanger)
+	clsMenuItemIcon   = NameTargetDate.Class(PartItemIcon)
+	clsMenuItemLabel  = NameTargetDate.Class(PartItemLabel)
 )
 
-const iconDots = svg.Icon("th-dots")
-const iconDelete = svg.Icon("th-delete")
+const iconDots = svg.Icon("td-dots")
+const iconDelete = svg.Icon("td-delete")
 
 // Item is view.Item — see targetlist.Item's comment for why this is an
-// alias, not a copy. TargetHour is the one row that actually reads
+// alias, not a copy. TargetDate is the one row that actually reads
 // LeadTop/Main/Bottom.
 type Item = view.Item
 
-// TargetHour is a selectable list of records with a per-row options menu and
+// TargetDate is a selectable list of records with a per-row options menu and
 // a prominent leading badge (LeadTop/Main/Bottom) instead of a plain label
 // lead-in. Same field/method surface as targetlist.TargetList on purpose —
 // see crudview.ListView.
-type TargetHour struct {
+type TargetDate struct {
 	Element
 
 	Selected *SignalString
@@ -89,10 +89,10 @@ type TargetHour struct {
 	openMenu *SignalString
 }
 
-func (t *TargetHour) WidgetName() widget.Name { return NameTargetHour }
-func (t *TargetHour) WidgetKind() widget.Kind { return widget.Combobox }
+func (t *TargetDate) WidgetName() widget.Name { return NameTargetDate }
+func (t *TargetDate) WidgetKind() widget.Kind { return widget.Combobox }
 
-func (t *TargetHour) ensure() {
+func (t *TargetDate) ensure() {
 	if t.rows == nil {
 		t.rows = NewNodes()
 	}
@@ -104,10 +104,10 @@ func (t *TargetHour) ensure() {
 	}
 }
 
-func (t *TargetHour) Init(_ Ctx) { t.ensure() }
+func (t *TargetDate) Init(_ Ctx) { t.ensure() }
 
 // SetItems replaces the visible rows — see targetlist.TargetList.SetItems.
-func (t *TargetHour) SetItems(items []Item) {
+func (t *TargetDate) SetItems(items []Item) {
 	t.ensure()
 	t.items = items
 	nodes := make([]*Element, 0, len(items))
@@ -117,26 +117,26 @@ func (t *TargetHour) SetItems(items []Item) {
 	t.rows.Set(nodes)
 }
 
-func (t *TargetHour) Items() []Item { return t.items }
-func (t *TargetHour) Count() int    { return len(t.items) }
+func (t *TargetDate) Items() []Item { return t.items }
+func (t *TargetDate) Count() int    { return len(t.items) }
 
-func (t *TargetHour) closeAllMenus() {
+func (t *TargetDate) closeAllMenus() {
 	t.openMenu.Set("")
 }
 
 // CloseMenus — see targetlist.TargetList.CloseMenus for why a host needs this.
-func (t *TargetHour) CloseMenus() {
+func (t *TargetDate) CloseMenus() {
 	t.closeAllMenus()
 }
 
-func (t *TargetHour) Render() *Element {
+func (t *TargetDate) Render() *Element {
 	list := Ul().Set(clsList.AsAttr()).Attr("role", "listbox").BindChildren(t.rows)
 	return Div().Set(clsListWrap.AsAttr()).Child(list)
 }
 
-func (t *TargetHour) buildRow(it Item) *Element {
+func (t *TargetDate) buildRow(it Item) *Element {
 	id := it.ID
-	key := "th-" + id
+	key := "td-" + id
 
 	isSelSig := DeriveBool(func() bool {
 		return t.Selected.Get() == id

@@ -76,9 +76,9 @@ const iconDelete = svg.Icon("tl-delete")
 
 // Item is view.Item, not a copy: a shared shape means crudview.filter's
 // []view.Item flows straight into SetItems, and a host swapping this widget
-// for targethour (also view.Item-based) needs no re-mapping either. TargetList
+// for targetdate (also view.Item-based) needs no re-mapping either. TargetList
 // itself only ever reads ID/Label/Description — LeadTop/Main/Bottom are
-// targethour's slot, ignored here.
+// targetdate's slot, ignored here.
 type Item = view.Item
 
 // TargetList is a selectable list of records with a per-row options menu.

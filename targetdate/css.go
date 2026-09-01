@@ -1,6 +1,6 @@
 //go:build !wasm
 
-package targethour
+package targetdate
 
 import (
 	"github.com/tinywasm/components/listgap"
@@ -9,28 +9,24 @@ import (
 	"github.com/tinywasm/widget/style"
 )
 
-// RenderCSS defines the targethour visual contract using the style DSL.
-func (t *TargetHour) RenderCSS() *css.Stylesheet {
+// RenderCSS defines the targetdate visual contract using the style DSL.
+func (t *TargetDate) RenderCSS() *css.Stylesheet {
 	return t.sheet().Stylesheet()
 }
 
 // sheet builds the style Sheet — same split-for-Validate() reason as
 // targetlist's own sheet().
-func (t *TargetHour) sheet() *style.Sheet {
-	return style.For(t).
-		Root(
-			style.Fill(),
-			style.Stack(style.SpaceNone),
-		).
-		Part(PartList,
-			style.Stack(listgap.Gap),
-			style.Scroll(),
-			style.PadInline(listgap.Gap),
-		).
-		On(css.Mobile, PartList,
-			style.Stack(listgap.GapMobile),
-			style.PadInline(listgap.GapMobile),
-		).
+func (t *TargetDate) sheet() *style.Sheet {
+	s := style.For(t).Root(
+		style.Fill(),
+		style.Stack(style.SpaceNone),
+	)
+	// Same shared list container as targetlist — see listgap. Keeping it one
+	// piece is what lets crudview swap targetdate in for targetlist without the
+	// row rhythm or the lateral inset shifting.
+	listgap.Apply(s, PartList)
+	s.On(css.Mobile, PartList, listgap.MobileOpts()...)
+	return s.
 		// Same KeepSize reasoning as targetlist.TargetList's PartRow: the row is
 		// a flex item inside a Scroll() column and must not shrink back under
 		// its own open ⋮ options — see that file for the measured numbers.
@@ -120,10 +116,10 @@ func (t *TargetHour) sheet() *style.Sheet {
 			style.KeepSize(),
 			style.OnEdge(style.EdgeBottom, style.SideEnd, style.SpaceNone, style.Space3),
 		).
-		// DOM-trailing (see targethour.go's buildRow), not PushEnd: PartLabel's
+		// DOM-trailing (see targetdate.go's buildRow), not PushEnd: PartLabel's
 		// Grow() already claims every pixel of the row's free space during
 		// flex resolution, so a margin-auto trick on a DOM-leading trigger
-		// would have nothing left to distribute. targethour has no inherited
+		// would have nothing left to distribute. targetdate has no inherited
 		// mobile-sliver-reachability history to preserve (unlike
 		// targetlist.TargetList's PartButton), so there is no Mobile carve-out
 		// pulling it back to the leading edge either.

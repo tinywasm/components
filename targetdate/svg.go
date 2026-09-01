@@ -1,13 +1,13 @@
 //go:build !wasm
 
-package targethour
+package targetdate
 
 import "github.com/tinywasm/svg/sprite"
 
 // IconSvg registers the ⋮ (vertical dots) options glyph and the trash can
-// (Eliminar) — identical paths to targetlist's own, under a th- prefix so
+// (Eliminar) — identical paths to targetlist's own, under a td- prefix so
 // the two sprites never collide once ssr fuses every IconSvg() into one.
-func (t *TargetHour) IconSvg() *sprite.Sprite {
+func (t *TargetDate) IconSvg() *sprite.Sprite {
 	return sprite.NewSprite(
 		sprite.Define(iconDots, "0 0 16 16",
 			sprite.Path("M8 2a1.6 1.6 0 1 0 0 3.2A1.6 1.6 0 0 0 8 2M8 6.4a1.6 1.6 0 1 0 0 3.2A1.6 1.6 0 0 0 8 6.4M8 10.8a1.6 1.6 0 1 0 0 3.2A1.6 1.6 0 0 0 8 10.8"),

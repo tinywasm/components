@@ -25,24 +25,15 @@ const (
 )
 
 var (
-	clsBtn             = NameActionButton.Root()
-	clsBtnPrimary      = NameActionButton.Class(PartPrimary)
-	clsBtnSecondary    = NameActionButton.Class(PartSecondary)
-	clsBtnDanger       = NameActionButton.Class(PartDanger)
-	clsBtnUrlUp        = NameActionButton.Class(PartUrlUp)
-	clsBtnUrlDown      = NameActionButton.Class(PartUrlDown)
-	clsBtnUrl          = NameActionButton.Class(PartUrl)
-	clsBtnUrlDisable   = NameActionButton.Class(PartUrlDisable)
-	clsBtnSelected     = NameActionButton.Class(PartSelected)
-	clsBtnLogin        = NameActionButton.Class(PartLogin)
-	clsBtnUrlPulse     = NameActionButton.Class(PartUrlPulse)
-	clsContebuton      = NameActionButton.Class(PartContebuton)
-	clsContCenteredBtn = NameActionButton.Class(PartCenteredBtn)
+	clsBtn          = NameActionButton.Root()
+	clsBtnPrimary   = NameActionButton.Class(PartPrimary)
+	clsBtnSecondary = NameActionButton.Class(PartSecondary)
+	clsBtnDanger    = NameActionButton.Class(PartDanger)
 )
 
 type ActionButton struct {
 	Element
-	Text string
+	Text    string
 	Variant string // "primary", "secondary", "danger"
 
 	// Href renders the button as <a href> instead of <button>: no click
