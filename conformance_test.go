@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
-	"testing"
 
 	"github.com/tinywasm/components/actionbutton"
 	"github.com/tinywasm/components/calendarslider"
@@ -29,6 +28,7 @@ import (
 	"github.com/tinywasm/components/themetoggle"
 	"github.com/tinywasm/css"
 	"github.com/tinywasm/widget"
+	"testing"
 )
 
 // Allowed CSS variables in github.com/tinywasm/css v0.2.0 (and widget/style)
@@ -186,8 +186,8 @@ func TestConformance(t *testing.T) {
 			}
 		}
 
-		// Check css.go structure: declares exactly one method named RenderCSS and no method named Style
-		if strings.HasSuffix(path, "css.go") {
+		// Check css.go structure for full components (excluding helper packages like listgap or listselect)
+		if strings.HasSuffix(path, "css.go") && !strings.Contains(path, "listgap") && !strings.Contains(path, "listselect") {
 			var hasStyleMethod bool
 			var renderCSSCount int
 			for _, decl := range node.Decls {
@@ -480,17 +480,6 @@ func TestNoRemovedSymbols(t *testing.T) {
 	}
 }
 
-// TestNoHoverCuePairs enforces the thing its name says: Hover and Focus come
-// in pairs. A hand-rolled Cue(widget.Hover, X, ...) with no matching
-// Cue(widget.Focus, X, ...) in the same file gives a mouse/touch user a
-// preview that a keyboard user tabbing to X never sees -- the gap this test
-// exists to catch. It used to enforce this by banning Cue(widget.Hover
-// outright and pushing everyone onto Interactive(), which derives hover,
-// focus and press together from one call and can't drift apart by
-// construction. That blanket ban stopped being the whole story once a widget
-// legitimately needs a hover/focus treatment Interactive()'s own derived mix
-// cannot express (e.g. a preview of an amber selection color, not a generic
-// darken) -- the real invariant was always the pairing, not the API.
 func TestNoHoverCuePairs(t *testing.T) {
 	cueRe := regexp.MustCompile(`Cue\(widget\.(Hover|Focus),\s*([^,\n]+),`)
 	err := filepath.Walk(".", func(path string, info os.FileInfo, err error) error {

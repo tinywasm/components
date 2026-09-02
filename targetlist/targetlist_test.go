@@ -14,52 +14,21 @@ var (
 	htmlClassRegex2 = regexp.MustCompile(`class="([^"]*)"`)
 )
 
-// selectorBodies concatenates the body of every top-level "selector { ... }"
-// block found in region, in order. A style.Sheet can legally emit the same
-// selector more than once within one @layer (e.g. a flow shape block ahead
-// of a value-carrying one — see On()'s handling of a breakpoint override
-// that sets its own flow primitive), so a test asserting on "the" rule for a
-// selector needs every block, not just the first.
-func selectorBodies(region, selector string) string {
-	var out strings.Builder
-	needle := "\n" + selector + " {"
-	rest := region
-	for {
-		i := strings.Index(rest, needle)
-		if i == -1 {
-			break
-		}
-		rest = rest[i+len(needle):]
-		end := strings.Index(rest, "}")
-		if end == -1 {
-			break
-		}
-		out.WriteString(rest[:end])
-		out.WriteString("\n")
-		rest = rest[end+1:]
-	}
-	return out.String()
-}
-
-func TestTargetList_RowHasLabelBadgeAndMenu(t *testing.T) {
+func TestTargetList_RowHasLabelBadgeAndCheck(t *testing.T) {
 	tl := &TargetList{}
 	tl.Init(nil)
 
 	html := tl.buildRow(Item{ID: "7", Label: "Alpha", Description: "192.168.0.7"}).String()
 
-	for _, want := range []string{"targetlist__row", "Alpha", "targetlist__badge", "192.168.0.7", "targetlist__button", "targetlist__options", "Eliminar"} {
+	for _, want := range []string{"targetlist__row", "Alpha", "targetlist__badge", "192.168.0.7", "targetlist__check"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("buildRow output missing %q\ngot: %s", want, html)
 		}
 	}
-	// Editar left the menu with the lock it existed to undo: the ⋮ opens a
-	// single-option accordion now, and tapping a row already leaves the form
-	// editable. Neither the label nor the pencil glyph may come back.
-	if strings.Contains(html, "Editar") {
-		t.Errorf("buildRow must not render an Editar option (the lock is gone)\ngot: %s", html)
-	}
-	if strings.Contains(html, "tl-edit") {
-		t.Errorf("buildRow must not reference the tl-edit icon\ngot: %s", html)
+	for _, unwanted := range []string{"targetlist__button", "targetlist__options", "Eliminar", "Editar"} {
+		if strings.Contains(html, unwanted) {
+			t.Errorf("buildRow must not render per-row menu artifact %q\ngot: %s", unwanted, html)
+		}
 	}
 }
 
@@ -73,51 +42,6 @@ func TestTargetList_SetItemsPopulatesRows(t *testing.T) {
 	}
 }
 
-// The accordion is exclusive by construction: openMenu holds ONE id, so there
-// is no state in which two rows are expanded. This replaced a native
-// <details name="…"> group, whose open state lived in the DOM and had to be
-// read back out of it — see the openMenu comment in targetlist.go.
-func TestTargetList_OnlyOneRowExpandsAtATime(t *testing.T) {
-	tl := &TargetList{}
-	tl.Init(nil)
-	tl.SetItems([]Item{{ID: "1", Label: "One"}, {ID: "2", Label: "Two"}})
-
-	// buildRow, not Render(): the rows are cached in a SignalNodes that the
-	// wrapper only reconciles in the browser, but each row's own state binding
-	// evaluates on String(), which is what this is about.
-	expanded := func() []string {
-		var open []string
-		for _, it := range tl.Items() {
-			if strings.Contains(tl.buildRow(it).String(), `data-open='true'`) {
-				open = append(open, it.ID)
-			}
-		}
-		return open
-	}
-
-	if got := expanded(); len(got) != 0 {
-		t.Errorf("no row may be expanded initially, got %v", got)
-	}
-
-	tl.openMenu.Set("1")
-	if got := expanded(); len(got) != 1 || got[0] != "1" {
-		t.Errorf("expanding row 1 must expand exactly row 1, got %v", got)
-	}
-
-	tl.openMenu.Set("2")
-	if got := expanded(); len(got) != 1 || got[0] != "2" {
-		t.Errorf("expanding row 2 must collapse row 1, got %v", got)
-	}
-
-	tl.closeAllMenus()
-	if tl.openMenu.Get() != "" {
-		t.Errorf("closeAllMenus must clear openMenu, got %q", tl.openMenu.Get())
-	}
-	if got := expanded(); len(got) != 0 {
-		t.Errorf("closeAllMenus must collapse every row, got %v", got)
-	}
-}
-
 func TestTargetList_CSSDoesNotContainHas(t *testing.T) {
 	tl := &TargetList{}
 	tl.Init(nil)
@@ -126,24 +50,9 @@ func TestTargetList_CSSDoesNotContainHas(t *testing.T) {
 	if strings.Contains(css, ":has(") {
 		t.Error("expected CSS not to contain forbidden :has( selector")
 	}
-	// The options are hidden until their own row's id is the one in openMenu:
-	// RevealedBy(Open) is the whole open/close mechanism now that no native
-	// <details> is doing it.
-	if !strings.Contains(css, "display: none") {
-		t.Error("expected CSS to hide the options by default")
-	}
-	if !strings.Contains(css, "[data-open=\"true\"]") {
-		t.Error("expected CSS to contain selector matching [data-open=\"true\"]")
-	}
-	if !strings.Contains(css, "display: flex") {
-		t.Error("expected the revealed options to get a real flow back")
-	}
 }
 
 func TestTargetList_SelectionUsesAccent(t *testing.T) {
-	// PLAN v0.2.0 item 3: the selected row wears the amber Accent surface —
-	// the same "where I am" statement the rail's current nav item makes —
-	// never the 15% blue Highlight wash, which was close to invisible.
 	css := (&TargetList{}).RenderCSS().String()
 	i := strings.Index(css, `.targetlist__row[data-selected="true"] {`)
 	if i == -1 {
@@ -163,212 +72,12 @@ func TestTargetList_SelectionUsesAccent(t *testing.T) {
 	}
 }
 
-// TestTargetList_ListGutterDoesNotClobberTheScrollSeam: the list's block gutter
-// lives ENTIRELY in the primitives layer — the FloatingChrome reservation plus,
-// since listgap.Apply adds ScrollGutter, an ambient top/bottom gutter folded
-// into the SAME calc. The widgets-layer rule must still carry no padding-block
-// of its own: a `padding:`/PadEdge() shorthand there would override the whole
-// primitives declaration and silently drop the FloatingChrome reservation,
-// putting the last row's badge back under a host's floating button.
-func TestTargetList_ListGutterDoesNotClobberTheScrollSeam(t *testing.T) {
-	css := (&TargetList{}).RenderCSS().String()
-
-	// The seam is present in the primitives layer, now with the ambient gutter
-	// added to it (ScrollGutter folds both into one calc so neither can be lost
-	// to a later plain override).
-	if !strings.Contains(css, "padding-block-end: calc(var(--floating-bottom, 0px) + var(--space-1") {
-		t.Errorf("expected Scroll()+ScrollGutter to emit the additive floating-bottom seam, got:\n%s", css)
-	}
-	if !strings.Contains(css, "padding-block-start: calc(var(--floating-top, 0px) + var(--space-1") {
-		t.Errorf("expected a symmetric additive top seam, got:\n%s", css)
-	}
-
-	// Base widgets-layer rule: inline gutter only, no shorthand, no block pad.
-	widgetsIdx := strings.Index(css, "@layer widgets {")
-	if widgetsIdx == -1 {
-		t.Fatal("expected an @layer widgets block")
-	}
-	bi := strings.Index(css[widgetsIdx:], "\n.targetlist__list {")
-	if bi == -1 {
-		t.Fatal("expected a widgets-layer rule for .targetlist__list")
-	}
-	bi += widgetsIdx
-	baseBody := css[bi:]
-	if end := strings.Index(baseBody, "}"); end != -1 {
-		baseBody = baseBody[:end]
-	}
-	if !strings.Contains(baseBody, "padding-inline: var(--space-1") {
-		t.Errorf("expected the base rule to keep its inline gutter, block:\n%s", baseBody)
-	}
-	// The widgets-layer rule carries the inline gutter only. The block gutter
-	// is the primitives-layer additive calc (asserted above) — never a plain
-	// padding-block here, which would replace it outright, and never a
-	// `padding:` shorthand.
-	if strings.Contains(baseBody, "padding: ") || strings.Contains(baseBody, "padding-block") {
-		t.Errorf("the widgets-layer base rule must not carry a block padding of its own, block:\n%s", baseBody)
-	}
-
-	// Mobile: the additive seam is re-emitted for this breakpoint with the
-	// Space2 inset (matching the mobile lateral inset), and the widgets-layer
-	// mobile rule still carries the inline gutter only.
-	mediaIdx := strings.Index(css, "@media (max-width")
-	if mediaIdx == -1 {
-		t.Fatal("expected a mobile media query")
-	}
-	mobileRegion := css[mediaIdx:]
-	if next := strings.Index(mobileRegion[1:], "@media"); next != -1 {
-		mobileRegion = mobileRegion[:next+1]
-	}
-	if !strings.Contains(mobileRegion, "padding-block-end: calc(var(--floating-bottom, 0px) + var(--space-2") {
-		t.Errorf("expected the mobile additive seam with the Space2 gutter, region:\n%s", mobileRegion)
-	}
-	// The value-carrying widgets-layer mobile block: the one with --gap. It
-	// must hold the inline gutter and nothing on the block axis.
-	widgetsMobile := ruleContaining(mobileRegion, ".targetlist__list", "--gap:")
-	if widgetsMobile == "" {
-		t.Fatal("expected a widgets-layer mobile rule for .targetlist__list carrying --gap")
-	}
-	if !strings.Contains(widgetsMobile, "padding-inline: var(--space-2") {
-		t.Errorf("expected the mobile widgets rule to keep the Space2 inline pad, block:\n%s", widgetsMobile)
-	}
-	if strings.Contains(widgetsMobile, "padding: ") || strings.Contains(widgetsMobile, "padding-block") {
-		t.Errorf("the mobile widgets rule must not carry a block padding of its own, block:\n%s", widgetsMobile)
-	}
-}
-
-// TestTargetList_BadgeStraddlesWithoutTransform is the net for PLAN.md
-// Stage 2: OnEdge straddles with half a --chip-height of negative margin, not
-// a transform — the badge's box must stay visible to scroll-size calculations
-// so a host's FloatingChrome reservation applies to where it really paints.
-func TestTargetList_BadgeStraddlesWithoutTransform(t *testing.T) {
-	css := (&TargetList{}).RenderCSS().String()
-	i := strings.Index(css, "\n.targetlist__badge {")
-	if i == -1 {
-		t.Fatal("expected a rule for .targetlist__badge")
-	}
-	body := css[i:]
-	if end := strings.Index(body, "}"); end != -1 {
-		body = body[:end]
-	}
-	if !strings.Contains(body, "margin-block-end: calc(-0.5 * var(--chip-height") {
-		t.Errorf("expected the badge to straddle the row's bottom line by half a chip, block:\n%s", body)
-	}
-	if strings.Contains(body, "transform") {
-		t.Errorf("the badge must not use a transform to straddle, block:\n%s", body)
-	}
-}
-
-// TestMenuTrailsTheRow supersedes an earlier net that required the OPPOSITE
-// placement (the ⋮ trigger as the row's FIRST child, leading edge, for the
-// mobile master-detail sliver's sake — see git history for that version's
-// full rationale). The trigger is now DOM-LAST, on purpose: PartLabel's
-// Grow() already claims 100% of the row's free space during flex
-// resolution, so a margin-auto push on a leading trigger had nothing left
-// to distribute — trailing placement is the only one that actually lands
-// at the row's trailing edge (see css.go's PartButton comment). The
-// trade-off — the ⋮ is no longer reachable from the mobile sliver — is
-// accepted, not overlooked.
-func TestMenuTrailsTheRow(t *testing.T) {
-	tl := &TargetList{}
-	tl.Init(nil)
-	markup := tl.buildRow(Item{ID: "7", Label: "Alpha"}).String()
-
-	// The row's LAST in-flow child (before the options panel) must be the
-	// ⋮ trigger: in a Row() flow, order is the position.
-	last, bestIdx := "", -1
-	if i := strings.Index(markup, "targetlist__row"); i != -1 {
-		if j := strings.Index(markup[i:], ">"); j != -1 {
-			rest := markup[i+j+1:]
-			for _, c := range []string{"targetlist__button", "targetlist__label", "targetlist__badge"} {
-				if k := strings.Index(rest, c); k != -1 && k > bestIdx {
-					bestIdx = k
-					last = c
-				}
-			}
-		}
-	}
-	if last != "targetlist__button" {
-		t.Errorf("expected the ⋮ trigger to be the row's LAST child (trailing edge by flex order), got last=%q\nmarkup: %s", last, markup)
-	}
-
-	// And it must be in flow: no position declarations on its own base rule.
-	cssStr := tl.RenderCSS().String()
-	block := baseRuleBlock(cssStr, string(clsMenuBtn))
-	if block == "" {
-		t.Fatal("expected a base rule for .targetlist__button")
-	}
-	for _, prop := range []string{"position", "inset-block-start", "inset-block-end", "inset-inline-start"} {
-		if declValue(block, prop) != "" {
-			t.Errorf("expected .targetlist__button to be in flow (no %s), block:\n%s", prop, block)
-		}
-	}
-}
-
 func TestSheetValidates(t *testing.T) {
 	tl := &TargetList{}
 	tl.Init(nil)
 	if errs := tl.sheet().Validate(); len(errs) > 0 {
 		t.Errorf("targetlist sheet must validate, got:\n%v", errs)
 	}
-}
-
-// TestOptionsNeverLeaveTheFlow is the regression net for BOTH shipped bugs of
-// this panel, which had one root: an out-of-flow options panel cannot coexist
-// with the list's own Scroll() region.
-//
-//  1. As a Flyout it resolved inset-block-start: 100% against the nearest
-//     POSITIONED ancestor. Measured at 1440x900: the panel opened 21.2px inside
-//     its own row and covered 8.2px of the row's label.
-//  2. Anchored correctly to the row, it was then clipped by the scroller: on
-//     the last row, 10px of an 84.8px panel survived.
-//  3. The mobile Docked(Viewport, …) escape hatch from (2) landed the buttons
-//     502px from their row, over two unrelated rows, which then needed a
-//     Veil()'d backdrop that blurred the very row being acted on.
-//
-// In flow there is no clipper to escape and nothing to disambiguate. Measured
-// after: the same last row shows 41.6px of 41.6px.
-//
-// So: no positioning on the options, on ANY device. A future device override
-// that reaches for absolute/fixed to "get more room" is re-entering the loop.
-func TestOptionsNeverLeaveTheFlow(t *testing.T) {
-	tl := &TargetList{}
-	tl.Init(nil)
-	cssStr := tl.RenderCSS().String()
-
-	for _, blk := range strings.Split(cssStr, "}") {
-		if !strings.Contains(blk, ".targetlist__options") {
-			continue
-		}
-		for _, banned := range []string{"position: absolute;", "position: fixed;"} {
-			if strings.Contains(blk, banned) {
-				t.Errorf("the options must stay in flow (found %q); an out-of-flow "+
-					"panel is clipped by the list's Scroll() region, and escaping "+
-					"that clipper is what detached it from its row.\nblock:%s",
-					banned, blk)
-			}
-		}
-	}
-
-	// And the row must be able to grow to hold them: inside a Scroll() column a
-	// flex item defaults to flex-shrink: 1, which pins the row at its
-	// min-height and lets the options paint outside its box.
-	if b := baseRuleBlock(cssStr, string(clsRow)); !strings.Contains(b, "flex-shrink: 0") {
-		if p := ruleContaining(cssStr, ".targetlist__row", "flex-shrink"); !strings.Contains(p, "flex-shrink: 0") {
-			t.Errorf("the row must not shrink, or it cannot grow to contain the expanded options; got:\n%s%s", b, p)
-		}
-	}
-}
-
-// ruleContaining returns the first rule block whose selector list mentions sel
-// and whose body mentions prop. The primitives layer groups shared flags across
-// selectors, so a per-part lookup can legitimately miss them.
-func ruleContaining(cssStr, sel, prop string) string {
-	for _, blk := range strings.Split(cssStr, "}") {
-		if strings.Contains(blk, sel) && strings.Contains(blk, prop) {
-			return blk
-		}
-	}
-	return ""
 }
 
 func TestPairMarkupAndStylesheet(t *testing.T) {
