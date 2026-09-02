@@ -26,4 +26,3 @@ require (
 	github.com/tinywasm/router v0.1.29 // indirect
 )
 
-// widget.PartSubmit (fieldset's submit button styling hook) — not published yet.

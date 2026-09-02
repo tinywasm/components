@@ -42,6 +42,82 @@ func TestSelectSearch_Render(t *testing.T) {
 	// display:none when isOpen is false so options are present in the SSR HTML.
 }
 
+func manyOptions(n int) []SsOption {
+	opts := make([]SsOption, n)
+	for i := range opts {
+		opts[i] = SsOption{ID: fmt.Sprintf("id-%d", i), Label: fmt.Sprintf("Option %d", i)}
+	}
+	return opts
+}
+
+func TestSearchAutoHidesTheFieldOnAShortList(t *testing.T) {
+	// The field is what summons the phone's on-screen keyboard the moment the
+	// picker opens. On a list of five names there is nothing to type into and
+	// the keyboard covers the very rows the user came to read.
+	c := &SelectSearch{Options: manyOptions(5)}
+	c.Init(nil)
+
+	if c.searchVisible() {
+		t.Errorf("SearchAuto must hide the field for %d options (threshold %d)", 5, searchThreshold)
+	}
+	if c.searchShown.Get() {
+		t.Error("searchShown signal must agree with searchVisible at Init")
+	}
+}
+
+func TestSearchAutoShowsTheFieldOnALongList(t *testing.T) {
+	c := &SelectSearch{Options: manyOptions(searchThreshold)}
+	c.Init(nil)
+
+	if !c.searchVisible() {
+		t.Errorf("SearchAuto must show the field at %d options", searchThreshold)
+	}
+}
+
+func TestSearchAutoShowsTheFieldWhenARemoteSourceIsWired(t *testing.T) {
+	// A consumer that fetches results for a term has already declared the list
+	// is not browsable, whatever len(Options) says at this instant.
+	c := &SelectSearch{
+		Options:  manyOptions(2),
+		OnSearch: func(string) []SsOption { return nil },
+	}
+	c.Init(nil)
+
+	if !c.searchVisible() {
+		t.Error("SearchAuto must show the field when OnSearch is wired, however short the list")
+	}
+}
+
+func TestSearchModeOverridesTheCount(t *testing.T) {
+	always := &SelectSearch{Options: manyOptions(1), Search: SearchAlways}
+	always.Init(nil)
+	if !always.searchVisible() {
+		t.Error("SearchAlways must show the field on a one-item list")
+	}
+
+	never := &SelectSearch{Options: manyOptions(500), Search: SearchNever}
+	never.Init(nil)
+	if never.searchVisible() {
+		t.Error("SearchNever must hide the field however long the list")
+	}
+}
+
+func TestSetOptionsMovesTheSearchDecision(t *testing.T) {
+	// A picker rendered empty and filled from an async source must be able to
+	// grow its field: the count is what SearchAuto decides on.
+	c := &SelectSearch{}
+	c.Init(nil)
+	if c.searchShown.Get() {
+		t.Error("an empty picker must start without a field")
+	}
+
+	c.SetOptions(manyOptions(searchThreshold + 5))
+
+	if !c.searchShown.Get() {
+		t.Error("SetOptions must re-decide searchShown, or a late-arriving list never gains its field")
+	}
+}
+
 func TestSelectSearch_SelectedValue(t *testing.T) {
 	c := &SelectSearch{
 		Placeholder: "Choose category",
@@ -52,6 +128,43 @@ func TestSelectSearch_SelectedValue(t *testing.T) {
 	html := c.Render().String()
 	if !fmt.Contains(html, "Automobiles") {
 		t.Error("expected selected label")
+	}
+}
+
+func TestHeaderEchoesThePickedRow(t *testing.T) {
+	// The collapsed header must carry the whole picked option — name, second
+	// line and trailing datum — using the same PartText/PartLabel/PartSublabel
+	// /PartDesc an open row uses, so the two never drift.
+	c := &SelectSearch{
+		Placeholder: "Seleccione un paciente...",
+		Options: []SsOption{
+			{ID: "p3", Label: "Diego Rojas, 58 años", Sublabel: "9.876.543-2", Description: "10:15"},
+		},
+	}
+	c.Init(nil)
+
+	// Before any choice: the placeholder line, nothing else.
+	empty := c.Render().String()
+	if !fmt.Contains(empty, "Seleccione un paciente...") {
+		t.Error("empty header must show the placeholder")
+	}
+	if !fmt.Contains(empty, string(ClsSsPlaceholder)) {
+		t.Errorf("empty header must render the %s part", ClsSsPlaceholder)
+	}
+
+	c.selectOption(c.Options[0])
+	picked := c.Render().String()
+
+	for _, want := range []string{"Diego Rojas, 58 años", "9.876.543-2", "10:15"} {
+		if !fmt.Contains(picked, want) {
+			t.Errorf("picked header missing %q", want)
+		}
+	}
+	// The header body must use the shared option parts, not header-only ones.
+	for _, cls := range []string{string(ClsSsHeaderBody), string(ClsSsText), string(ClsSsLabel), string(ClsSsSublabel), string(ClsSsDesc)} {
+		if !fmt.Contains(picked, cls) {
+			t.Errorf("picked header missing shared part class %q", cls)
+		}
 	}
 }
 
