@@ -3,8 +3,9 @@ PLAN: "feat!: listselect lego piece replaces the per-row options menu"
 TAG: v0.6.0
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 18257757338148011582
+PR: https://github.com/tinywasm/components/pull/22
 ---
 
 > Este plan se despacha con el flujo CodeJob. Ver skill: agents-workflow.
