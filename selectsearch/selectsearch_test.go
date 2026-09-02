@@ -159,6 +159,19 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 	}
 }
 
+func TestTwoPickersDoNotShareIDs(t *testing.T) {
+	a, b := &SelectSearch{}, &SelectSearch{}
+	a.Init(nil)
+	b.Init(nil)
+	ha, hb := a.Render().String(), b.Render().String()
+	if strings.Contains(ha, "ss-toggle") || strings.Contains(hb, "ss-toggle") {
+		t.Error("ids must be per-instance, not the fixed ss-* literals")
+	}
+	if ha == hb {
+		t.Error("two pickers rendered identical markup — their ids collide")
+	}
+}
+
 func TestSelectSearch_SatisfiesFilterable(t *testing.T) {
 	var _ widget.Filterable = (*SelectSearch)(nil)
 }

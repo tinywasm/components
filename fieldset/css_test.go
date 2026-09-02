@@ -3,12 +3,14 @@
 package fieldset
 
 import (
+	"github.com/tinywasm/widget"
 	"regexp"
 	"strings"
 	"testing"
 )
 
 var (
+	fieldname  = string(widget.NameField)
 	classRegex = regexp.MustCompile(`\.([a-zA-Z0-9_-]+)`)
 )
 
@@ -18,7 +20,7 @@ func TestRenderCSS_StylesFieldset(t *testing.T) {
 	if cssStr == "" {
 		t.Fatal("Stylesheet() returned empty")
 	}
-	for _, want := range []string{".tw-field", ".tw-field__label"} {
+	for _, want := range []string{"." + fieldname, "." + fieldname + "__label"} {
 		if !contains(cssStr, want) {
 			t.Errorf("Stylesheet() missing rule for %q", want)
 		}
@@ -32,9 +34,9 @@ func TestFieldset_LabelChip(t *testing.T) {
 	// at the leading edge. Inline padding is the one exemption: it leaves the
 	// height alone and keeps the text off the chip's filled edges.
 	css := (&Fieldset{}).RenderCSS().String()
-	i := strings.Index(css, ".tw-field__label {")
+	i := strings.Index(css, "."+fieldname+"__label {")
 	if i == -1 {
-		t.Fatal("expected a rule for .tw-field__label")
+		t.Fatal("expected a rule for ." + fieldname + "__label")
 	}
 	body := css[i:]
 	end := strings.Index(body, "}")
@@ -54,15 +56,37 @@ func TestFieldset_LabelChip(t *testing.T) {
 }
 
 // TestFieldset_NoOutline is the net for PLAN.md Stage 3: the Locked ring is a
-// box-shadow, never an outline — an outline ignores border-radius and paints
-// over the OnEdge legend chip. No rule in the whole sheet may use it.
+// box-shadow, never an `outline:` property — an outline ignores border-radius
+// and paints over the OnEdge legend chip. No rule in the whole sheet may
+// declare one. (The `--color-outline` TOKEN legitimately appears now, in the
+// input's Panel `border:`, so the guard matches the property name with its
+// colon — the same way widget/style's own shell_test.go does.)
 func TestFieldset_NoOutline(t *testing.T) {
 	css := (&Fieldset{}).RenderCSS().String()
-	if contains(css, "outline") {
-		t.Errorf("fieldset must not emit outline (the Locked ring is a box-shadow), got:\n%s", css)
+	if contains(css, "outline:") {
+		t.Errorf("fieldset must not emit an outline: property (the Locked ring is a box-shadow), got:\n%s", css)
 	}
 	if !contains(css, "box-shadow") {
 		t.Errorf("expected the Locked ring to be a box-shadow, got:\n%s", css)
+	}
+}
+
+// TestFieldset_InputIsFramed pins the shape decision: the input carries a
+// hairline ColorOutline frame (As(Panel)), so the OnEdge legend chip has a real
+// border line to sit centred on instead of anchoring to an invisible edge —
+// and every text control in the app (this, the search bar) shares one shape.
+func TestFieldset_InputIsFramed(t *testing.T) {
+	css := (&Fieldset{}).RenderCSS().String()
+	i := strings.Index(css, "."+fieldname+"__input {")
+	if i == -1 {
+		t.Fatal("expected a rule for ." + fieldname + "__input")
+	}
+	body := css[i:]
+	if end := strings.Index(body, "}"); end != -1 {
+		body = body[:end]
+	}
+	if !contains(body, "border: 1px solid var(--color-outline") {
+		t.Errorf("input must carry the hairline frame the legend chip straddles, block:\n%s", body)
 	}
 }
 
@@ -72,9 +96,9 @@ func TestFieldset_ErrorClearsTheInputEdges(t *testing.T) {
 	// Space2 pin only buys back the Root's own Pad and left the text flush with
 	// the input's border; and straddling the border cut the text in half.
 	css := (&Fieldset{}).RenderCSS().String()
-	i := strings.Index(css, ".tw-field__error {")
+	i := strings.Index(css, "."+fieldname+"__error {")
 	if i == -1 {
-		t.Fatal("expected a rule for .tw-field__error")
+		t.Fatal("expected a rule for ." + fieldname + "__error")
 	}
 	body := css[i:]
 	end := strings.Index(body, "}")
@@ -119,25 +143,26 @@ func TestPairMarkupAndStylesheet(t *testing.T) {
 
 	f := &Fieldset{}
 	css := f.RenderCSS().String()
-	cssClasses := filterClasses(extractCSSClasses(css), "tw-field")
+	cssClasses := filterClasses(extractCSSClasses(css), fieldname)
 
 	expectedFormClasses := map[string]bool{
-		"tw-field":              true,
-		"tw-field__label":       true,
-		"tw-field__input":       true,
-		"tw-field__error":       true,
-		"tw-field__radio-group": true,
-		"tw-field__submit":      true,
+		fieldname:                   true,
+		fieldname + "__form":        true,
+		fieldname + "__label":       true,
+		fieldname + "__input":       true,
+		fieldname + "__error":       true,
+		fieldname + "__radio-group": true,
+		fieldname + "__submit":      true,
 	}
 
 	for cls := range cssClasses {
 		if !expectedFormClasses[cls] {
-			t.Errorf("Fieldset CSS contains unexpected class %q which form v0.3.0 does not emit", cls)
+			t.Errorf("Fieldset CSS contains unexpected class %q which form does not emit", cls)
 		}
 	}
 	for cls := range expectedFormClasses {
 		if !cssClasses[cls] {
-			t.Errorf("Fieldset CSS missing style rule for form v0.3.0 class %q", cls)
+			t.Errorf("Fieldset CSS missing style rule for form class %q", cls)
 		}
 	}
 }

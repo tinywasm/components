@@ -46,6 +46,23 @@ var (
 
 const iconArrowDown = svg.Icon("ss-arrow-down")
 
+// The per-instance id suffixes. Derived from c.uid (never written inline) so
+// two pickers on one page cannot collide — the label's `for`, the focus lookup
+// and every option id all share the same prefix.
+const (
+	suffixToggle  = "-toggle"
+	suffixSearch  = "-search"
+	suffixOptions = "-options"
+	suffixOption  = "-opt-"
+)
+
+var selectSearchSeq int
+
+func nextSelectSearchID() int {
+	selectSearchSeq++
+	return selectSearchSeq
+}
+
 // SsOption represents a selectable item.
 type SsOption struct {
 	ID          string // unique identifier, returned in OnSelect
@@ -63,9 +80,12 @@ type SelectSearch struct {
 
 	// Internal state signals
 	selectedLabel *SignalString
+	selectedID    *SignalString
 	query         *SignalString
 	isOpen        *SignalBool
 	rows          *SignalNodes
+
+	uid string // per-instance id prefix; two pickers on one page must not collide
 
 	onFilter func(term string) // set via OnFilterChange — satisfies widget.Filterable
 }
@@ -89,7 +109,13 @@ var _ widget.Filterable = (*SelectSearch)(nil)
 func (c *SelectSearch) OnFilterChange(fn func(term string)) { c.onFilter = fn }
 
 func (c *SelectSearch) Init(_ Ctx) {
+	// A page may mount more than one picker. The label's `for`, the focus
+	// lookup and every option id are derived from this prefix so instance B's
+	// header cannot toggle instance A's checkbox — the failure a fixed,
+	// page-global toggle id guarantees the moment a second picker appears.
+	c.uid = fmt.Sprintf("%s-%d", string(NameSelectSearch), nextSelectSearchID())
 	c.selectedLabel = NewString("")
+	c.selectedID = NewString("")
 	c.query = NewString("")
 	c.isOpen = NewBool(false)
 	c.rows = NewNodes(c.buildRows("")...)
@@ -116,13 +142,13 @@ func (c *SelectSearch) Render() *Element {
 	})
 
 	toggle := Input("checkbox").Set(ClsSsToggle.AsAttr()).
-		ID("ss-toggle").
+		ID(c.uid + suffixToggle).
 		BindAttrBool("checked", c.isOpen).
 		On("change", func(e Event) {
 			checked := e.TargetChecked()
 			c.isOpen.Set(checked)
 			if checked {
-				if ref, ok := Get("ss-search"); ok {
+				if ref, ok := Get(c.uid + suffixSearch); ok {
 					ref.Focus()
 				}
 			}
@@ -142,7 +168,7 @@ func (c *SelectSearch) Render() *Element {
 	// from the header's edges, or it stops reading as a flush cap.
 	icon := Div().Set(ClsSsIcon.AsAttr()).Child(iconArrowDown.Render(string(ClsSsGlyph)))
 	header := Label().Set(ClsSsHeader.AsAttr()).
-		Attr("for", "ss-toggle").
+		Attr("for", c.uid+suffixToggle).
 		Child(
 			icon,
 			Span().Set(ClsSsHeaderText.AsAttr()).BindText(headerTextSig),
@@ -150,11 +176,11 @@ func (c *SelectSearch) Render() *Element {
 
 	searchInput := Input("search").
 		Set(ClsSsSearch.AsAttr()).
-		ID("ss-search").
+		ID(c.uid + suffixSearch).
 		Attr("placeholder", "Search...").
 		Attr("role", "combobox").
 		BindAttrBool("aria-expanded", c.isOpen).
-		Attr("aria-controls", "ss-options").
+		Attr("aria-controls", c.uid+suffixOptions).
 		Bind(c.query).
 		On("input", func(e Event) {
 			term := e.TargetValue()
@@ -179,7 +205,7 @@ func (c *SelectSearch) Render() *Element {
 			c.rows.Set(c.buildRows(term))
 		})
 
-	optList := Ul().Set(ClsSsOptions.AsAttr()).ID("ss-options").
+	optList := Ul().Set(ClsSsOptions.AsAttr()).ID(c.uid + suffixOptions).
 		Attr("role", "listbox").
 		BindChildren(c.rows)
 
@@ -187,7 +213,12 @@ func (c *SelectSearch) Render() *Element {
 		Child(searchInput).
 		Child(optList)
 
+	// BindState, not a class toggled by hand: data-open is the single value the
+	// stylesheet selects on, so markup and CSS cannot disagree. It is what lets
+	// the chevron turn be a CSS state rule instead of a second source of truth
+	// in Go.
 	return Div().Set(ClsSsBox.AsAttr()).
+		BindState(widget.Open, c.isOpen).
 		Child(toggle).
 		Child(header).
 		Child(Show(c.isOpen, dropdown))
@@ -199,6 +230,7 @@ func (c *SelectSearch) Render() *Element {
 // Filterable sink can never fire out of step with each other.
 func (c *SelectSearch) selectOption(o SsOption) {
 	c.selectedLabel.Set(o.Label)
+	c.selectedID.Set(o.ID)
 	c.isOpen.Set(false)
 	c.query.Set("")
 	c.rows.Set(c.buildRows(""))
@@ -230,8 +262,9 @@ func (c *SelectSearch) buildRows(term string) []*Element {
 
 		item := Li().Set(ClsSsOption.AsAttr()).
 			Key(opt.ID).
-			ID("ss-opt-"+opt.ID). // required for wirePendingEvents to attach the click handler
+			ID(c.uid + suffixOption + opt.ID). // required for wirePendingEvents to attach the click handler
 			Attr("role", "option").
+			BindStateFunc(widget.Selected, func() bool { return c.selectedID.Get() == o.ID }).
 			Child(text).
 			On("click", func(e Event) { c.selectOption(o) })
 

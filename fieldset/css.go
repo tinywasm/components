@@ -14,25 +14,41 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 		// The field is not a card. It is a label chip sitting on an input box:
 		// wrapping the pair in a second bordered panel nests a box inside a box
 		// and reads as clutter once several fields stack up.
-		// Pad, not a gap: the <form> that holds the fields carries no class, so
-		// the only place to put air between consecutive fields is inside each
-		// one.
+		//
+		// The field owns NO vertical rhythm of its own — the gap between
+		// consecutive fields is one value, on the form container (PartForm
+		// below). What the field reserves is ChipSeat(EdgeTop): exactly half a
+		// chip-height of top padding, the space the legend seats into so it
+		// centres on the input's top border without poking out of whatever
+		// card the form sits in. PadInline is the field's only other padding —
+		// the input's inset from the field's own edges.
 		Root(
 			style.Anchor(),
 			style.Stack(style.SpaceNone),
-			style.Pad(style.Space2),
+			style.ChipSeat(style.EdgeTop),
+			style.PadInline(style.Space2),
 			style.KeepSize(),
 		).
-		// A legend, not a caption: OnEdge centres the chip ON the input's top
-		// border rather than stacking it above, and Space2 is the field's own
-		// padding — the distance from the field's border to the input's.
-		// No vertical Pad: the chip's box is its one TextXs line, and OnEdge
-		// mounts it by half the declared --chip-height — the same token the
-		// badge of a targetlist row straddles the line by. Both hang the same
-		// 10px below the border, so the legend and the badge align by
-		// construction, not by a padding value tuned against another repo's
-		// skin. PadInline is exempt: it never touches the height, and text
-		// flush against the chip's filled edge reads as a bug, not as density.
+		// The form: the one place the inter-field rhythm lives. A gap on the
+		// container spaces every field the same and — unlike a per-field
+		// margin — does not double up at the first and last field against the
+		// card's own inset.
+		Part(widget.PartForm,
+			style.Stack(style.Space3),
+		).
+		// A legend, not a caption: OnEdge(EdgeTop) seats the chip flush against
+		// the field's ChipSeat padding and centres it — pinned to the shared
+		// --chip-height token — on the input's top border. SpaceNone block
+		// offset: the seat already IS half a chip-height, no extra gap wanted.
+		// The targetlist badge straddles its row's bottom line by the same
+		// token, so legend and badge align by construction.
+		// No ChipBox: a legend is read, not lined up. ChipBox pins every chip to
+		// --chip-width and clips the overflow, which is right for a badge in a
+		// column of badges (they align) and wrong here — one field per row means
+		// there is no column to align with, so a short label like "id" padded a
+		// fixed 112px reads as a mislabelled box, and a long one is silently cut
+		// mid-word. Shrink-wrapped to its text, the chip says exactly its own
+		// name at any length.
 		// No ChipBox: a legend is read, not lined up. ChipBox pins every chip to
 		// --chip-width and clips the overflow, which is right for a badge in a
 		// column of badges (they align) and wrong here — one field per row means
@@ -46,7 +62,7 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 		// keeps that decision in the skin instead of asking every model to
 		// pre-format a display string.
 		Part(widget.PartLabel,
-			style.OnEdge(style.EdgeTop, style.SideStart, style.Space2, style.Space4),
+			style.OnEdge(style.EdgeTop, style.SideStart, style.SpaceNone, style.Space4),
 			style.As(style.Primary),
 			style.Round(style.RadiusSm),
 			style.FontSize(style.TextXs),
@@ -73,13 +89,15 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 		// half its height inside the box, so the value needs room to clear it.
 		// At the chip's 20px height the hang is 10px and Space4's 16px still
 		// clears it.
-		// Page, not Panel: an editable control is the one place on the screen
-		// asking to be written in, so it gets the whitest surface the theme
-		// has. Against the sunken card the form sits in, that white IS the
-		// affordance — it reads as an empty writing area at a glance, without
-		// a border having to announce it.
+		// Panel, not Page: the legend chip is centred ON the input's top border
+		// line, and a borderless Page box gave it no line to sit on — the chip
+		// then read as floating a hair high, anchored to an edge the eye could
+		// not see. Panel's hairline ColorOutline frame is the same one the
+		// search bar's own input carries, so every text control in the app now
+		// shares one framed shape; the focus ring (amber, inset — see
+		// css/css.reset.go) lands just inside that frame instead of fighting it.
 		Part(widget.PartInput,
-			style.As(style.Page),
+			style.As(style.Panel),
 			style.Round(style.RadiusMd),
 			style.Pad(style.Space4),
 			style.ControlBox(),
@@ -106,9 +124,10 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 		// wrapper got the treatment and the resulting ring crossed the legend
 		// chip straddling the top border line. Nothing about a locked field
 		// needs a second box around the pair; the control itself is what is
-		// locked, so the control is what changes. (Today the state paints
-		// fill only: Secondary carries no border, so no ring at all — the
-		// only box-shadow in this sheet is the label chip's Raise elevation.)
+		// locked, so the control is what changes. (Secondary drops the base
+		// Panel's hairline frame and repaints the fill — no border, no ring;
+		// the only box-shadow in this sheet stays the label chip's Raise
+		// elevation.)
 		//
 		// This gate is PER FIELD, not per form. dom writes data-locked on the
 		// wrapper whenever form's isDisabledOrLocked() says so, and that check
@@ -126,7 +145,8 @@ func (f *Fieldset) RenderCSS() *css.Stylesheet {
 		// this deliberately does not reach for Inactive's muted text.
 		// WhenWithin, not When: dom writes data-locked on the field wrapper
 		// that owns the gate, so When(Locked, PartInput) would emit
-		// `.tw-field__input[data-locked="true"]` and match nothing.
+		// `.NAME__input[data-locked="true"]` (NAME = widget.NameField) and match
+		// nothing.
 		// Round(RadiusMd) is not redundant: a surface with no explicit radius
 		// falls back to its own default, and Secondary's is RadiusSm, so
 		// locking silently shrank the control's corners from the 8px the base
