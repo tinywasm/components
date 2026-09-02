@@ -9,74 +9,53 @@ import (
 	"github.com/tinywasm/components/targetlist"
 )
 
-func TestRowsCarryNoOptionsMenu(t *testing.T) {
+// API-level assembly tests. Row MARKUP is asserted in the internal test file,
+// which can reach buildRow — Render() binds its children and SSR does not
+// serialize a children binding, so an external test sees an empty <ul> and any
+// assertion it makes about a row is vacuously true.
+//
+// The toggle BEHAVIOUR — tap order, render order, the count callback — is
+// covered where it lives, in listselect/listselect_test.go: a row is marked by
+// a DOM click, and there is no click to dispatch under SSR.
+
+func TestSelectModeShowsOnTheRoot(t *testing.T) {
+	// The root's Open state is the hook the stylesheet reveals the checks
+	// from. Without it the mode would flip in Go and change nothing on screen.
 	tl := &targetlist.TargetList{}
 	tl.Init(nil)
 	tl.SetItems([]targetlist.Item{{ID: "1", Label: "Row 1"}})
 
-	html := tl.Render().String() + tl.Items()[0].ID
-
-	for _, unwanted := range []string{"targetlist__button", "targetlist__options", "targetlist__item-danger", "Eliminar"} {
-		if strings.Contains(html, unwanted) {
-			t.Errorf("rendered row contains unwanted options menu artifact %q\nhtml: %s", unwanted, html)
-		}
+	if html := tl.Render().String(); strings.Contains(html, "data-open") {
+		t.Errorf("the root must not carry the open state with the mode OFF\nhtml: %s", html)
 	}
-}
-
-func TestSelectModeOffFiresOnSelect(t *testing.T) {
-	tl := &targetlist.TargetList{}
-	tl.Init(nil)
-	tl.SetItems([]targetlist.Item{{ID: "1", Label: "Row 1"}})
-
-	if len(tl.CheckedIDs()) != 0 {
-		t.Errorf("selection mode off should have no checked IDs, got %v", tl.CheckedIDs())
-	}
-}
-
-func TestSelectModeOnTogglesInsteadOfSelecting(t *testing.T) {
-	tl := &targetlist.TargetList{}
-	tl.Init(nil)
-	tl.SetItems([]targetlist.Item{{ID: "1", Label: "Row 1"}, {ID: "2", Label: "Row 2"}})
 
 	tl.SetSelectMode(true)
-	if len(tl.CheckedIDs()) != 0 {
-		t.Errorf("initially no checked IDs")
+	if html := tl.Render().String(); !strings.Contains(html, "data-open='true'") {
+		t.Errorf("the root must carry data-open='true' with the mode ON\nhtml: %s", html)
 	}
 }
 
-func TestCheckIsInTheMarkupWhenModeIsOff(t *testing.T) {
+func TestNothingIsCheckedUntilTheUserMarksIt(t *testing.T) {
 	tl := &targetlist.TargetList{}
 	tl.Init(nil)
-	tl.SetItems([]targetlist.Item{{ID: "1", Label: "Row 1"}})
-
-	tl.SetSelectMode(false)
-	html := tl.Render().String()
-
-	if !strings.Contains(html, "targetlist") {
-		t.Errorf("container must exist in markup\nhtml: %s", html)
-	}
-}
-
-func TestCheckedIDsFollowRenderOrder(t *testing.T) {
-	tl := &targetlist.TargetList{}
-	tl.Init(nil)
-	tl.SetItems([]targetlist.Item{
-		{ID: "1", Label: "First"},
-		{ID: "2", Label: "Second"},
-		{ID: "3", Label: "Third"},
-	})
+	tl.SetItems([]targetlist.Item{{ID: "1"}, {ID: "2"}, {ID: "3"}})
 
 	tl.SetSelectMode(true)
-	// CheckedIDs uses rendering order provided by SetItems
 	if ids := tl.CheckedIDs(); len(ids) != 0 {
-		t.Errorf("expected empty checked IDs, got %v", ids)
+		t.Errorf("entering selection mode must not preselect anything, got %v", ids)
 	}
 }
 
-func TestSheetValidates(t *testing.T) {
+func TestLeavingSelectModeClearsTheMarks(t *testing.T) {
 	tl := &targetlist.TargetList{}
 	tl.Init(nil)
-	if errs := tl.RenderCSS().String(); errs == "" {
-		t.Error("RenderCSS must return stylesheet string")
+	tl.SetItems([]targetlist.Item{{ID: "1"}, {ID: "2"}})
+
+	tl.SetSelectMode(true)
+	tl.SetSelectMode(false)
+
+	if ids := tl.CheckedIDs(); len(ids) != 0 {
+		t.Errorf("leaving selection mode must clear the marks, got %v", ids)
 	}
 }
+
