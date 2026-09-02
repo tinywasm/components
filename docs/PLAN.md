@@ -3,6 +3,8 @@ PLAN: "feat!: listselect lego piece replaces the per-row options menu"
 TAG: v0.6.0
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 18257757338148011582
 ---
 
 > Este plan se despacha con el flujo CodeJob. Ver skill: agents-workflow.
