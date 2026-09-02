@@ -3,7 +3,7 @@ module github.com/tinywasm/components
 go 1.25.2
 
 require (
-	github.com/tinywasm/css v0.4.18
+	github.com/tinywasm/css v0.4.19
 	github.com/tinywasm/date v0.0.2
 	github.com/tinywasm/dom v0.13.5
 	github.com/tinywasm/fmt v0.25.7
