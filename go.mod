@@ -12,7 +12,7 @@ require (
 	github.com/tinywasm/js v0.0.6
 	github.com/tinywasm/svg v0.3.0
 	github.com/tinywasm/time v0.5.4
-	github.com/tinywasm/view v0.1.15
+	github.com/tinywasm/view v0.2.1
 	github.com/tinywasm/widget v0.6.19
 )
 
@@ -25,4 +25,3 @@ require (
 	github.com/tinywasm/model v0.1.7 // indirect
 	github.com/tinywasm/router v0.1.29 // indirect
 )
-
