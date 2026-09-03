@@ -26,6 +26,19 @@ type Mode struct {
 	// inventing a Value of "true" would be a stringly-typed bool.
 	checked []string
 
+	// changed flips on every Toggle. checked is a plain slice — reading it
+	// inside a DeriveBool tracks nothing, so without this signal a row's
+	// bound states would go stale the moment after selection mode opens and
+	// no tap would ever repaint. Rows read Changed() first in their
+	// derives; the flip re-runs them and IsChecked is re-read live.
+	changed *SignalBool
+
+	// danger arms the danger tone: while set, a checked row means "marked
+	// for a destructive action" and the skin paints it red instead of blue.
+	// Owned by the host (crudview sets it from its mode); a plain list that
+	// never arms it keeps the single Accent selection language it always had.
+	danger *SignalBool
+
 	// OnChange fires after every toggle with the current count, so a host can
 	// label its commit button ("🗑 3") and disable it at zero.
 	OnChange func(n int)
@@ -42,6 +55,37 @@ func (m *Mode) ensure() {
 func (m *Mode) On() *SignalBool {
 	m.ensure()
 	return m.on
+}
+
+// SetDanger arms or disarms the danger tone. Additive: a host that never
+// calls it gets no red anywhere, whatever the selection does.
+func (m *Mode) SetDanger(on bool) {
+	m.ensure()
+	if m.danger == nil {
+		m.danger = NewBool(false)
+	}
+	m.danger.Set(on)
+}
+
+// Danger reports the tone signal a row binds its Invalid state to. Never a
+// bool: the skin has to react.
+func (m *Mode) Danger() *SignalBool {
+	m.ensure()
+	if m.danger == nil {
+		m.danger = NewBool(false)
+	}
+	return m.danger
+}
+
+// Changed flips on every Toggle. Rows read it first in their state derives
+// (see the changed field); without that read a tap would update nothing on
+// screen.
+func (m *Mode) Changed() *SignalBool {
+	m.ensure()
+	if m.changed == nil {
+		m.changed = NewBool(false)
+	}
+	return m.changed
 }
 
 // SetOn enters or leaves selection mode. Leaving ALWAYS clears the marks:
@@ -76,6 +120,7 @@ func (m *Mode) Toggle(id string) {
 		// add
 		m.checked = append(m.checked, id)
 	}
+	m.Changed().Toggle()
 
 	if m.OnChange != nil {
 		m.OnChange(len(m.checked))

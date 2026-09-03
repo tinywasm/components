@@ -130,6 +130,7 @@ See [Component Catalog](docs/CATALOG.md) for full documentation.
 -   **ActionButton**: Primary/secondary actions with variants.
 -   **CalendarSlider**: Declarative month calendar (holidays, occupation %, selection).
 -   **ContentCard**: Content container with header/body/footer.
+-   **CountBadge**: Notification bubble on a button's top-end corner.
 -   **DataTable**: Data tables with headers and rows.
 -   **ModalDialog**: Centered modal overlay with backdrop.
 -   **SelectSearch**: Searchable dropdown with live filtering.

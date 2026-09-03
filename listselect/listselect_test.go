@@ -102,3 +102,22 @@ func TestOnChangeReportsTheCount(t *testing.T) {
 		t.Errorf("expected count 0 on SetOn(false), got %d", lastCount)
 	}
 }
+
+func TestDangerToneDefaultsOff(t *testing.T) {
+	var m listselect.Mode
+	if m.Danger().Get() {
+		t.Error("the danger tone must default to off")
+	}
+}
+
+func TestSetDangerRoundtrip(t *testing.T) {
+	var m listselect.Mode
+	m.SetDanger(true)
+	if !m.Danger().Get() {
+		t.Error("SetDanger(true) must arm the tone")
+	}
+	m.SetDanger(false)
+	if m.Danger().Get() {
+		t.Error("SetDanger(false) must disarm the tone")
+	}
+}

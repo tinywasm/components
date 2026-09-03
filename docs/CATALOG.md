@@ -35,6 +35,14 @@ Versatile button component with variant support (primary, secondary, danger).
 
 ---
 
+## [CountBadge](../countbadge/README.md) — ✅ Slot-ready
+Notification bubble riding the host button's top-end corner, out of the flow
+so the host keeps its box at any count. Amber (`AccentInverse`) pill, shown
+only above zero.
+[Detailed Documentation →](../countbadge/README.md)
+
+---
+
 ## [ContentCard](../contentcard/README.md) — ✅ Slot-ready
 Container with header, body, and footer sections.
 [Detailed Documentation →](../contentcard/README.md)

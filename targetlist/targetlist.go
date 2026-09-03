@@ -20,20 +20,22 @@ const badgeChars = 16
 const NameTargetList = widget.Name("targetlist")
 
 const (
-	PartRow   = widget.Part("row")
-	PartCheck = widget.Part("check")
-	PartBadge = widget.Part("badge")
-	PartLabel = widget.Part("label")
-	PartList  = widget.Part("list")
+	PartRow       = widget.Part("row")
+	PartCheck     = widget.Part("check")
+	PartCheckIcon = widget.Part("check-icon")
+	PartBadge     = widget.Part("badge")
+	PartLabel     = widget.Part("label")
+	PartList      = widget.Part("list")
 )
 
 var (
-	clsListWrap = NameTargetList.Root()
-	clsList     = NameTargetList.Class(PartList)
-	clsRow      = NameTargetList.Class(PartRow)
-	clsCheck    = NameTargetList.Class(PartCheck)
-	clsLabel    = NameTargetList.Class(PartLabel)
-	clsBadge    = NameTargetList.Class(PartBadge)
+	clsListWrap  = NameTargetList.Root()
+	clsList      = NameTargetList.Class(PartList)
+	clsRow       = NameTargetList.Class(PartRow)
+	clsCheck     = NameTargetList.Class(PartCheck)
+	clsCheckIcon = NameTargetList.Class(PartCheckIcon)
+	clsLabel     = NameTargetList.Class(PartLabel)
+	clsBadge     = NameTargetList.Class(PartBadge)
 )
 
 const iconCheck = svg.Icon("tl-check")
@@ -75,7 +77,8 @@ func (t *TargetList) ensure() {
 
 func (t *TargetList) Init(_ Ctx) { t.ensure() }
 
-func (t *TargetList) SetSelectMode(on bool)       { t.sel.SetOn(on) }
+func (t *TargetList) SetSelectMode(on bool)        { t.sel.SetOn(on) }
+func (t *TargetList) SetDanger(on bool)            { t.sel.SetDanger(on) }
 func (t *TargetList) OnCheckedChange(fn func(int)) { t.sel.OnChange = fn }
 
 func (t *TargetList) CheckedIDs() []string {
@@ -116,19 +119,35 @@ func (t *TargetList) buildRow(it Item) *Element {
 	id := it.ID
 	key := "tl-" + id
 
+	// Selected and Invalid never coincide: a checked row under the armed
+	// danger tone is Invalid (red) instead of Selected (blue) — one row, one
+	// fill, no race in the cascade. aria-selected names either.
 	isSelSig := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
 		if t.sel.On().Get() {
+			if t.sel.Danger().Get() {
+				return false
+			}
 			return t.sel.IsChecked(id)
 		}
 		return t.Selected.Get() == id
 	})
+	isDangerSig := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
+		if t.sel.On().Get() && t.sel.Danger().Get() {
+			return t.sel.IsChecked(id)
+		}
+		return false
+	})
+	isMarkedSig := DeriveBool(func() bool { return isSelSig.Get() || isDangerSig.Get() })
 
 	row := Li().Set(clsRow.AsAttr()).
 		ID(key).
 		Key(key).
 		Attr("role", "option").
-		BindAttrBool("aria-selected", isSelSig).
-		BindState(widget.Selected, isSelSig)
+		BindAttrBool("aria-selected", isMarkedSig).
+		BindState(widget.Selected, isSelSig).
+		BindState(widget.Invalid, isDangerSig)
 
 	row.On("click", func(Event) {
 		if t.sel.On().Get() {
@@ -140,7 +159,7 @@ func (t *TargetList) buildRow(it Item) *Element {
 		}
 	})
 
-	check := Span().Set(clsCheck.AsAttr()).Child(iconCheck.Render(string(clsCheck)))
+	check := Span().Set(clsCheck.AsAttr()).Child(iconCheck.Render(string(clsCheckIcon)))
 
 	row.Child(check)
 	row.Child(Span().Set(clsLabel.AsAttr()).Text(it.Label))

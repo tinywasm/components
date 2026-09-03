@@ -25,6 +25,7 @@ const (
 	PartRow        = widget.Part("row")
 	PartContent    = widget.Part("content")
 	PartCheck      = widget.Part("check")
+	PartCheckIcon  = widget.Part("check-icon")
 	PartBadge      = widget.Part("badge")
 	PartLabel      = widget.Part("label")
 	PartList       = widget.Part("list")
@@ -41,6 +42,7 @@ var (
 	clsRow        = NameTargetDate.Class(PartRow)
 	clsContent    = NameTargetDate.Class(PartContent)
 	clsCheck      = NameTargetDate.Class(PartCheck)
+	clsCheckIcon  = NameTargetDate.Class(PartCheckIcon)
 	clsLabel      = NameTargetDate.Class(PartLabel)
 	clsBadge      = NameTargetDate.Class(PartBadge)
 	clsLead       = NameTargetDate.Class(PartLead)
@@ -85,7 +87,8 @@ func (t *TargetDate) ensure() {
 
 func (t *TargetDate) Init(_ Ctx) { t.ensure() }
 
-func (t *TargetDate) SetSelectMode(on bool)       { t.sel.SetOn(on) }
+func (t *TargetDate) SetSelectMode(on bool)        { t.sel.SetOn(on) }
+func (t *TargetDate) SetDanger(on bool)            { t.sel.SetDanger(on) }
 func (t *TargetDate) OnCheckedChange(fn func(int)) { t.sel.OnChange = fn }
 
 func (t *TargetDate) CheckedIDs() []string {
@@ -121,18 +124,31 @@ func (t *TargetDate) buildRow(it Item) *Element {
 	key := "td-" + id
 
 	isSelSig := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
 		if t.sel.On().Get() {
+			if t.sel.Danger().Get() {
+				return false
+			}
 			return t.sel.IsChecked(id)
 		}
 		return t.Selected.Get() == id
 	})
+	isDangerSig := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
+		if t.sel.On().Get() && t.sel.Danger().Get() {
+			return t.sel.IsChecked(id)
+		}
+		return false
+	})
+	isMarkedSig := DeriveBool(func() bool { return isSelSig.Get() || isDangerSig.Get() })
 
 	row := Li().Set(clsRow.AsAttr()).
 		ID(key).
 		Key(key).
 		Attr("role", "option").
-		BindAttrBool("aria-selected", isSelSig).
-		BindState(widget.Selected, isSelSig)
+		BindAttrBool("aria-selected", isMarkedSig).
+		BindState(widget.Selected, isSelSig).
+		BindState(widget.Invalid, isDangerSig)
 
 	row.On("click", func(Event) {
 		if t.sel.On().Get() {
@@ -152,7 +168,7 @@ func (t *TargetDate) buildRow(it Item) *Element {
 		),
 	)
 
-	check := Span().Set(clsCheck.AsAttr()).Child(iconCheck.Render(string(clsCheck)))
+	check := Span().Set(clsCheck.AsAttr()).Child(iconCheck.Render(string(clsCheckIcon)))
 
 	content := Div().Set(clsContent.AsAttr()).
 		Child(check).
