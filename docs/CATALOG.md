@@ -89,7 +89,8 @@ select in the same slot.
 ---
 
 ## [TargetHour](../targethour/README.md) — ✅ Slot-ready
-Selectable list component for a day's booked slots: each row leads with a prominent hour (`HH:MM`) and carries an optional per-row status tint (`pending` / `confirmed` / `attended`). Same multi-selection mechanics and `crudview.ListView` compatibility as `targetlist` and `targetdate`.
+Selectable list component for a day's booked slots: each row leads with a prominent hour (`HH:MM`) and carries an optional per-row status tint (`pending` / `confirmed` / `attended`). Same multi-selection mechanics and `crudview.ListView` compatibility as `targetlist` and `targetdate`. Pairs with `CalendarSlider` (now `widget.Filterable`) as the crud filter.
+[Detailed Documentation →](../targethour/README.md)
 
 ---
 
