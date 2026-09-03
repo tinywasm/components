@@ -2,6 +2,8 @@
 PLAN: "feat: master select-all check for target* record lists"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 17971103714245978648
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
