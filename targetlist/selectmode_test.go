@@ -58,4 +58,3 @@ func TestLeavingSelectModeClearsTheMarks(t *testing.T) {
 		t.Errorf("leaving selection mode must clear the marks, got %v", ids)
 	}
 }
-

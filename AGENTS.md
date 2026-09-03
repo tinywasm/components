@@ -136,6 +136,26 @@ extracted by `tinywasm/ssr` and injected inline into `<body>` by `sitec`
   GOOS=js GOARCH=wasm go list -deps ./... | grep tinywasm/svg/sprite   # must be empty
   ```
 
+### A glyph two components share comes from `tinywasm/icons`, not a local copy
+
+If the *same* glyph appears in more than one component (the trash/pencil marks
+`targetlist`/`targetdate` draw are also `crudview`'s footer buttons), do NOT
+define its geometry in one of them and import it sideways, and do NOT paste the
+path into each. Import the per-glyph package — `github.com/tinywasm/icons/trash`,
+`.../pencil`, … — and take `trash.Ref` (markup) + `trash.Def()` (your
+`IconSvg()` sprite). One id, one geometry, assembled everywhere; `assetmin`
+collapses the duplicate `Def()`s to one `<symbol>`. A glyph private to one
+component still lives in that component's own `svg.go`.
+
+### The *skin* of a shared mark is assembled once too, never re-declared
+
+`listselect.Apply(sheet, …)` is the check mark's whole visual contract — box,
+reveal, glyph colour. `targetlist` and `targetdate` **call** it; neither writes
+its own version of those rules. Same rule as the geometry: two lists that
+`crudview` swaps for each other cannot each own a private copy of the skin, or
+they drift. A new shared mark gets a new `*.Apply` in the piece that owns it —
+not a block pasted into both consumers.
+
 ## Testing
 
 ```bash

@@ -8,11 +8,12 @@ import (
 	. "github.com/tinywasm/dom"
 	"github.com/tinywasm/fmt"
 	. "github.com/tinywasm/html"
-	"github.com/tinywasm/svg"
 	"github.com/tinywasm/view"
 	"github.com/tinywasm/widget"
 
 	"github.com/tinywasm/components/listselect"
+	"github.com/tinywasm/icons/pencil"
+	"github.com/tinywasm/icons/trash"
 )
 
 // badgeChars mirrors targetlist's own budget — see that package's comment.
@@ -22,37 +23,37 @@ const badgeChars = 16
 const NameTargetDate = widget.Name("targetdate")
 
 const (
-	PartRow        = widget.Part("row")
-	PartContent    = widget.Part("content")
-	PartCheck      = widget.Part("check")
-	PartCheckIcon  = widget.Part("check-icon")
-	PartBadge      = widget.Part("badge")
-	PartLabel      = widget.Part("label")
-	PartList       = widget.Part("list")
-	PartLead       = widget.Part("lead")
-	PartLeadStack  = widget.Part("lead-stack")
-	PartLeadTop    = widget.Part("lead-top")
-	PartLeadMain   = widget.Part("lead-main")
-	PartLeadBottom = widget.Part("lead-bottom")
+	PartRow         = widget.Part("row")
+	PartContent     = widget.Part("content")
+	PartCheck       = widget.Part("check")
+	PartCheckTrash  = widget.Part("check-trash")
+	PartCheckPencil = widget.Part("check-pencil")
+	PartBadge       = widget.Part("badge")
+	PartLabel       = widget.Part("label")
+	PartList        = widget.Part("list")
+	PartLead        = widget.Part("lead")
+	PartLeadStack   = widget.Part("lead-stack")
+	PartLeadTop     = widget.Part("lead-top")
+	PartLeadMain    = widget.Part("lead-main")
+	PartLeadBottom  = widget.Part("lead-bottom")
 )
 
 var (
-	clsListWrap   = NameTargetDate.Root()
-	clsList       = NameTargetDate.Class(PartList)
-	clsRow        = NameTargetDate.Class(PartRow)
-	clsContent    = NameTargetDate.Class(PartContent)
-	clsCheck      = NameTargetDate.Class(PartCheck)
-	clsCheckIcon  = NameTargetDate.Class(PartCheckIcon)
-	clsLabel      = NameTargetDate.Class(PartLabel)
-	clsBadge      = NameTargetDate.Class(PartBadge)
-	clsLead       = NameTargetDate.Class(PartLead)
-	clsLeadStack  = NameTargetDate.Class(PartLeadStack)
-	clsLeadTop    = NameTargetDate.Class(PartLeadTop)
-	clsLeadMain   = NameTargetDate.Class(PartLeadMain)
-	clsLeadBottom = NameTargetDate.Class(PartLeadBottom)
+	clsListWrap    = NameTargetDate.Root()
+	clsList        = NameTargetDate.Class(PartList)
+	clsRow         = NameTargetDate.Class(PartRow)
+	clsContent     = NameTargetDate.Class(PartContent)
+	clsCheck       = NameTargetDate.Class(PartCheck)
+	clsCheckTrash  = NameTargetDate.Class(PartCheckTrash)
+	clsCheckPencil = NameTargetDate.Class(PartCheckPencil)
+	clsLabel       = NameTargetDate.Class(PartLabel)
+	clsBadge       = NameTargetDate.Class(PartBadge)
+	clsLead        = NameTargetDate.Class(PartLead)
+	clsLeadStack   = NameTargetDate.Class(PartLeadStack)
+	clsLeadTop     = NameTargetDate.Class(PartLeadTop)
+	clsLeadMain    = NameTargetDate.Class(PartLeadMain)
+	clsLeadBottom  = NameTargetDate.Class(PartLeadBottom)
 )
-
-const iconCheck = svg.Icon("td-check")
 
 // Item is view.Item — see targetlist.Item's comment for why this is an
 // alias, not a copy. TargetDate is the one row that actually reads
@@ -123,22 +124,25 @@ func (t *TargetDate) buildRow(it Item) *Element {
 	id := it.ID
 	key := "td-" + id
 
-	isSelSig := DeriveBool(func() bool {
+	// See targetlist.buildRow for the split: isEditCheck is the narrow
+	// "marked for edit in selection mode"; isSel widens it with the
+	// normal-mode "loaded record" highlight for the ROW only. The CHECK box
+	// binds the narrow one, so a row merely loaded in normal mode reveals no
+	// glyph.
+	isEditCheckSig := DeriveBool(func() bool {
 		_ = t.sel.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
-		if t.sel.On().Get() {
-			if t.sel.Danger().Get() {
-				return false
-			}
-			return t.sel.IsChecked(id)
-		}
-		return t.Selected.Get() == id
+		return t.sel.On().Get() && !t.sel.Danger().Get() && t.sel.IsChecked(id)
 	})
 	isDangerSig := DeriveBool(func() bool {
 		_ = t.sel.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
-		if t.sel.On().Get() && t.sel.Danger().Get() {
-			return t.sel.IsChecked(id)
+		return t.sel.On().Get() && t.sel.Danger().Get() && t.sel.IsChecked(id)
+	})
+	isSelSig := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get()
+		if t.sel.On().Get() {
+			return isEditCheckSig.Get()
 		}
-		return false
+		return t.Selected.Get() == id
 	})
 	isMarkedSig := DeriveBool(func() bool { return isSelSig.Get() || isDangerSig.Get() })
 
@@ -168,7 +172,14 @@ func (t *TargetDate) buildRow(it Item) *Element {
 		),
 	)
 
-	check := Span().Set(clsCheck.AsAttr()).Child(iconCheck.Render(string(clsCheckIcon)))
+	// The box owns which glyph shows and its colour via its own
+	// Selected (edit) / Invalid (delete) state, written only in selection
+	// mode. Nothing here hangs off the ROW's state. See targetlist.buildRow.
+	check := Span().Set(clsCheck.AsAttr()).
+		BindState(widget.Selected, isEditCheckSig).
+		BindState(widget.Invalid, isDangerSig).
+		Child(trash.Ref.Render(string(clsCheckTrash))).
+		Child(pencil.Ref.Render(string(clsCheckPencil)))
 
 	content := Div().Set(clsContent.AsAttr()).
 		Child(check).

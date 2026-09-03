@@ -2,13 +2,20 @@
 
 package targetlist
 
-import "github.com/tinywasm/svg/sprite"
+import (
+	"github.com/tinywasm/icons/pencil"
+	"github.com/tinywasm/icons/trash"
+	"github.com/tinywasm/svg/sprite"
+)
 
-// IconSvg registers the checkmark glyph.
+// IconSvg registers the glyphs the rows use: the shared trash/pencil action
+// glyphs from tinywasm/icons. Each row renders them through currentColor
+// inside the check box, and the crud view's footer buttons ship the same two
+// definitions from their own IconSvg() — same ids, so assetmin collapses them
+// to one symbol each.
 func (t *TargetList) IconSvg() *sprite.Sprite {
 	return sprite.NewSprite(
-		sprite.Define(iconCheck, "0 0 16 16",
-			sprite.Path("M13.78 4.22a.75.75 0 0 1 0 1.06l-6.25 6.25a.75.75 0 0 1-1.06 0L3.72 8.78a.75.75 0 0 1 1.06-1.06l2.22 2.22 5.72-5.72a.75.75 0 0 1 1.06 0z"),
-		),
+		trash.Def(),
+		pencil.Def(),
 	)
 }

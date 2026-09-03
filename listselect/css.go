@@ -8,44 +8,80 @@ import (
 	"github.com/tinywasm/widget/style"
 )
 
-// Apply adds the check part's skin to s and returns s for chaining. Both
+// Apply adds the selection check's skin to s and returns s for chaining. Both
 // target* lists call this instead of hand-writing the block, so the check
 // cannot drift between them.
 //
 // The check rides its row's top-end corner (OnEdge), out of the flow: the
-// label never shifts when selection mode opens, and the box reads as a
-// badge on the row rather than a column of its own. checkIcon is the glyph
-// inside the box, hidden until the row is actually marked — an always
-// painted tick reads as pre-selected. row carries the danger wash while the
-// host's danger tone is armed (see Mode.SetDanger); Selected and Invalid
-// never coincide on one row (the row binds Selected only when the tone is
-// off), so the two fills cannot race.
-func Apply(s *style.Sheet, check, checkIcon, row widget.Part) *style.Sheet {
+// label never shifts when selection mode opens, and the box reads as a badge
+// on the row rather than a column of its own.
+//
+// Three reveal facts, and each hangs off exactly the element that owns it:
+//
+//   - The BOX exists only inside the list root's Open state (selection mode).
+//     In normal mode the root has no data-open, so there is no square at all —
+//     not an empty one. Hide() is the sole display authority in the base rule;
+//     the flex centring lives in the Open reveal, so nothing in the base
+//     competes with it (a base rule mixing Hide() with CenterContent() emits
+//     two `display` values and the revealed box comes back as a block, which
+//     stacks its glyph off-centre — the exact defect this split fixes).
+//
+//   - WHICH GLYPH shows, and what colour the box wears, is the BOX's own
+//     Selected/Invalid state — written by the row ONLY in selection mode (see
+//     buildRow). Never the ROW's Selected/Invalid: those also mean "this is
+//     the loaded record" in normal mode, and a glyph must never appear then.
+//     Invalid → trash on a solid Danger box (white glyph via --color-on-danger);
+//     Selected → pencil on a solid AccentInverse box (white via
+//     --color-on-primary). A plain Accent/Inset box would tint the glyph
+//     near-black through currentColor.
+//
+//   - The ROW carries the danger wash under the whole row while it is marked
+//     for delete (the row binds Invalid too, alongside the box).
+func Apply(s *style.Sheet, check, trashIcon, pencilIcon, row widget.Part) *style.Sheet {
 	return s.
 		Part(check,
+			style.Hide(),
 			style.OnEdge(style.EdgeTop, style.SideEnd, style.SpaceNone, style.SpaceNone),
 			style.IconBox(style.IconMd),
 			style.KeepSize(),
-			style.As(style.Inset),
 			style.Round(style.RadiusSm),
-			style.CenterContent(),
+			// The resting square in selection mode: marked nothing yet. A
+			// checked box overrides this from its own state rule below
+			// (higher specificity: .check[data-x] beats .check).
+			style.As(style.Inset),
 			style.Animate(style.MotionFast),
 		).
-		Part(checkIcon,
+		Part(trashIcon,
 			style.Hide(),
+			style.IconBox(style.IconSm),
 		).
+		Part(pencilIcon,
+			style.Hide(),
+			style.IconBox(style.IconSm),
+		).
+		// Reveal the square only inside selection mode, as a centred flex box
+		// so its single visible glyph sits dead centre. Row(SpaceNone) gives
+		// Show() a flex display to restore; CenterContent aligns both axes.
 		WhenWithin(widget.Open, "", check,
 			style.Show(),
+			style.Row(style.SpaceNone),
+			style.CenterContent(),
 		).
-		WhenWithin(widget.Selected, "", checkIcon,
+		// Glyph reveal + box colour: the box's OWN state, set only in
+		// selection mode.
+		WhenWithin(widget.Invalid, check, trashIcon,
 			style.Show(),
 		).
-		WhenWithin(widget.Invalid, "", checkIcon,
+		WhenWithin(widget.Selected, check, pencilIcon,
 			style.Show(),
 		).
-		WhenWithin(widget.Invalid, "", check,
+		When(widget.Invalid, check,
 			style.As(style.Danger),
 		).
+		When(widget.Selected, check,
+			style.As(style.AccentInverse),
+		).
+		// The whole row, washed red while marked for delete.
 		When(widget.Invalid, row,
 			style.As(style.DangerWash),
 		)

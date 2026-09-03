@@ -5,11 +5,12 @@ import (
 	. "github.com/tinywasm/dom"
 	"github.com/tinywasm/fmt"
 	. "github.com/tinywasm/html"
-	"github.com/tinywasm/svg"
 	"github.com/tinywasm/view"
 	"github.com/tinywasm/widget"
 
 	"github.com/tinywasm/components/listselect"
+	"github.com/tinywasm/icons/pencil"
+	"github.com/tinywasm/icons/trash"
 )
 
 // badgeChars is the badge's budget, calibrated against the --chip-width the
@@ -20,25 +21,25 @@ const badgeChars = 16
 const NameTargetList = widget.Name("targetlist")
 
 const (
-	PartRow       = widget.Part("row")
-	PartCheck     = widget.Part("check")
-	PartCheckIcon = widget.Part("check-icon")
-	PartBadge     = widget.Part("badge")
-	PartLabel     = widget.Part("label")
-	PartList      = widget.Part("list")
+	PartRow         = widget.Part("row")
+	PartCheck       = widget.Part("check")
+	PartCheckTrash  = widget.Part("check-trash")
+	PartCheckPencil = widget.Part("check-pencil")
+	PartBadge       = widget.Part("badge")
+	PartLabel       = widget.Part("label")
+	PartList        = widget.Part("list")
 )
 
 var (
-	clsListWrap  = NameTargetList.Root()
-	clsList      = NameTargetList.Class(PartList)
-	clsRow       = NameTargetList.Class(PartRow)
-	clsCheck     = NameTargetList.Class(PartCheck)
-	clsCheckIcon = NameTargetList.Class(PartCheckIcon)
-	clsLabel     = NameTargetList.Class(PartLabel)
-	clsBadge     = NameTargetList.Class(PartBadge)
+	clsListWrap    = NameTargetList.Root()
+	clsList        = NameTargetList.Class(PartList)
+	clsRow         = NameTargetList.Class(PartRow)
+	clsCheck       = NameTargetList.Class(PartCheck)
+	clsCheckTrash  = NameTargetList.Class(PartCheckTrash)
+	clsCheckPencil = NameTargetList.Class(PartCheckPencil)
+	clsLabel       = NameTargetList.Class(PartLabel)
+	clsBadge       = NameTargetList.Class(PartBadge)
 )
-
-const iconCheck = svg.Icon("tl-check")
 
 // Item is view.Item, not a copy: a shared shape means crudview.filter's
 // []view.Item flows straight into SetItems, and a host swapping this widget
@@ -119,25 +120,27 @@ func (t *TargetList) buildRow(it Item) *Element {
 	id := it.ID
 	key := "tl-" + id
 
-	// Selected and Invalid never coincide: a checked row under the armed
-	// danger tone is Invalid (red) instead of Selected (blue) — one row, one
-	// fill, no race in the cascade. aria-selected names either.
-	isSelSig := DeriveBool(func() bool {
+	// isEditCheck is the narrow fact "marked for edit in selection mode" —
+	// nothing else. isSel widens it with the normal-mode highlight ("this is
+	// the loaded record") for the ROW's fill; the CHECK box binds the narrow
+	// one, so a row that is merely loaded in normal mode never reveals a
+	// glyph. Selected and Invalid never coincide on one element: a checked row
+	// under the armed danger tone is Invalid (red), otherwise Selected (blue)
+	// — one element, one fill, no race in the cascade.
+	isEditCheckSig := DeriveBool(func() bool {
 		_ = t.sel.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
-		if t.sel.On().Get() {
-			if t.sel.Danger().Get() {
-				return false
-			}
-			return t.sel.IsChecked(id)
-		}
-		return t.Selected.Get() == id
+		return t.sel.On().Get() && !t.sel.Danger().Get() && t.sel.IsChecked(id)
 	})
 	isDangerSig := DeriveBool(func() bool {
 		_ = t.sel.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
-		if t.sel.On().Get() && t.sel.Danger().Get() {
-			return t.sel.IsChecked(id)
+		return t.sel.On().Get() && t.sel.Danger().Get() && t.sel.IsChecked(id)
+	})
+	isSelSig := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get()
+		if t.sel.On().Get() {
+			return isEditCheckSig.Get()
 		}
-		return false
+		return t.Selected.Get() == id
 	})
 	isMarkedSig := DeriveBool(func() bool { return isSelSig.Get() || isDangerSig.Get() })
 
@@ -159,7 +162,15 @@ func (t *TargetList) buildRow(it Item) *Element {
 		}
 	})
 
-	check := Span().Set(clsCheck.AsAttr()).Child(iconCheck.Render(string(clsCheckIcon)))
+	// The box owns which glyph shows and what colour it wears: its own
+	// Invalid (delete) / Selected (edit) state, written only in selection
+	// mode. Both glyphs start hidden; listselect.Apply reveals whichever the
+	// box's state names. Nothing here hangs off the ROW's state.
+	check := Span().Set(clsCheck.AsAttr()).
+		BindState(widget.Selected, isEditCheckSig).
+		BindState(widget.Invalid, isDangerSig).
+		Child(trash.Ref.Render(string(clsCheckTrash))).
+		Child(pencil.Ref.Render(string(clsCheckPencil)))
 
 	row.Child(check)
 	row.Child(Span().Set(clsLabel.AsAttr()).Text(it.Label))

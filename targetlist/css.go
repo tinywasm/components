@@ -23,7 +23,7 @@ func (t *TargetList) sheet() *style.Sheet {
 	)
 	listgap.Apply(s, PartList)
 	s.On(css.Mobile, PartList, listgap.MobileOpts()...)
-	listselect.Apply(s, PartCheck, PartCheckIcon, PartRow)
+	listselect.Apply(s, PartCheck, PartCheckTrash, PartCheckPencil, PartRow)
 
 	return s.
 		Part(PartRow,
