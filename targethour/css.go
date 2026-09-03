@@ -1,0 +1,81 @@
+//go:build !wasm
+
+package targethour
+
+import (
+	"github.com/tinywasm/components/listgap"
+	"github.com/tinywasm/components/listselect"
+	"github.com/tinywasm/css"
+	"github.com/tinywasm/widget"
+	"github.com/tinywasm/widget/style"
+)
+
+// RenderCSS defines the targethour visual contract using the style DSL.
+func (t *TargetHour) RenderCSS() *css.Stylesheet {
+	return t.sheet().Stylesheet()
+}
+
+// sheet builds the style Sheet.
+func (t *TargetHour) sheet() *style.Sheet {
+	s := style.For(t).Root(
+		style.Fill(),
+		style.Stack(style.SpaceNone),
+	)
+	listgap.Apply(s, PartList)
+	s.On(css.Mobile, PartList, listgap.MobileOpts()...)
+	listselect.Apply(s, PartCheck, PartCheckTrash, PartCheckPencil, PartRow)
+
+	return s.
+		Part(PartRow,
+			style.Anchor(),
+			style.Row(style.Space2),
+			style.KeepSize(),
+			style.ControlBox(),
+			style.Interactive(style.Page),
+			style.Round(style.RadiusMd),
+		).
+		Part(PartContent,
+			style.Row(style.Space2),
+			style.Grow(),
+			style.Pad(style.Space2),
+		).
+		Part(PartHour,
+			style.FontSize(style.TextLg),
+			style.FontWeight(style.WeightBold),
+			style.KeepSize(),
+			style.CenterContent(),
+			style.Divider(style.SideEnd),
+			style.Pad(style.Space2),
+		).
+		Part(PartLabel,
+			style.FontWeight(style.WeightBold),
+			style.Grow(),
+		).
+		Part(PartBadge,
+			style.As(style.Inset),
+			style.Round(style.RadiusSm),
+			style.FontSize(style.TextXs),
+			style.ChipBox(),
+			style.CenterContent(),
+			style.KeepSize(),
+			style.OnEdge(style.EdgeBottom, style.SideEnd, style.SpaceNone, style.Space3),
+		).
+		When(widget.Selected, PartRow,
+			style.As(style.Accent),
+		).
+		When(widget.Locked, PartRow,
+			style.As(style.AccentWash),
+		).
+		When(widget.Busy, PartRow,
+			style.As(style.Subtle),
+		).
+		Cue(widget.Hover, PartRow,
+			style.As(style.AccentWash),
+		).
+		Cue(widget.Focus, PartRow,
+			style.As(style.AccentWash),
+		).
+		Cue(widget.Press, PartRow,
+			style.As(style.Accent),
+		)
+}

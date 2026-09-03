@@ -128,12 +128,13 @@ See [Component Skill Guide](docs/SKILL.md) for the full standard.
 See [Component Catalog](docs/CATALOG.md) for full documentation.
 
 -   **ActionButton**: Primary/secondary actions with variants.
--   **CalendarSlider**: Declarative month calendar (holidays, occupation %, selection).
+-   **CalendarSlider**: Declarative month calendar (holidays, occupation %, selection, filterable control).
 -   **ContentCard**: Content container with header/body/footer.
 -   **CountBadge**: Notification bubble on a button's top-end corner.
 -   **DataTable**: Data tables with headers and rows.
 -   **ModalDialog**: Centered modal overlay with backdrop.
 -   **SelectSearch**: Searchable dropdown with live filtering.
+-   **TargetHour**: Booked slot list with hour lead and optional status tint.
 -   **ThemeToggle**: Theme switcher (dark/light).
 
 ## Where components fit

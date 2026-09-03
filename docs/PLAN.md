@@ -2,8 +2,9 @@
 PLAN: "feat: targethour list component + calendarslider widget.Filterable"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 14562099828291569359
+PR: https://github.com/tinywasm/components/pull/23
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.

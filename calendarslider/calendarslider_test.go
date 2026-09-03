@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	. "github.com/tinywasm/fmt"
+	"github.com/tinywasm/widget"
 )
 
 // La aritmética pura de fechas (bisiestos, días por mes, día de la semana,
@@ -321,5 +322,14 @@ func TestNumMonthsDefaultsToThree(t *testing.T) {
 	htmlOut := c.Render().String()
 	if got := strings.Count(htmlOut, "id='cs-m-"); got != 3 {
 		t.Errorf("NumMonths sin especificar debería dar 3 meses, la tira tiene %d", got)
+	}
+}
+
+func TestCalendarSlider_SatisfiesFilterable(t *testing.T) {
+	var c widget.Filterable = &CalendarSlider{}
+	got := ""
+	c.OnFilterChange(func(term string) { got = term })
+	if got != "" {
+		t.Fatalf("sink must not fire on registration, got %q", got)
 	}
 }

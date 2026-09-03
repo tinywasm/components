@@ -36,12 +36,14 @@ func exists(sel string) bool {
 // selecciona (señal + callback) y un día no ocupable no.
 func TestDayClickSelects(t *testing.T) {
 	var got string
+	var gotFilter string
 	c := &CalendarSlider{
 		Start:      "2026-08",
 		Holidays:   []Holiday{{Date: "2026-08-15", Name: "Asunción"}},
 		Occupation: []OccupationDay{{Date: "2026-08-11", Percent: 60}},
 		OnSelect:   func(date string) { got = date },
 	}
+	c.OnFilterChange(func(term string) { gotFilter = term })
 	c.Init(nil)
 	Render("app", c.Render())
 
@@ -53,6 +55,9 @@ func TestDayClickSelects(t *testing.T) {
 	if got != "2026-08-11" {
 		t.Errorf("OnSelect = %q, want 2026-08-11", got)
 	}
+	if gotFilter != "2026-08-11" {
+		t.Errorf("OnFilterChange = %q, want 2026-08-11", gotFilter)
+	}
 	if query(t, "#cs-d-2026-08-11").Call("getAttribute", "data-selected").String() != "true" {
 		t.Error("el día seleccionado debería llevar data-selected=true")
 	}
@@ -60,8 +65,9 @@ func TestDayClickSelects(t *testing.T) {
 	// Un sábado sin ocupación no es seleccionable: ni señal ni callback.
 	c.Selected.Set("")
 	got = ""
+	gotFilter = ""
 	query(t, "#cs-d-2026-08-01").Call("click")
-	if c.Selected.Get() != "" || got != "" {
+	if c.Selected.Get() != "" || got != "" || gotFilter != "" {
 		t.Error("un día no ocupable no debería seleccionarse")
 	}
 }
