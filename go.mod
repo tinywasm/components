@@ -23,5 +23,5 @@ require (
 	github.com/tinywasm/font v0.0.4 // indirect
 	github.com/tinywasm/json v0.5.23 // indirect
 	github.com/tinywasm/model v0.1.7 // indirect
-	github.com/tinywasm/router v0.1.29 // indirect
+	github.com/tinywasm/router v0.1.30 // indirect
 )
