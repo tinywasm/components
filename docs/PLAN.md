@@ -2,6 +2,8 @@
 PLAN: "fix: calendarslider nav must not touch location.hash; move list-selection chrome into listselect"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 8064228250952934631
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
