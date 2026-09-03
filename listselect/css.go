@@ -91,14 +91,16 @@ func Apply(s *style.Sheet, check, trashIcon, pencilIcon, row widget.Part) *style
 // targetdate and targethour call this instead of hand-writing the block.
 //
 // Same shape as Apply's per-row check: hidden until selection mode opens
-// (Open on the list root), then a centred flex box carrying one glyph — trash
-// while the danger tone is armed (Invalid on the box), pencil otherwise
-// (Selected on the box). The box fills solid when every row is marked (Locked
-// on the box); it shows a lighter "some marked" wash otherwise (Busy). count
-// is a small "n / total" label beside the glyph.
+// (Open on the list root), then a centred flex box carrying one glyph beside a
+// small "n / total" count label. Which glyph, and what colour the box wears,
+// is the MODE: Invalid on the box (danger tone armed) → trash on a red wash;
+// Selected on the box (edit) → pencil on an amber wash. The none / some / all
+// distinction is read from the count text ("0 / 15", "7 / 15", "15 / 15"), not
+// from a third fill — a red "all" box in edit mode would lie about the mode.
 //
-// MAINTAINER: the exact tokens for the all/some/none looks are a first pass —
-// refine As(...) below.
+// MAINTAINER: a solid fill at "all" is a reasonable future polish — it needs a
+// compound state the DSL does not have today (mode AND count), so it is left
+// out of this first pass rather than faked mode-blind.
 func ApplyMaster(s *style.Sheet, checkAll, trashIcon, pencilIcon, count widget.Part) *style.Sheet {
 	return s.
 		Part(checkAll,
@@ -127,8 +129,8 @@ func ApplyMaster(s *style.Sheet, checkAll, trashIcon, pencilIcon, count widget.P
 		).
 		WhenWithin(widget.Invalid, checkAll, trashIcon, style.Show()).
 		WhenWithin(widget.Selected, checkAll, pencilIcon, style.Show()).
-		When(widget.Locked, checkAll, style.As(style.Danger)).       // all rows marked
-		When(widget.Busy, checkAll, style.As(style.DangerWash))      // some rows marked
+		When(widget.Invalid, checkAll, style.As(style.DangerWash)). // delete-select mode
+		When(widget.Selected, checkAll, style.As(style.AccentWash)) // edit-select mode
 }
 
 // Ensure compile check for css import

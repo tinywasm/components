@@ -140,12 +140,6 @@ func (t *TargetHour) buildMasterCheck() *Element {
 		n := t.sel.Count()
 		return n > 0 && n == len(t.items)
 	})
-	someChecked := DeriveBool(func() bool {
-		_ = t.sel.Changed().Get()
-		n := t.sel.Count()
-		return n > 0 && n < len(t.items)
-	})
-
 	m := Span().Set(clsCheckAll.AsAttr()).
 		Attr("role", "checkbox").
 		BindAttrBool("aria-checked", allChecked).
@@ -154,9 +148,6 @@ func (t *TargetHour) buildMasterCheck() *Element {
 		// keyed on the MODE (sel.Danger), not on "this row is checked".
 		BindState(widget.Invalid, DeriveBool(func() bool { return t.sel.On().Get() && t.sel.Danger().Get() })).
 		BindState(widget.Selected, DeriveBool(func() bool { return t.sel.On().Get() && !t.sel.Danger().Get() })).
-		// fill: solid when ALL marked, lighter wash when SOME marked.
-		BindState(widget.Locked, allChecked).
-		BindState(widget.Busy, someChecked).
 		Child(trash.Ref.Render(string(clsCheckAllTrash))).
 		Child(pencil.Ref.Render(string(clsCheckAllPencil))).
 		Child(Span().Set(clsCheckAllCount.AsAttr()).
