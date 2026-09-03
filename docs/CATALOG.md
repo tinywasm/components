@@ -54,7 +54,7 @@ Declarative month calendar (zero JS): a window of `NumMonths` months centered
 on the current month, rebuilt by ‹ › via `BindChildren`. Holidays (red),
 occupation percentage (selectable days with `N%` bar), today marker, and
 single-day selection through a `*dom.SignalString` (`YYYY-MM-DD`) with
-`BindState(widget.Selected, ...)` — the DOM patches in place, never re-renders.
+`BindState(widget.Selected, ...)` — the DOM patches in place, never re-renders. Satisfies `widget.Filterable` for `crudview` filter integration.
 [Detailed Documentation →](../calendarslider/README.md)
 
 ---
@@ -85,6 +85,11 @@ One-control filter bar: a magnifier cap and a text field sized by
 knows nothing about what it filters, so a host can swap it for a calendar or a
 select in the same slot.
 [Detailed Documentation →](../searchbar/README.md)
+
+---
+
+## [TargetHour](../targethour/README.md) — ✅ Slot-ready
+Selectable list component for a day's booked slots: each row leads with a prominent hour (`HH:MM`) and carries an optional per-row status tint (`pending` / `confirmed` / `attended`). Same multi-selection mechanics and `crudview.ListView` compatibility as `targetlist` and `targetdate`.
 
 ---
 

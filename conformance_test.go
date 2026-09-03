@@ -24,6 +24,7 @@ import (
 	"github.com/tinywasm/components/selectsearch"
 	"github.com/tinywasm/components/sitenav"
 	"github.com/tinywasm/components/statgrid"
+	"github.com/tinywasm/components/targethour"
 	"github.com/tinywasm/components/targetlist"
 	"github.com/tinywasm/components/themetoggle"
 	"github.com/tinywasm/css"
@@ -336,6 +337,7 @@ func TestEveryPackageEmits(t *testing.T) {
 		&selectsearch.SelectSearch{},
 		&sitenav.SiteNav{},
 		&statgrid.StatGrid{},
+		&targethour.TargetHour{},
 		&targetlist.TargetList{},
 		&themetoggle.ThemeToggle{},
 	}
@@ -367,6 +369,7 @@ func TestKindAllowsEveryState(t *testing.T) {
 		"selectsearch":   &selectsearch.SelectSearch{},
 		"sitenav":        &sitenav.SiteNav{},
 		"statgrid":       &statgrid.StatGrid{},
+		"targethour":     &targethour.TargetHour{},
 		"targetlist":     &targetlist.TargetList{},
 		"themetoggle":    &themetoggle.ThemeToggle{},
 	}

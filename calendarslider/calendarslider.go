@@ -105,8 +105,17 @@ type CalendarSlider struct {
 	// OnSelect se invoca al hacer clic en un día ocupable, con "YYYY-MM-DD".
 	OnSelect func(date string)
 
+	onFilter func(term string) // set via OnFilterChange — satisfies widget.Filterable
+
 	today string // fecha local de hoy, "YYYY-MM-DD"
 }
+
+var _ widget.Filterable = (*CalendarSlider)(nil)
+
+// OnFilterChange implements widget.Filterable: it registers the sink called
+// with the picked day ("YYYY-MM-DD") on every day selection. The signature
+// is fixed by widget.Filterable — do not add a parameter, do not rename.
+func (c *CalendarSlider) OnFilterChange(fn func(term string)) { c.onFilter = fn }
 
 // holidayName busca date en Holidays. Recorrido lineal — a lo sumo unas
 // pocas decenas de entradas por ventana renderizada — no map, TinyGo.
@@ -367,6 +376,9 @@ func (c *CalendarSlider) buildDay(year, month, day int) *Element {
 			c.Selected.Set(dateStr)
 			if c.OnSelect != nil {
 				c.OnSelect(dateStr)
+			}
+			if c.onFilter != nil {
+				c.onFilter(dateStr)
 			}
 		})
 	}
