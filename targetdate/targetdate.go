@@ -23,36 +23,44 @@ const badgeChars = 16
 const NameTargetDate = widget.Name("targetdate")
 
 const (
-	PartRow         = widget.Part("row")
-	PartContent     = widget.Part("content")
-	PartCheck       = widget.Part("check")
-	PartCheckTrash  = widget.Part("check-trash")
-	PartCheckPencil = widget.Part("check-pencil")
-	PartBadge       = widget.Part("badge")
-	PartLabel       = widget.Part("label")
-	PartList        = widget.Part("list")
-	PartLead        = widget.Part("lead")
-	PartLeadStack   = widget.Part("lead-stack")
-	PartLeadTop     = widget.Part("lead-top")
-	PartLeadMain    = widget.Part("lead-main")
-	PartLeadBottom  = widget.Part("lead-bottom")
+	PartRow            = widget.Part("row")
+	PartContent        = widget.Part("content")
+	PartCheck          = widget.Part("check")
+	PartCheckTrash     = widget.Part("check-trash")
+	PartCheckPencil    = widget.Part("check-pencil")
+	PartCheckAll       = widget.Part("check-all")
+	PartCheckAllTrash  = widget.Part("check-all-trash")
+	PartCheckAllPencil = widget.Part("check-all-pencil")
+	PartCheckAllCount  = widget.Part("check-all-count")
+	PartBadge          = widget.Part("badge")
+	PartLabel          = widget.Part("label")
+	PartList           = widget.Part("list")
+	PartLead           = widget.Part("lead")
+	PartLeadStack      = widget.Part("lead-stack")
+	PartLeadTop        = widget.Part("lead-top")
+	PartLeadMain       = widget.Part("lead-main")
+	PartLeadBottom     = widget.Part("lead-bottom")
 )
 
 var (
-	clsListWrap    = NameTargetDate.Root()
-	clsList        = NameTargetDate.Class(PartList)
-	clsRow         = NameTargetDate.Class(PartRow)
-	clsContent     = NameTargetDate.Class(PartContent)
-	clsCheck       = NameTargetDate.Class(PartCheck)
-	clsCheckTrash  = NameTargetDate.Class(PartCheckTrash)
-	clsCheckPencil = NameTargetDate.Class(PartCheckPencil)
-	clsLabel       = NameTargetDate.Class(PartLabel)
-	clsBadge       = NameTargetDate.Class(PartBadge)
-	clsLead        = NameTargetDate.Class(PartLead)
-	clsLeadStack   = NameTargetDate.Class(PartLeadStack)
-	clsLeadTop     = NameTargetDate.Class(PartLeadTop)
-	clsLeadMain    = NameTargetDate.Class(PartLeadMain)
-	clsLeadBottom  = NameTargetDate.Class(PartLeadBottom)
+	clsListWrap       = NameTargetDate.Root()
+	clsList           = NameTargetDate.Class(PartList)
+	clsRow            = NameTargetDate.Class(PartRow)
+	clsContent        = NameTargetDate.Class(PartContent)
+	clsCheck          = NameTargetDate.Class(PartCheck)
+	clsCheckTrash     = NameTargetDate.Class(PartCheckTrash)
+	clsCheckPencil    = NameTargetDate.Class(PartCheckPencil)
+	clsCheckAll       = NameTargetDate.Class(PartCheckAll)
+	clsCheckAllTrash  = NameTargetDate.Class(PartCheckAllTrash)
+	clsCheckAllPencil = NameTargetDate.Class(PartCheckAllPencil)
+	clsCheckAllCount  = NameTargetDate.Class(PartCheckAllCount)
+	clsLabel          = NameTargetDate.Class(PartLabel)
+	clsBadge          = NameTargetDate.Class(PartBadge)
+	clsLead           = NameTargetDate.Class(PartLead)
+	clsLeadStack      = NameTargetDate.Class(PartLeadStack)
+	clsLeadTop        = NameTargetDate.Class(PartLeadTop)
+	clsLeadMain       = NameTargetDate.Class(PartLeadMain)
+	clsLeadBottom     = NameTargetDate.Class(PartLeadBottom)
 )
 
 // Item is view.Item — see targetlist.Item's comment for why this is an
@@ -92,12 +100,16 @@ func (t *TargetDate) SetSelectMode(on bool)        { t.sel.SetOn(on) }
 func (t *TargetDate) SetDanger(on bool)            { t.sel.SetDanger(on) }
 func (t *TargetDate) OnCheckedChange(fn func(int)) { t.sel.OnChange = fn }
 
-func (t *TargetDate) CheckedIDs() []string {
+func (t *TargetDate) itemIDs() []string {
 	ids := make([]string, len(t.items))
 	for i, it := range t.items {
 		ids[i] = it.ID
 	}
-	return t.sel.CheckedIDs(ids)
+	return ids
+}
+
+func (t *TargetDate) CheckedIDs() []string {
+	return t.sel.CheckedIDs(t.itemIDs())
 }
 
 func (t *TargetDate) SetItems(items []Item) {
@@ -117,7 +129,40 @@ func (t *TargetDate) Render() *Element {
 	list := Ul().Set(clsList.AsAttr()).Attr("role", "listbox").BindChildren(t.rows)
 	return Div().Set(clsListWrap.AsAttr()).
 		BindStateFunc(widget.Open, func() bool { return t.sel.On().Get() }).
+		Child(t.buildMasterCheck()).
 		Child(list)
+}
+
+func (t *TargetDate) buildMasterCheck() *Element {
+	allChecked := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get() // re-read after every toggle (see Mode.Changed)
+		n := t.sel.Count()
+		return n > 0 && n == len(t.items)
+	})
+	m := Span().Set(clsCheckAll.AsAttr()).
+		Attr("role", "checkbox").
+		BindAttrBool("aria-checked", allChecked).
+		// glyph selector: trash while the danger tone is armed, pencil
+		// otherwise — mirrors the row check's Invalid/Selected split, but
+		// keyed on the MODE (sel.Danger), not on "this row is checked".
+		BindState(widget.Invalid, DeriveBool(func() bool { return t.sel.On().Get() && t.sel.Danger().Get() })).
+		BindState(widget.Selected, DeriveBool(func() bool { return t.sel.On().Get() && !t.sel.Danger().Get() })).
+		Child(trash.Ref.Render(string(clsCheckAllTrash))).
+		Child(pencil.Ref.Render(string(clsCheckAllPencil))).
+		Child(Span().Set(clsCheckAllCount.AsAttr()).
+			BindTextFunc(func() string {
+				_ = t.sel.Changed().Get()
+				return fmt.Sprintf("%d / %d", t.sel.Count(), len(t.items))
+			}))
+
+	m.On("click", func(Event) {
+		if n := t.sel.Count(); n > 0 && n == len(t.items) {
+			t.sel.Clear()
+			return
+		}
+		t.sel.CheckAll(t.itemIDs())
+	})
+	return m
 }
 
 func (t *TargetDate) buildRow(it Item) *Element {
