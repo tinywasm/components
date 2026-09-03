@@ -13,7 +13,7 @@ require (
 	github.com/tinywasm/svg v0.3.0
 	github.com/tinywasm/time v0.5.4
 	github.com/tinywasm/view v0.2.1
-	github.com/tinywasm/widget v0.6.19
+	github.com/tinywasm/widget v0.6.21
 )
 
 require (
