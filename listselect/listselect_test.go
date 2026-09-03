@@ -121,3 +121,55 @@ func TestSetDangerRoundtrip(t *testing.T) {
 		t.Error("SetDanger(false) must disarm the tone")
 	}
 }
+
+func TestCheckAllMarksEveryIDInOrder(t *testing.T) {
+	var m listselect.Mode
+	m.SetOn(true)
+	m.CheckAll([]string{"a", "b", "c"})
+	if m.Count() != 3 {
+		t.Fatalf("Count = %d, want 3", m.Count())
+	}
+	got := m.CheckedIDs([]string{"a", "b", "c"})
+	if len(got) != 3 || got[0] != "a" || got[2] != "c" {
+		t.Errorf("CheckedIDs = %v, want [a b c]", got)
+	}
+}
+
+func TestClearUnmarksButStaysInSelectionMode(t *testing.T) {
+	var m listselect.Mode
+	m.SetOn(true)
+	m.CheckAll([]string{"a", "b"})
+	m.Clear()
+	if m.Count() != 0 {
+		t.Errorf("Clear must unmark everything, Count = %d", m.Count())
+	}
+	if !m.On().Get() {
+		t.Errorf("Clear must NOT leave selection mode")
+	}
+}
+
+func TestCheckAllOwnsItsBackingArray(t *testing.T) {
+	var m listselect.Mode
+	m.SetOn(true)
+	src := []string{"a", "b"}
+	m.CheckAll(src)
+	src[0] = "MUTATED"
+	if m.IsChecked("MUTATED") || !m.IsChecked("a") {
+		t.Errorf("CheckAll must copy, not alias, the caller's slice")
+	}
+}
+
+func TestCheckAllFiresOnChangeWithTotal(t *testing.T) {
+	var m listselect.Mode
+	var last int
+	m.OnChange = func(n int) { last = n }
+	m.SetOn(true)
+	m.CheckAll([]string{"a", "b", "c"})
+	if last != 3 {
+		t.Errorf("OnChange got %d, want 3", last)
+	}
+	m.Clear()
+	if last != 0 {
+		t.Errorf("OnChange after Clear got %d, want 0", last)
+	}
+}

@@ -22,28 +22,36 @@ const badgeChars = 16
 const NameTargetHour = widget.Name("targethour")
 
 const (
-	PartRow         = widget.Part("row")
-	PartContent     = widget.Part("content")
-	PartCheck       = widget.Part("check")
-	PartCheckTrash  = widget.Part("check-trash")
-	PartCheckPencil = widget.Part("check-pencil")
-	PartHour        = widget.Part("hour")
-	PartLabel       = widget.Part("label")
-	PartBadge       = widget.Part("badge")
-	PartList        = widget.Part("list")
+	PartRow            = widget.Part("row")
+	PartContent        = widget.Part("content")
+	PartCheck          = widget.Part("check")
+	PartCheckTrash     = widget.Part("check-trash")
+	PartCheckPencil    = widget.Part("check-pencil")
+	PartCheckAll       = widget.Part("check-all")
+	PartCheckAllTrash  = widget.Part("check-all-trash")
+	PartCheckAllPencil = widget.Part("check-all-pencil")
+	PartCheckAllCount  = widget.Part("check-all-count")
+	PartHour           = widget.Part("hour")
+	PartLabel          = widget.Part("label")
+	PartBadge          = widget.Part("badge")
+	PartList           = widget.Part("list")
 )
 
 var (
-	clsListWrap    = NameTargetHour.Root()
-	clsList        = NameTargetHour.Class(PartList)
-	clsRow         = NameTargetHour.Class(PartRow)
-	clsContent     = NameTargetHour.Class(PartContent)
-	clsCheck       = NameTargetHour.Class(PartCheck)
-	clsCheckTrash  = NameTargetHour.Class(PartCheckTrash)
-	clsCheckPencil = NameTargetHour.Class(PartCheckPencil)
-	clsHour        = NameTargetHour.Class(PartHour)
-	clsLabel       = NameTargetHour.Class(PartLabel)
-	clsBadge       = NameTargetHour.Class(PartBadge)
+	clsListWrap       = NameTargetHour.Root()
+	clsList           = NameTargetHour.Class(PartList)
+	clsRow            = NameTargetHour.Class(PartRow)
+	clsContent        = NameTargetHour.Class(PartContent)
+	clsCheck          = NameTargetHour.Class(PartCheck)
+	clsCheckTrash     = NameTargetHour.Class(PartCheckTrash)
+	clsCheckPencil    = NameTargetHour.Class(PartCheckPencil)
+	clsCheckAll       = NameTargetHour.Class(PartCheckAll)
+	clsCheckAllTrash  = NameTargetHour.Class(PartCheckAllTrash)
+	clsCheckAllPencil = NameTargetHour.Class(PartCheckAllPencil)
+	clsCheckAllCount  = NameTargetHour.Class(PartCheckAllCount)
+	clsHour           = NameTargetHour.Class(PartHour)
+	clsLabel          = NameTargetHour.Class(PartLabel)
+	clsBadge          = NameTargetHour.Class(PartBadge)
 )
 
 type Item = view.Item
@@ -93,12 +101,16 @@ func (t *TargetHour) SetSelectMode(on bool)        { t.sel.SetOn(on) }
 func (t *TargetHour) SetDanger(on bool)            { t.sel.SetDanger(on) }
 func (t *TargetHour) OnCheckedChange(fn func(int)) { t.sel.OnChange = fn }
 
-func (t *TargetHour) CheckedIDs() []string {
+func (t *TargetHour) itemIDs() []string {
 	ids := make([]string, len(t.items))
 	for i, it := range t.items {
 		ids[i] = it.ID
 	}
-	return t.sel.CheckedIDs(ids)
+	return ids
+}
+
+func (t *TargetHour) CheckedIDs() []string {
+	return t.sel.CheckedIDs(t.itemIDs())
 }
 
 func (t *TargetHour) SetItems(items []Item) {
@@ -118,7 +130,49 @@ func (t *TargetHour) Render() *Element {
 	list := Ul().Set(clsList.AsAttr()).Attr("role", "listbox").BindChildren(t.rows)
 	return Div().Set(clsListWrap.AsAttr()).
 		BindStateFunc(widget.Open, func() bool { return t.sel.On().Get() }).
+		Child(t.buildMasterCheck()).
 		Child(list)
+}
+
+func (t *TargetHour) buildMasterCheck() *Element {
+	allChecked := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get() // re-read after every toggle (see Mode.Changed)
+		n := t.sel.Count()
+		return n > 0 && n == len(t.items)
+	})
+	someChecked := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get()
+		n := t.sel.Count()
+		return n > 0 && n < len(t.items)
+	})
+
+	m := Span().Set(clsCheckAll.AsAttr()).
+		Attr("role", "checkbox").
+		BindAttrBool("aria-checked", allChecked).
+		// glyph selector: trash while the danger tone is armed, pencil
+		// otherwise — mirrors the row check's Invalid/Selected split, but
+		// keyed on the MODE (sel.Danger), not on "this row is checked".
+		BindState(widget.Invalid, DeriveBool(func() bool { return t.sel.On().Get() && t.sel.Danger().Get() })).
+		BindState(widget.Selected, DeriveBool(func() bool { return t.sel.On().Get() && !t.sel.Danger().Get() })).
+		// fill: solid when ALL marked, lighter wash when SOME marked.
+		BindState(widget.Locked, allChecked).
+		BindState(widget.Busy, someChecked).
+		Child(trash.Ref.Render(string(clsCheckAllTrash))).
+		Child(pencil.Ref.Render(string(clsCheckAllPencil))).
+		Child(Span().Set(clsCheckAllCount.AsAttr()).
+			BindTextFunc(func() string {
+				_ = t.sel.Changed().Get()
+				return fmt.Sprintf("%d / %d", t.sel.Count(), len(t.items))
+			}))
+
+	m.On("click", func(Event) {
+		if n := t.sel.Count(); n > 0 && n == len(t.items) {
+			t.sel.Clear()
+			return
+		}
+		t.sel.CheckAll(t.itemIDs())
+	})
+	return m
 }
 
 func (t *TargetHour) buildRow(it Item) *Element {

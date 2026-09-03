@@ -24,6 +24,7 @@ func (t *TargetHour) sheet() *style.Sheet {
 	listgap.Apply(s, PartList)
 	s.On(css.Mobile, PartList, listgap.MobileOpts()...)
 	listselect.Apply(s, PartCheck, PartCheckTrash, PartCheckPencil, PartRow)
+	listselect.ApplyMaster(s, PartCheckAll, PartCheckAllTrash, PartCheckAllPencil, PartCheckAllCount)
 
 	return s.
 		Part(PartRow,

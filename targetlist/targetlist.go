@@ -21,24 +21,32 @@ const badgeChars = 16
 const NameTargetList = widget.Name("targetlist")
 
 const (
-	PartRow         = widget.Part("row")
-	PartCheck       = widget.Part("check")
-	PartCheckTrash  = widget.Part("check-trash")
-	PartCheckPencil = widget.Part("check-pencil")
-	PartBadge       = widget.Part("badge")
-	PartLabel       = widget.Part("label")
-	PartList        = widget.Part("list")
+	PartRow            = widget.Part("row")
+	PartCheck          = widget.Part("check")
+	PartCheckTrash     = widget.Part("check-trash")
+	PartCheckPencil    = widget.Part("check-pencil")
+	PartCheckAll       = widget.Part("check-all")
+	PartCheckAllTrash  = widget.Part("check-all-trash")
+	PartCheckAllPencil = widget.Part("check-all-pencil")
+	PartCheckAllCount  = widget.Part("check-all-count")
+	PartBadge          = widget.Part("badge")
+	PartLabel          = widget.Part("label")
+	PartList           = widget.Part("list")
 )
 
 var (
-	clsListWrap    = NameTargetList.Root()
-	clsList        = NameTargetList.Class(PartList)
-	clsRow         = NameTargetList.Class(PartRow)
-	clsCheck       = NameTargetList.Class(PartCheck)
-	clsCheckTrash  = NameTargetList.Class(PartCheckTrash)
-	clsCheckPencil = NameTargetList.Class(PartCheckPencil)
-	clsLabel       = NameTargetList.Class(PartLabel)
-	clsBadge       = NameTargetList.Class(PartBadge)
+	clsListWrap       = NameTargetList.Root()
+	clsList           = NameTargetList.Class(PartList)
+	clsRow            = NameTargetList.Class(PartRow)
+	clsCheck          = NameTargetList.Class(PartCheck)
+	clsCheckTrash     = NameTargetList.Class(PartCheckTrash)
+	clsCheckPencil    = NameTargetList.Class(PartCheckPencil)
+	clsCheckAll       = NameTargetList.Class(PartCheckAll)
+	clsCheckAllTrash  = NameTargetList.Class(PartCheckAllTrash)
+	clsCheckAllPencil = NameTargetList.Class(PartCheckAllPencil)
+	clsCheckAllCount  = NameTargetList.Class(PartCheckAllCount)
+	clsLabel          = NameTargetList.Class(PartLabel)
+	clsBadge          = NameTargetList.Class(PartBadge)
 )
 
 // Item is view.Item, not a copy: a shared shape means crudview.filter's
@@ -82,12 +90,16 @@ func (t *TargetList) SetSelectMode(on bool)        { t.sel.SetOn(on) }
 func (t *TargetList) SetDanger(on bool)            { t.sel.SetDanger(on) }
 func (t *TargetList) OnCheckedChange(fn func(int)) { t.sel.OnChange = fn }
 
-func (t *TargetList) CheckedIDs() []string {
+func (t *TargetList) itemIDs() []string {
 	ids := make([]string, len(t.items))
 	for i, it := range t.items {
 		ids[i] = it.ID
 	}
-	return t.sel.CheckedIDs(ids)
+	return ids
+}
+
+func (t *TargetList) CheckedIDs() []string {
+	return t.sel.CheckedIDs(t.itemIDs())
 }
 
 // SetItems replaces the visible rows. Safe to call from a host on every filter or
@@ -113,7 +125,49 @@ func (t *TargetList) Render() *Element {
 
 	return Div().Set(clsListWrap.AsAttr()).
 		BindStateFunc(widget.Open, func() bool { return t.sel.On().Get() }).
+		Child(t.buildMasterCheck()).
 		Child(list)
+}
+
+func (t *TargetList) buildMasterCheck() *Element {
+	allChecked := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get() // re-read after every toggle (see Mode.Changed)
+		n := t.sel.Count()
+		return n > 0 && n == len(t.items)
+	})
+	someChecked := DeriveBool(func() bool {
+		_ = t.sel.Changed().Get()
+		n := t.sel.Count()
+		return n > 0 && n < len(t.items)
+	})
+
+	m := Span().Set(clsCheckAll.AsAttr()).
+		Attr("role", "checkbox").
+		BindAttrBool("aria-checked", allChecked).
+		// glyph selector: trash while the danger tone is armed, pencil
+		// otherwise — mirrors the row check's Invalid/Selected split, but
+		// keyed on the MODE (sel.Danger), not on "this row is checked".
+		BindState(widget.Invalid, DeriveBool(func() bool { return t.sel.On().Get() && t.sel.Danger().Get() })).
+		BindState(widget.Selected, DeriveBool(func() bool { return t.sel.On().Get() && !t.sel.Danger().Get() })).
+		// fill: solid when ALL marked, lighter wash when SOME marked.
+		BindState(widget.Locked, allChecked).
+		BindState(widget.Busy, someChecked).
+		Child(trash.Ref.Render(string(clsCheckAllTrash))).
+		Child(pencil.Ref.Render(string(clsCheckAllPencil))).
+		Child(Span().Set(clsCheckAllCount.AsAttr()).
+			BindTextFunc(func() string {
+				_ = t.sel.Changed().Get()
+				return fmt.Sprintf("%d / %d", t.sel.Count(), len(t.items))
+			}))
+
+	m.On("click", func(Event) {
+		if n := t.sel.Count(); n > 0 && n == len(t.items) {
+			t.sel.Clear()
+			return
+		}
+		t.sel.CheckAll(t.itemIDs())
+	})
+	return m
 }
 
 func (t *TargetList) buildRow(it Item) *Element {

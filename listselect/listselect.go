@@ -127,6 +127,38 @@ func (m *Mode) Toggle(id string) {
 	}
 }
 
+// CheckAll marks every id in ids — the caller's CURRENT render order — and
+// replaces any previous selection. It owns a fresh backing array (never
+// aliases the caller's slice). Fires Changed() and OnChange with the new
+// count. This is the master check's "select all" action.
+func (m *Mode) CheckAll(ids []string) {
+	m.ensure()
+	m.checked = append([]string(nil), ids...)
+	m.Changed().Toggle()
+	if m.OnChange != nil {
+		m.OnChange(len(m.checked))
+	}
+}
+
+// Clear unmarks every row WITHOUT leaving selection mode — unlike
+// SetOn(false), which also exits the mode. The master check's "deselect all".
+// A no-op (no signal churn) when nothing is marked.
+func (m *Mode) Clear() {
+	m.ensure()
+	if len(m.checked) == 0 {
+		return
+	}
+	m.checked = nil
+	m.Changed().Toggle()
+	if m.OnChange != nil {
+		m.OnChange(0)
+	}
+}
+
+// Count reports how many rows are currently marked. The master check reads it
+// to decide its tri-state (none / some / all) and to render "n / total".
+func (m *Mode) Count() int { return len(m.checked) }
+
 // IsChecked answers for one id — what a row binds its check state to.
 func (m *Mode) IsChecked(id string) bool {
 	for _, c := range m.checked {

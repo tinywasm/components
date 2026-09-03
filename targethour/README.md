@@ -78,6 +78,10 @@ returns the marked ids in render order, `OnCheckedChange(fn)` fires the count.
 The check glyph (trash / pencil) comes from `github.com/tinywasm/icons`, the
 same one the crud view's footer buttons draw.
 
+### Master check (select all)
+
+In selection mode, a master check appears at the top-end corner of the list. It operates as a tri-state toggle: tapping it when no rows or some rows are checked selects all rows; tapping it when all rows are checked clears the selection. Beside the mode glyph (trash in danger mode, pencil otherwise), it displays an `n / total` count label.
+
 ## `crudview` integration
 
 Pair it with `calendarslider.CalendarSlider` as the `crudview.Config.Filter`:

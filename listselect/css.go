@@ -87,5 +87,49 @@ func Apply(s *style.Sheet, check, trashIcon, pencilIcon, row widget.Part) *style
 		)
 }
 
+// ApplyMaster adds the master (select-all) check's skin to s. targetlist,
+// targetdate and targethour call this instead of hand-writing the block.
+//
+// Same shape as Apply's per-row check: hidden until selection mode opens
+// (Open on the list root), then a centred flex box carrying one glyph — trash
+// while the danger tone is armed (Invalid on the box), pencil otherwise
+// (Selected on the box). The box fills solid when every row is marked (Locked
+// on the box); it shows a lighter "some marked" wash otherwise (Busy). count
+// is a small "n / total" label beside the glyph.
+//
+// MAINTAINER: the exact tokens for the all/some/none looks are a first pass —
+// refine As(...) below.
+func ApplyMaster(s *style.Sheet, checkAll, trashIcon, pencilIcon, count widget.Part) *style.Sheet {
+	return s.
+		Part(checkAll,
+			style.Hide(),
+			style.IconBox(style.IconMd),
+			style.KeepSize(),
+			style.Round(style.RadiusSm),
+			style.As(style.Inset),
+			style.OnEdge(style.EdgeTop, style.SideEnd, style.SpaceNone, style.Space2),
+			style.Animate(style.MotionFast),
+		).
+		Part(trashIcon, style.Hide(), style.IconBox(style.IconSm)).
+		Part(pencilIcon, style.Hide(), style.IconBox(style.IconSm)).
+		Part(count,
+			style.Hide(),
+			style.FontSize(style.TextXs),
+			style.FontWeight(style.WeightBold),
+		).
+		WhenWithin(widget.Open, "", checkAll,
+			style.Show(),
+			style.Row(style.Space1),
+			style.CenterContent(),
+		).
+		WhenWithin(widget.Open, "", count,
+			style.Show(),
+		).
+		WhenWithin(widget.Invalid, checkAll, trashIcon, style.Show()).
+		WhenWithin(widget.Selected, checkAll, pencilIcon, style.Show()).
+		When(widget.Locked, checkAll, style.As(style.Danger)).       // all rows marked
+		When(widget.Busy, checkAll, style.As(style.DangerWash))      // some rows marked
+}
+
 // Ensure compile check for css import
 var _ = css.Mobile
