@@ -2,8 +2,9 @@
 PLAN: "feat: master select-all check for target* record lists"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 17971103714245978648
+PR: https://github.com/tinywasm/components/pull/24
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
