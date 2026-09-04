@@ -47,7 +47,7 @@ func TestTargetDate_NormalHighlightLeavesCheckStateless(t *testing.T) {
 	row := td.buildRow(Item{ID: "1", Label: "Row 1"})
 
 	html := row.String()
-	check := html[strings.Index(html, `class='targetdate__check'`):]
+	check := html[strings.Index(html, `class='targetdate__sel-check'`):]
 	check = check[:strings.Index(check, "</span>")]
 	if strings.Contains(check, "data-selected") || strings.Contains(check, "data-invalid") {
 		t.Errorf("normal-mode highlight must leave the check box stateless\ncheck: %s", check)
@@ -60,9 +60,12 @@ func TestTargetDate_NormalHighlightLeavesCheckStateless(t *testing.T) {
 func TestTargetDate_CheckRidesTopEndCorner(t *testing.T) {
 	cssStr := (&TargetDate{}).RenderCSS().String()
 
-	i := strings.Index(cssStr, ".targetdate__check {")
+	// Anchored at line start: the KeepSize primitives group also mentions
+	// this class (as its last selector), so a bare substring search would
+	// land on a rule that has flex-shrink/grow but no position.
+	i := strings.Index(cssStr, "\n.targetdate__sel-check {")
 	if i == -1 {
-		t.Fatal("expected a rule for .targetdate__check")
+		t.Fatal("expected a rule for .targetdate__sel-check")
 	}
 	body := cssStr[i:]
 	if end := strings.Index(body, "}"); end != -1 {
@@ -95,18 +98,18 @@ func TestTargetDate_GlyphRevealHangsOffTheCheckBox(t *testing.T) {
 	cssStr := (&TargetDate{}).RenderCSS().String()
 
 	for _, sel := range []string{
-		`.targetdate__check[data-invalid="true"] .targetdate__check-trash`,
-		`.targetdate__check[data-selected="true"] .targetdate__check-pencil`,
-		`.targetdate__check[data-selected="true"]`,
-		`.targetdate__check[data-invalid="true"]`,
+		`.targetdate__sel-check[data-invalid="true"] .targetdate__sel-check-trash`,
+		`.targetdate__sel-check[data-selected="true"] .targetdate__sel-check-pencil`,
+		`.targetdate__sel-check[data-selected="true"]`,
+		`.targetdate__sel-check[data-invalid="true"]`,
 	} {
 		if !strings.Contains(cssStr, sel) {
 			t.Errorf("expected a check-box-scoped rule for %s", sel)
 		}
 	}
 	for _, sel := range []string{
-		`.targetdate__row[data-selected="true"] .targetdate__check-pencil`,
-		`.targetdate__row[data-invalid="true"] .targetdate__check-trash`,
+		`.targetdate__row[data-selected="true"] .targetdate__sel-check-pencil`,
+		`.targetdate__row[data-invalid="true"] .targetdate__sel-check-trash`,
 	} {
 		if strings.Contains(cssStr, sel) {
 			t.Errorf("the glyph reveal must not hang off the row: %s", sel)
@@ -121,8 +124,8 @@ func TestTargetDate_CheckBoxCarriesWhiteText(t *testing.T) {
 	cssStr := (&TargetDate{}).RenderCSS().String()
 
 	for _, tc := range []struct{ sel, want string }{
-		{`.targetdate__check[data-selected="true"]`, "--color-on-primary"},
-		{`.targetdate__check[data-invalid="true"]`, "--color-on-danger"},
+		{`.targetdate__sel-check[data-selected="true"]`, "--color-on-primary"},
+		{`.targetdate__sel-check[data-invalid="true"]`, "--color-on-danger"},
 	} {
 		i := strings.Index(cssStr, tc.sel+" {")
 		if i == -1 {
@@ -146,9 +149,12 @@ func TestTargetDate_CheckBoxCarriesWhiteText(t *testing.T) {
 func TestTargetDate_CheckHiddenUntilSelectionMode(t *testing.T) {
 	cssStr := (&TargetDate{}).RenderCSS().String()
 
-	i := strings.Index(cssStr, ".targetdate__check {")
+	// Anchored at line start: the KeepSize primitives group also mentions
+	// this class (as its last selector), so a bare substring search finds no
+	// display authority there.
+	i := strings.Index(cssStr, "\n.targetdate__sel-check {")
 	if i == -1 {
-		t.Fatal("expected a rule for .targetdate__check")
+		t.Fatal("expected a rule for .targetdate__sel-check")
 	}
 	body := cssStr[i:]
 	if end := strings.Index(body, "}"); end != -1 {
@@ -158,7 +164,7 @@ func TestTargetDate_CheckHiddenUntilSelectionMode(t *testing.T) {
 		t.Errorf("the check box must be hidden by default (normal mode), block:\n%s", body)
 	}
 
-	i = strings.Index(cssStr, `.targetdate[data-open="true"] .targetdate__check {`)
+	i = strings.Index(cssStr, `.targetdate[data-open="true"] .targetdate__sel-check {`)
 	if i == -1 {
 		t.Fatal("expected the check box to be revealed by the list's open state")
 	}
@@ -170,7 +176,7 @@ func TestTargetDate_CheckHiddenUntilSelectionMode(t *testing.T) {
 		t.Errorf("the revealed box must be a centred flex box, block:\n%s", body)
 	}
 
-	for _, part := range []string{".targetdate__check-trash", ".targetdate__check-pencil"} {
+	for _, part := range []string{".targetdate__sel-check-trash", ".targetdate__sel-check-pencil"} {
 		i := strings.Index(cssStr, part+" {")
 		if i == -1 {
 			t.Fatalf("expected a rule for %s", part)

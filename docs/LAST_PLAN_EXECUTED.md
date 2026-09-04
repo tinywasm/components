@@ -1,530 +1,491 @@
 ---
-PLAN: "fix(selectsearch): shape, icon turn, focus clipping and list parity"
-TAG: v0.6.0
+PLAN: "fix: calendarslider nav must not touch location.hash; move list-selection chrome into listselect"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 8064228250952934631
 ---
 
-> Este plan se despacha con el flujo CodeJob. Ver skill: agents-workflow.
+> This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
+> Do NOT run `gopush` or `codejob`; they are developer tools outside this repo.
 
-# Plan — `selectsearch`: forma, giro del icono, foco recortado y paridad con el resto del chasis
+# PLAN — `tinywasm/components`
 
-> **Idioma:** este documento está en español porque lo pidió el autor.
-> **El código, los comentarios de código y los nombres de símbolos van SIEMPRE en
-> inglés** — `tinywasm/*` es librería pública. No traduzcas identificadores ni
-> escribas comentarios en español dentro de los `.go`.
+Two independent fixes, both found testing the `#reservation` view of the demo
+app in the browser. Do **Part 1** and **Part 2** in order; each is
+self-contained; finish one (its acceptance criteria green) before the next.
+Never mix changes between them.
 
-## Prerrequisito (ejecutar primero)
-
-```bash
-go install github.com/tinywasm/devflow/cmd/gotest@latest
-```
-
-Se ejecuta `gotest` (nunca `go test`) desde la raíz del repo. No invoques
-`gopush` ni `codejob`.
-
-## ⛔ Gate: este plan depende de `tinywasm/widget`
-
-Las etapas 2 y 6 consumen `style.Rotate` / `style.TurnHalf`, que **todavía no
-existen**. Se añaden en
-<https://github.com/tinywasm/widget/blob/main/docs/PLAN.md>. No empieces hasta
-que ese plan esté publicado y `go.mod` apunte a la versión que los trae.
-Comprobación:
-
-```bash
-grep -rn "func Rotate" $(go env GOMODCACHE)/github.com/tinywasm/widget*/style/except.go
-```
+Root-cause write-up (context, not instructions):
+`../RESERVATION_VIEW_FIXES_MASTER_PLAN.md` in the monorepo — but everything you
+need is inline here.
 
 ---
 
-## 1. Contexto
+## Repo rules you MUST follow (from `AGENTS.md` + `CONSTRUCTION_HARNESS.md`)
 
-`components/selectsearch` es un combobox: una cabecera con un chevron que
-despliega un panel con un buscador y una lista de opciones. El autor reportó
-seis defectos. Todos comparten una causa de fondo: **el componente reinventó
-piezas que el chasis ya tenía resueltas** en lugar de ensamblar las existentes
-(`searchbar` para la cabecera, `listgap` + `targetlist` para la lista).
+- **Public library → everything in English**: code, comments, identifiers,
+  error messages. (Only Spanish that already exists in test comments may stay.)
+- **No Go stdlib in files that compile to WASM.** Use `github.com/tinywasm/fmt`
+  (`fmt.Sprintf`, `fmt.Errf`). No `errors`, `strconv`, `strings`. `tinywasm/fmt`
+  has **no** `Itoa` — use `fmt.Sprintf("%d", n)`.
+- **No `map[...]` in WASM-compiled code.** Linear scan over a slice.
+- **Embed `dom.Element` by value**, never `*dom.Element`.
+- **Build-tag split by file**: runtime/`Render()` code is untagged; CSS lives in
+  `css.go` under `//go:build !wasm`; SVG geometry in `svg.go` under
+  `//go:build !wasm`. Never create `front.go`.
+- **Component contract is `Render()` + optional `Init(ctx)` only.** No
+  `OnMount`/lifecycle hooks. One-time work goes in `Init`.
+- **Reactivity is signals only** (`SignalString`/`SignalBool`/`SignalNodes`,
+  `DeriveBool`, `Bind*`/`Bind*Func`). No generics anywhere.
+- **A shared piece is assembled, never re-declared.** If two components would
+  contain the same block, it belongs in the lego piece that owns the concern
+  (`listselect`, `listgap`), exposed as a typed helper — not pasted twice.
+- Tests: `gotest`, never `go test`. Stdlib `testing` only. WASM tests run
+  against a real DOM. Every new/changed public helper needs a
+  **consumer-shaped test in this repo**.
+- Pre-publish sprite-leak check must stay clean:
+  `GOOS=js GOARCH=wasm go list -deps ./... | grep tinywasm/svg/sprite` → empty.
 
-Eso viola la doctrina del ecosistema (`CONSTRUCTION_HARNESS.md`):
+---
 
-> *"Applications and server implementations do not re-implement anything; they
-> **assemble pieces**."*
-> *"The glue is written once, in the library that owns it."*
+# PART 1 — `calendarslider`: the ‹ › controls must not mutate `location.hash`
 
-Archivos implicados (todos dentro de `selectsearch/`):
+## The bug
 
-| Archivo | Qué contiene hoy |
-|---|---|
-| `css.go` | 135 líneas: el `style.Sheet` completo del componente |
-| `selectsearch.go` | 244 líneas: markup, señales, `buildRows`, `selectOption` |
-| `svg.go` | el icono `ss-arrow-down` |
-| `selectsearch_test.go`, `css_test.go`, `selectsearch_contract_test.go` | tests |
-
-## 2. Los seis defectos, con su causa exacta
-
-### A. Pierde la forma al estrechar la ventana
-
-`style.Row()` emite `flex-wrap: wrap` (verificable en
-`widget/style/emit_primitives.go`, bloque `rowSel`). En `css.go`:
-
-- `PartHeader` es `Row(SpaceNone)` **sin** `ControlBox()` ni `KeepSize()`.
-- `PartIcon` tiene `ControlBox()` pero **sin** `KeepSize()`, así que encoge.
-
-Al faltar espacio, el texto salta a una segunda línea debajo del cuadro azul y
-la cabecera deja de ser una barra.
-
-**`searchbar/css.go` ya resuelve exactamente esto** y es el patrón a copiar:
+`calendarslider/calendarslider.go` `buildMonth` renders the month-navigation
+controls as page anchors:
 
 ```go
-Root(Row(SpaceNone), Round(RadiusMd), HideOverflow(), ControlBox(), KeepSize())
-Part(PartIcon, As(Primary), MediaBox(AspectSquare), ControlBox(), KeepSize())
-Part(PartInput, As(Inset), Pad(Space2), Grow(), ControlBox())
+monthEl.Child(A("#cs-m-" + prevKey).Set(clsPrev.AsAttr())...)
+monthEl.Child(A("#cs-m-" + nextKey).Set(clsNext.AsAttr())...)
 ```
 
-### B. El chevron no gira al desplegar
+The package doc (lines 1–9) states this is deliberate: *"the ‹ › controls are
+plain same-page anchor links (`<a href="#cs-m-...">`) … the browser's native
+scroll-snap does the sliding — no click handler"*.
 
-No hay ninguna regla de rotación, y el DOM no escribe `data-open` en ninguna
-parte que el CSS pueda seleccionar. `c.isOpen` sólo alimenta el `checked` del
-checkbox oculto y el `Show()` del panel.
+That assumes the URL hash is free real estate. In `platformd` (the shell the
+demo runs in) **the hash is the router**. Clicking ‹ or › sets
+`location.hash = "#cs-m-2026-10"`; the router finds no module by that name and
+**blanks the whole stage**. Confirmed live: pressing › left `<main>` empty with
+`location.hash` = `#cs-m-2026-10`.
 
-### C. El buscador aparece con las esquinas recortadas al enfocarse
+## What is already correct — do NOT change it
 
-`PartDropdown` es `As(Panel)` sin `Round()` explícito → hereda
-`border-radius: var(--radius-md)` por defecto (ver `Surface.defaultRadius()` en
-`widget/style/surface.go`) **y** lleva `HideOverflow()`. `PartDropdown` no
-tiene padding, así que `PartSearch` queda a ras del borde superior redondeado y
-sus esquinas —y el anillo de foco ámbar, que se dibuja por dentro— quedan
-cortadas por el clip del padre.
+- `NumMonths` (field, `calendarslider.go:100`) already makes the month count
+  configurable. `numMonths()` (`:153`) already applies `0 → 3` and caps at
+  `maxMonths` (12). **The demo's "3 months" is already the default. Add no new
+  configurability.**
+- The wrap-around ("rotate between them") is already built: `Render` (`:198`)
+  links `keys[(i-1+n)%n]` as prev and `keys[(i+1)%n]` as next, so the first
+  month's ‹ points at the last and the last month's › points at the first.
+  **Keep this behaviour exactly.**
 
-### D. El hover no es el del resto de la aplicación
+The ONLY defect is that the control is an `<a href="#...">` instead of a button
+that scrolls.
 
-`PartOption` usa `Interactive(style.Panel)`, cuyo hover es una mezcla gris
-genérica. El lenguaje del chasis para "vas camino de seleccionar esto" es el
-ámbar: `targetlist/css.go` lo declara así y lo documenta —
+## Fix — file by file
 
-```go
-Cue(widget.Hover, PartRow, style.As(style.AccentWash))
-Cue(widget.Focus, PartRow, style.As(style.AccentWash))
-Cue(widget.Press, PartRow, style.As(style.Accent))
-When(widget.Selected, PartRow, style.As(style.Accent))
-```
+### `calendarslider/calendarslider.go`
 
-### E. El listado se ve distinto al resto de listados
+1. **`buildMonth`** — replace the two `A("#cs-m-"+key)` children with buttons.
+   Keep every other attribute (`clsPrev`/`clsNext` class, `aria-label`,
+   `title`, the `‹` / `›` text). Add `data-target` carrying the destination id
+   (needed by the SSR test to assert the wrap-around, and it documents intent):
 
-`PartOptions` declara su contenedor a mano (`Stack(SpaceNone)` + `Scroll()`),
-mientras que `targetlist` y `targetdate` ensamblan la pieza compartida
-`components/listgap`. Y `PartOption` no tiene la forma de fila del chasis
-(`Round`, `Pad(Space3)`, `ControlBox`, `Interactive(Page)`).
+   ```go
+   prev := Button().Set(clsPrev.AsAttr()).
+       Attr("type", "button").
+       Attr("aria-label", "Mes anterior").
+       Attr("title", "Mes anterior").
+       Attr("data-target", "cs-m-"+prevKey).
+       Text("‹")
+   prev.On("click", func(Event) { slideToMonth(prevKey) })
+   monthEl.Child(prev)
 
-`listgap` existe justo para esto — su doc de paquete:
+   next := Button().Set(clsNext.AsAttr()).
+       Attr("type", "button").
+       Attr("aria-label", "Mes siguiente").
+       Attr("title", "Mes siguiente").
+       Attr("data-target", "cs-m-"+nextKey).
+       Text("›")
+   next.On("click", func(Event) { slideToMonth(nextKey) })
+   monthEl.Child(next)
+   ```
 
-> *"It is a lego piece — the list components assemble it, they do not
-> re-declare its shape or its spacing."*
+   `Button` is already available (`. "github.com/tinywasm/html"` dot-import).
+   `Event` and `Get` are already available (`. "github.com/tinywasm/dom"`).
 
-### F. (adicional) IDs fijos: dos instancias en una página se pisan
+2. **Add the helper** (same file, package-level, near `buildMonth`):
 
-`selectsearch.go` escribe literales `"ss-toggle"`, `"ss-search"`, `"ss-options"`
-y `"ss-opt-"+id`. El `<label for="ss-toggle">` de una segunda instancia abre el
-desplegable de la primera, y `Get("ss-search")` enfoca el buscador equivocado.
-No es visible hoy porque la demo monta una sola, pero es el mismo tipo de
-defecto silencioso que el resto del plan corrige.
+   ```go
+   // slideToMonth jumps the scroll-snap strip to the month card carrying the
+   // given key. The ‹ › controls call this instead of being
+   // <a href="#cs-m-..."> anchors: an anchor mutates location.hash, and a
+   // hash-routed shell (platformd) reads that as a route change, not a scroll.
+   // A <button> plus this handler keeps the slide entirely inside the widget;
+   // the browser still animates it via scroll-snap. ScrollIntoView is a no-op
+   // on the server build.
+   func slideToMonth(key string) {
+       if ref, ok := Get("cs-m-" + key); ok {
+           ref.ScrollIntoView()
+       }
+   }
+   ```
 
-## 3. Cambios exactos
+   `dom.Get(id) (Reference, bool)` and `Reference.ScrollIntoView()` already
+   exist and are documented for exactly this (jumping a horizontal scroll-snap
+   container to another panel) — see `dom/dom.go` and `dom/element_wasm.go`.
 
-### 3.1 `selectsearch.go` — estado `Open` en la raíz
+3. **Package doc (lines 1–9)** — replace the sentence claiming the controls are
+   anchors with no click handler. New wording, same paragraph:
 
-En `Render()`, el `Div` raíz debe publicar el estado que el CSS necesita.
-Sustituir el return final:
+   > the ‹ › controls are `<button>`s; a small click handler
+   > (`slideToMonth`) jumps the scroll-snap strip to the neighbouring month
+   > card with `ScrollIntoView`, and the browser's scroll-snap animates it.
+   > They are deliberately **not** `<a href="#cs-m-...">`: an anchor mutates
+   > `location.hash`, which a hash-routed shell (`platformd`) reads as a route
+   > change, blanking the view.
 
-```go
-	return Div().Set(ClsSsBox.AsAttr()).
-		Child(toggle).
-		Child(header).
-		Child(Show(c.isOpen, dropdown))
-```
+### `calendarslider/README.md`
 
-por:
+Find every place that describes the ‹ › as anchor links / "no JavaScript" for
+navigation and correct it to match the new package doc. The day-click handler
+was always there, so "pure Go, zero JavaScript" as a general claim is already
+loose — keep the spirit ("no hand-written JS, no infinite-slider DOM
+recycling") but do not claim the nav has no handler.
 
-```go
-	// BindState, not a class toggled by hand: data-open is the single value the
-	// stylesheet selects on, so markup and CSS cannot disagree. It is what lets
-	// the chevron turn be a CSS state rule instead of a second source of truth
-	// in Go.
-	return Div().Set(ClsSsBox.AsAttr()).
-		BindState(widget.Open, c.isOpen).
-		Child(toggle).
-		Child(header).
-		Child(Show(c.isOpen, dropdown))
-```
+### `calendarslider/css.go`
 
-`widget` ya está importado en el archivo. `BindState` acepta `widget.Open`
-directamente (`dom.StateAttr` es una interfaz `Key()/Value()` que `widget.State`
-satisface).
+`clsPrev` / `clsNext` styling: a `<button>` carries a UA background, border and
+font. Add whatever is needed so the buttons render visually identical to the
+old anchors (`As(Bare)` or equivalent to strip the UA chrome, keep the existing
+size / position / `‹`/`›` glyph styling). Do not change their `OnEdge`
+placement on the month card.
 
-### 3.2 `selectsearch.go` — IDs por instancia (defecto F)
+### Tests
 
-Añadir un campo no exportado y un helper. `Init` genera el prefijo una vez:
+`calendarslider/calendarslider_test.go` (SSR / backend build):
 
-```go
-	uid string // per-instance id prefix; two pickers on one page must not collide
-```
+- `TestBuildMonthAgosto2026` (`:39`, `:42`): the two `href='#cs-m-...'`
+  assertions → assert the child is a `<button>` and its `data-target` is
+  `cs-m-2026-07` / `cs-m-2026-09` respectively (e.g.
+  `Contains(children[8].String(), `data-target='cs-m-2026-07'`)` and
+  `Contains(children[8].String(), "<button")`). Keep the child-count and
+  label assertions.
+- `TestRenderWrapsAround` (`:77`, `:82`): `href='#cs-m-2026-10'` /
+  `href='#cs-m-2026-08'` → `data-target='cs-m-2026-10'` /
+  `data-target='cs-m-2026-08'`. Keep the `calendarslider__prev` /
+  `calendarslider__next` count assertions (3 each).
+- `:234` (`href='#cs-m-2026-09'`): switch to the `data-target` form.
+- `TestBuildMonthAlwaysHasBothLinks`: `"Mes anterior"` / `"Mes siguiente"`
+  still present — unchanged.
 
-En `Init`, **antes** de crear las señales:
+`calendarslider/calendarslider_wasm_test.go` (real DOM):
 
-```go
-	// A page may mount more than one picker. The label's `for`, the focus
-	// lookup and every option id are derived from this prefix so instance B's
-	// header cannot toggle instance A's checkbox — the failure a fixed
-	// "ss-toggle" guarantees the moment a second one appears.
-	c.uid = fmt.Sprintf("%s-%d", string(NameSelectSearch), nextSelectSearchID())
-```
+- Rename `TestNavLinksTargetTheNeighbor` → `TestNavButtonsSlideToNeighbor`.
+  Rewrite its body:
+  - Assert `.calendarslider__prev` / `.calendarslider__next` have
+    `tagName == "BUTTON"`.
+  - Record `js.Global().Get("location").Get("hash").String()` before, click
+    `#cs-m-2026-08 .calendarslider__next`, assert the hash is **unchanged**
+    (still the same string — do NOT assert it becomes `#cs-m-2026-09`).
+  - Keep the "first month has a `prev`, last month has a `next`" existence
+    checks (they read class presence, not `href`).
+  - Keep the final loop asserting no `#cs-m-...` month element was removed from
+    the DOM.
+- `TestExternalSelectedHighlights`: after the `.calendarslider__next` click,
+  keep "selection survives"; add an assertion that `location.hash` did not
+  change.
+- `calendarslider_contract_test.go`: read it; if it asserts anchor `href`s,
+  move it to the `data-target` / `<button>` form. If it does not touch nav,
+  leave it.
 
-> **Anti-footgun verificado:** `github.com/tinywasm/fmt` **no** tiene `Itoa` ni
-> `FormatInt`. El helper sancionado para intercalar un entero es `fmt.Sprintf`,
-> que ya se usa en código WASM de este mismo repo
-> (`calendarslider/calendarslider.go:264`). No importes `strconv`.
+## Part 1 acceptance
 
-Y a nivel de paquete:
+- `grep -rn 'A("#cs-m-' calendarslider/` → empty.
+- `grep -rn "href='#cs-m-\|href=\"#cs-m-" calendarslider/` → empty (source
+  **and** tests).
+- `grep -n "ScrollIntoView" calendarslider/calendarslider.go` → present once,
+  in `slideToMonth`.
+- `gotest ./calendarslider/...` green (SSR and WASM).
+- `NumMonths` field and `numMonths()` unchanged (`git diff` shows no edit to
+  lines 100 or 152–162 beyond context).
 
-```go
-var selectSearchSeq int
+---
 
-func nextSelectSearchID() int {
-	selectSearchSeq++
-	return selectSearchSeq
-}
-```
+# PART 2 — one owner for list-selection chrome: move it into `listselect`
 
-Reemplazar los cuatro literales por derivados de `c.uid`:
+## The bug (and the debt behind it)
 
-| Antes | Después |
-|---|---|
-| `ID("ss-toggle")` | `ID(c.uid + "-toggle")` |
-| `Attr("for", "ss-toggle")` | `Attr("for", c.uid+"-toggle")` |
-| `Get("ss-search")` | `Get(c.uid + "-search")` |
-| `ID("ss-search")` | `ID(c.uid + "-search")` |
-| `ID("ss-options")` | `ID(c.uid + "-options")` |
-| `Attr("aria-controls", "ss-options")` | `Attr("aria-controls", c.uid+"-options")` |
-| `ID("ss-opt-"+opt.ID)` | `ID(c.uid + "-opt-" + opt.ID)` |
+Testing `#reservation` in delete mode: the top-right corner of the list card is
+a pile-up — a dark trash-glyph fragment, the row-count bubble, and the text
+`3 / 4`, overlapping the first row.
 
-> **Anti-footgun:** `selectsearch.go` compila a WASM. Usa `fmt.Sprintf` de
-> `github.com/tinywasm/fmt` (ya importado en el archivo), **nunca** `strconv`
-> ni `strings` del stdlib.
+Two **absolutely-positioned** overlays claim the same corner of the same box
+(`.crudview__list`, which is `position: relative`):
 
-### 3.3 `css.go` — la hoja completa
+| Overlay | Rendered by | Placement | Shows |
+|---|---|---|---|
+| row-count bubble (`countbadge`) | `layout/crudview` | `OnEdge(EdgeTop, SideEnd)` | total (`4`) |
+| select-all master check | THIS repo — `targethour.buildMasterCheck()` etc. | `OnEdge(EdgeTop, SideEnd, …, Space2)` | glyph + `k / N` |
 
-Reescribir `sheet()` con estos cambios. Mantén el resto de comentarios que ya
-existen y que siguen siendo ciertos; los que cito abajo son nuevos o
-reemplazan a uno obsoleto.
+They were built in two separate loops and never reconciled. On top of that:
 
-**Imports:** añadir `"github.com/tinywasm/components/listgap"` y
-`"github.com/tinywasm/widget"`.
+- **`buildMasterCheck()` is byte-identical** in `targetlist.go`, `targetdate.go`
+  and `targethour.go` (~30 lines each). Copy #1, #2, #3.
+- The **per-row selection check** (4 `DeriveBool`s + the `check` span with two
+  glyph children) is near-identical across the same three files. Copy #1, #2,
+  #3.
+- The master check's box uses `As(DangerWash)` / `As(AccentWash)` — a pale fill
+  with dark `currentColor`, so its glyph reads near-black (the row check solved
+  this exact thing with **solid** `As(Danger)` + `As(AccentInverse)` → white
+  glyph). And it has no width cap, no solid background, no `z-index`, so its
+  content spills onto row 1.
 
-**(a) `PartHeader` y `PartIcon` — defecto A.** Mismo par que searchbar:
+`CONSTRUCTION_HARNESS.md`: *"The glue is written once, in the library that owns
+it."* `listselect` owns "the multi-selection mode a record list enters" — so it
+owns the **UI** of that mode too, not just the `Mode` state and the CSS
+options. Today it half-owns it (`Apply` / `ApplyMaster` are CSS-only; the DOM
+is pasted into each widget).
 
-```go
-		// ControlBox+KeepSize on BOTH the bar and its cap, exactly as
-		// searchbar/css.go declares them: Row() carries flex-wrap: wrap, so a
-		// narrow viewport wrapped the text onto its own line under the square
-		// and the header stopped being a bar. KeepSize is what forbids the
-		// wrap; ControlBox is what keeps the two halves the same height.
-		Part(PartHeader,
-			style.Row(style.SpaceNone),
-			style.Round(style.RadiusMd),
-			style.HideOverflow(),
-			style.ControlBox(),
-			style.KeepSize(),
-		).
-		Part(PartIcon,
-			style.As(style.Primary),
-			style.MediaBox(style.AspectSquare),
-			style.ControlBox(),
-			style.KeepSize(),
-		).
-```
+## The fix — `listselect` builds the selection chrome; the three widgets assemble it
 
-**(b) `PartGlyph` — defecto B.** El que gira es el `<svg>`, nunca el cuadro
-azul:
+No absolute positioning anywhere. The select-all control + the count live in a
+**normal in-flow header strip** that `listselect` builds and each widget
+`Child()`s above its `<ul>`. The strip is `display:none` in normal mode
+(revealed by the widget root's `Open` state, exactly as the check boxes are
+today), so **normal mode looks identical to now** — no header, no count. In
+selection mode the strip appears: `[select-all box] [k / N]`.
 
-```go
-		// The GLYPH turns, not PartIcon: rotating the cap would spin the whole
-		// filled square. TurnNone is the resting rule Animate() transitions
-		// from — without a base value there is no start state to move off.
-		Part(PartGlyph,
-			style.IconBox(style.IconSm),
-			style.Rotate(style.TurnNone),
-			style.Animate(style.MotionBase),
-		).
-```
+This also deletes `crudview`'s row-count `countbadge` (that is Part of the
+`layout` plan — `../../layout/docs/PLAN.md`; do not touch `layout` from here).
 
-y, junto a las demás reglas de estado:
+### New public API in `components/listselect/`
 
-```go
-		// The chevron IS the open state. WhenWithin from the root, because
-		// data-open lives on the root (see selectsearch.go's BindState) and the
-		// glyph is two levels down inside the header.
-		WhenWithin(widget.Open, "", PartGlyph,
-			style.Rotate(style.TurnHalf),
-		).
-```
-
-**(c) `PartDropdown` y `PartSearch` — defecto C:**
-
-```go
-		// Pad(Space1): the dropdown is a rounded, clipping panel
-		// (As(Panel) brings RadiusMd by default; HideOverflow clips to it), so
-		// a child flush against its top edge loses its corners — and with them
-		// the inset focus ring, which is what made the search box look sawn
-		// off. The padding is what keeps every child inside the rounded area.
-		Part(PartDropdown,
-			style.Stack(style.Space1),
-			style.As(style.Panel),
-			style.Pad(style.Space1),
-			style.HideOverflow(),
-		).
-		// A radius of its own so the box reads as a control, not as a slab
-		// filling the panel's width.
-		Part(PartSearch,
-			style.As(style.Inset),
-			style.Pad(style.Space2),
-			style.Round(style.RadiusSm),
-			style.ControlBox(),
-		).
-```
-
-**(d) `PartOptions` — defecto E.** Borrar el `Part(PartOptions, ...)` a mano y
-ensamblar la pieza compartida. Como `sheet()` hoy es una sola cadena de
-llamadas, hay que romperla igual que hace `targetlist/css.go`:
+Add to `listselect.go` (untagged — compiles to WASM). It will need new imports:
+`"github.com/tinywasm/fmt"`, `"github.com/tinywasm/widget"`,
+`"github.com/tinywasm/icons/trash"`, `"github.com/tinywasm/icons/pencil"`
+(all already in `components/go.mod`).
 
 ```go
-func (c *SelectSearch) sheet() *style.Sheet {
-	s := style.For(c).
-		Root(
-			style.Anchor(),
-			style.Stack(style.Space1),
-			style.As(style.Panel),
-			style.Round(style.RadiusMd),
-		)
-	// The same list container targetlist and targetdate assemble — one lego
-	// piece, so the dropdown's rows breathe with the same rhythm as every
-	// other list in the app instead of inventing a third spacing.
-	listgap.Apply(s, PartOptions)
-	s.On(css.Mobile, PartOptions, listgap.MobileOpts()...)
-	return s.
-		Part(PartToggle, style.Hide()).
-		// … el resto de la cadena, tal cual, empezando por PartDropdown
-}
-```
-
-**(e) `PartOption` — defectos D y E.** La forma y los estados de una fila de
-`targetlist`, literalmente:
-
-```go
-		// The row recipe targetlist/css.go declares for PartRow: same surface,
-		// same box, same radius. A dropdown option and a list row are the same
-		// object to the user; they must not be two different shapes.
-		Part(PartOption,
-			style.Row(style.Space2),
-			style.KeepSize(),
-			style.ControlBox(),
-			style.Interactive(style.Page),
-			style.Pad(style.Space3),
-			style.Round(style.RadiusMd),
-		).
-```
-
-y los cuatro estados, con los mismos colores y por las mismas razones que
-`targetlist`:
-
-```go
-		// Amber is the chassis' one "where I am" statement — the rail's current
-		// nav item and a selected list row wear it too. AccentWash on hover and
-		// focus reads as "on the way to selected"; a grey mix reads as chrome
-		// with no relation to what clicking does. Focus repeats Hover on
-		// purpose: a keyboard user gets no :hover and must not be stranded on a
-		// different colour.
-		When(widget.Selected, PartOption, style.As(style.Accent)).
-		Cue(widget.Hover, PartOption, style.As(style.AccentWash)).
-		Cue(widget.Focus, PartOption, style.As(style.AccentWash)).
-		Cue(widget.Press, PartOption, style.As(style.Accent)).
-```
-
-**(f) `PartDesc`:** dejarlo como está (`As(Inset)`, `FontSize(TextXs)`).
-**No** lo conviertas en `OnEdge`: el `rowGap` de `listgap` está calibrado para
-el desbordamiento del badge de `targetlist` y aquí no hay tal desbordamiento.
-
-### 3.4 `selectsearch.go` — marcar la opción elegida
-
-Para que `When(widget.Selected, PartOption, …)` tenga algo que seleccionar,
-`buildRows` debe escribir el estado en la fila elegida. Añadir un
-`*SignalString` con el id seleccionado y, en `buildRows`, sobre cada `item`:
-
-```go
-		item.BindStateFunc(widget.Selected, func() bool { return c.selectedID.Get() == o.ID })
-```
-
-Declarar `selectedID *SignalString` en el struct, inicializarlo en `Init`
-(`c.selectedID = NewString("")`) y fijarlo en `selectOption`
-(`c.selectedID.Set(o.ID)`), junto a `c.selectedLabel.Set(o.Label)`.
-
-## 4. Reglas de calidad obligatorias
-
-- **Sin strings sueltos en la lógica.** Los prefijos de id salen de `c.uid`;
-  los sufijos (`-toggle`, `-search`, `-options`, `-opt-`) van en constantes de
-  paquete sin exportar, no repetidos inline.
-- **Sin librería estándar en código que compila a WASM.** `selectsearch.go`
-  usa `github.com/tinywasm/fmt` — nunca `strconv`, `strings` ni `errors` del
-  stdlib. *Anti-footgun:* `css.go` y `svg.go` llevan `//go:build !wasm` y ahí
-  el stdlib sí es legítimo; no "arregles" esos imports.
-- **Embebido por valor.** `SelectSearch` embebe `Element` por valor, nunca
-  `*Element` (restricción de heap de TinyGo). No lo cambies.
-- **Superficie mínima.** `uid`, `selectedID`, `selectSearchSeq` y
-  `nextSelectSearchID` quedan sin exportar.
-- **No dupliques `listgap`.** Si necesitas un valor de espaciado suyo, se
-  asamblea llamando a `Apply`/`MobileOpts`; no copies sus constantes.
-
-## 5. Tests
-
-Molde *consumer-shaped*, como el resto del repo. Añadir a
-`selectsearch/css_test.go` (o un archivo nuevo `selectsearch_visual_test.go`):
-
-```go
-func TestHeaderKeepsItsShapeWhenNarrow(t *testing.T) {
-	// Row() carries flex-wrap: wrap. Without KeepSize on both the bar and its
-	// cap a narrow viewport wrapped the text under the square. searchbar
-	// already answers this; the header must answer it identically.
-	s := (&SelectSearch{}).RenderCSS().String()
-	for _, want := range []string{
-		".selectsearch__header",
-		"flex-shrink: 0;",
-		"min-height: var(--control-height",
-	} {
-		if !strings.Contains(s, want) {
-			t.Errorf("expected %q in the header/icon rules, got:\n%s", want, s)
-		}
-	}
+// Row is the per-row selection wiring listselect hands a target* widget so the
+// three widgets stop hand-rolling identical derives. Build it once per row in
+// buildRow.
+//
+//   - Check is the glyph box: place it in the row. It reveals a trash glyph
+//     when the row is marked while the danger tone is armed, a pencil when
+//     marked while it is not, and is invisible otherwise.
+//   - Edit   is "marked, danger tone OFF" — the widget ORs this with its own
+//     "this is the loaded record" highlight for the row's Selected state.
+//   - Danger is "marked, danger tone ON" — bind the row's Invalid state to it.
+type Row struct {
+    Check  *Element
+    Edit   *SignalBool
+    Danger *SignalBool
 }
 
-func TestChevronTurnsOnOpen(t *testing.T) {
-	s := (&SelectSearch{}).RenderCSS().String()
-	if !strings.Contains(s, "transform: rotate(0deg);") {
-		t.Errorf("expected the chevron's resting rotation, got:\n%s", s)
-	}
-	if !strings.Contains(s, `.selectsearch[data-open="true"] .selectsearch__glyph`) {
-		t.Errorf("expected the open state to reach the glyph, got:\n%s", s)
-	}
-	if !strings.Contains(s, "transform: rotate(180deg);") {
-		t.Errorf("expected the open rotation, got:\n%s", s)
-	}
-}
+// RowOf builds the selection wiring for one row id. name is the host widget's
+// WidgetName() — listselect namespaces its parts under it so the CSS
+// (ApplyRow) and the element agree.
+func RowOf(m *Mode, id string, name widget.Name) Row
 
-func TestDropdownPadsItsClippedCorners(t *testing.T) {
-	// As(Panel) brings RadiusMd and HideOverflow clips to it: a child flush
-	// against the edge loses its corners AND its inset focus ring.
-	s := (&SelectSearch{}).RenderCSS().String()
-	i := strings.Index(s, ".selectsearch__dropdown {")
-	if i < 0 {
-		t.Fatal("expected a dropdown rule")
-	}
-	b := s[i:]
-	if e := strings.Index(b, "}"); e > 0 {
-		b = b[:e]
-	}
-	if !strings.Contains(b, "padding:") {
-		t.Errorf("the clipping dropdown must pad its children off the rounded corners, got:\n%s", b)
-	}
-}
-
-func TestOptionsWearTheChassisHoverAndSelection(t *testing.T) {
-	// The same amber language targetlist uses. A grey hover made the dropdown
-	// read as a foreign piece bolted onto the app.
-	s := (&SelectSearch{}).RenderCSS().String()
-	for _, want := range []string{
-		"--color-accent-wash",              // hover + focus
-		`.selectsearch__option[data-selected="true"]`,
-		"--color-accent",                    // selected + press
-	} {
-		if !strings.Contains(s, want) {
-			t.Errorf("expected %q, got:\n%s", want, s)
-		}
-	}
-}
-
-func TestOptionsReuseTheSharedListContainer(t *testing.T) {
-	// listgap owns the list rhythm for the whole component set. Re-declaring
-	// it here is what let the dropdown drift into a third spacing.
-	s := (&SelectSearch{}).RenderCSS().String()
-	if !strings.Contains(s, ".selectsearch__options") || !strings.Contains(s, "overflow-y: auto;") {
-		t.Errorf("expected the shared list container on the options, got:\n%s", s)
-	}
-}
+// Header builds the in-flow selection header strip: a select-all / deselect-all
+// box (trash glyph while the danger tone is armed, pencil otherwise) and a
+// count that reads "k / N". Child() it above the list <ul>. It is hidden in
+// normal mode (ApplyHeader reveals it on the root's Open state), so the host
+// shows no header and no count until selection mode starts.
+//
+// total reports the row count the widget currently renders (pass the widget's
+// Count method value, e.g. t.Count). name is the host's WidgetName().
+func Header(m *Mode, total func() int, name widget.Name) *Element
 ```
 
-Y para el defecto F, en `selectsearch_test.go`:
+Implementation notes (keep them faithful to today's behaviour):
+
+- `RowOf`'s `Edit` / `Danger` are `DeriveBool`s that read `m.Changed().Get()`
+  first (so a tap repaints — see the `Mode.changed` field doc), then
+  `m.On() && !m.Danger() && m.IsChecked(id)` and
+  `m.On() && m.Danger() && m.IsChecked(id)` respectively.
+- `RowOf`'s `Check` is a `Span` with class `name.Class(partCheck)`,
+  `BindState(widget.Selected, r.Edit)`, `BindState(widget.Invalid, r.Danger)`,
+  and two glyph children: `trash.Ref.Render(string(name.Class(partCheckTrash)))`
+  and `pencil.Ref.Render(string(name.Class(partCheckPencil)))`.
+- `Header`'s select-all box: `Span` class `name.Class(partAll)`,
+  `Attr("role", "checkbox")`, `BindAttrBool("aria-checked", allChecked)` where
+  `allChecked := DeriveBool(func() bool { _ = m.Changed().Get(); n := m.Count(); return n > 0 && n == total() })`,
+  `BindState(widget.Invalid, DeriveBool(func() bool { return m.On().Get() && m.Danger().Get() }))`,
+  `BindState(widget.Selected, DeriveBool(func() bool { return m.On().Get() && !m.Danger().Get() }))`,
+  two glyph children (`partAllTrash` / `partAllPencil`), and a count child
+  `Span` class `name.Class(partCount)` with
+  `BindTextFunc(func() string { _ = m.Changed().Get(); return fmt.Sprintf("%d / %d", m.Count(), total()) })`.
+- `Header`'s click handler: `if n := m.Count(); n > 0 && n == total() { m.Clear(); return }` else `m.CheckAll(idsInRenderOrder)`.
+  **Problem:** `CheckAll` needs the ids in render order, which the widget owns,
+  not `listselect`. Fix by having `Header` take them lazily: change the
+  signature to `Header(m *Mode, ids func() []string, name widget.Name) *Element`
+  and derive `total()` as `len(ids())`. The widget passes a closure returning
+  `t.itemIDs()`. (Update the doc comment accordingly — `ids` returns the
+  current rows in render order; count is its length.)
+- Part name constants are **unexported in `listselect`** (`partCheck`,
+  `partCheckTrash`, `partCheckPencil`, `partAll`, `partAllTrash`,
+  `partAllPencil`, `partAllCount`, each `widget.Part("sel-...")`). Nothing
+  outside `listselect` needs them — the widgets pass only `name`.
+
+### Rewrite `components/listselect/css.go`
+
+Replace `Apply` and `ApplyMaster` with:
 
 ```go
-func TestTwoPickersDoNotShareIDs(t *testing.T) {
-	a, b := &SelectSearch{}, &SelectSearch{}
-	a.Init(nil)
-	b.Init(nil)
-	ha, hb := a.Render().String(), b.Render().String()
-	if strings.Contains(ha, "ss-toggle") || strings.Contains(hb, "ss-toggle") {
-		t.Error("ids must be per-instance, not the fixed ss-* literals")
-	}
-	if ha == hb {
-		t.Error("two pickers rendered identical markup — their ids collide")
-	}
-}
+// ApplyRow adds the per-row selection-check skin to s (the host widget's
+// sheet). The host calls this instead of hand-writing the block. row is the
+// host's own row part (its class differs per widget), used only for the
+// danger wash under a marked row.
+func ApplyRow(s *style.Sheet, row widget.Part) *style.Sheet
+
+// ApplyHeader adds the in-flow selection-header skin to s: the strip is hidden
+// until the host root's Open state, then a centred flex row carrying the
+// select-all box and the count.
+func ApplyHeader(s *style.Sheet) *style.Sheet
 ```
 
-## 6. Criterios de aceptación (verificables)
+- `ApplyRow` body = today's `Apply` body but with `listselect`'s own
+  `partCheck` / `partCheckTrash` / `partCheckPencil` instead of the passed-in
+  parts. Unchanged rules: base `Hide()` + `OnEdge(EdgeTop, SideEnd, SpaceNone,
+  SpaceNone)` + `IconBox(IconMd)` + `KeepSize()` + `Round(RadiusSm)` +
+  `As(Inset)` + `Animate(MotionFast)` on the box; `Hide()` + `IconBox(IconSm)`
+  on each glyph; `WhenWithin(Open, "", partCheck, Show(), Row(SpaceNone),
+  CenterContent())`; `WhenWithin(Invalid, partCheck, partCheckTrash, Show())`
+  and the Selected/pencil pair; `When(Invalid, partCheck, As(Danger))` and
+  `When(Selected, partCheck, As(AccentInverse))`; `When(Invalid, row,
+  As(DangerWash))`.
+- `ApplyHeader` body — the strip is in flow, not `OnEdge`:
+  - `s.Part(partHeader, style.Hide())`
+  - `s.Part(partAll, style.IconBox(style.IconMd), style.KeepSize(),
+    style.Round(style.RadiusSm), style.As(style.Inset),
+    style.Animate(style.MotionFast))` — resting box, no `OnEdge`.
+  - `s.Part(partAllTrash, style.Hide(), style.IconBox(style.IconSm))`; same for
+    `partAllPencil`.
+  - `s.Part(partAllCount, style.FontSize(style.TextXs),
+    style.FontWeight(style.WeightBold))`.
+  - `s.WhenWithin(widget.Open, "", partHeader, style.Show(),
+    style.Row(style.Space2), style.CenterContent())` — appears as a flex strip.
+  - `s.WhenWithin(widget.Invalid, partAll, partAllTrash, style.Show())` and the
+    `Selected` / `partAllPencil` pair.
+  - **Solid fills** (this is the A4 fix — white glyph, opaque box):
+    `s.When(widget.Invalid, partAll, style.As(style.Danger))` and
+    `s.When(widget.Selected, partAll, style.As(style.Accent))`.
 
-```bash
-gotest                                                     # vet ✅ race ✅ tests ✅ wasm ✅
-grep -rn "ss-toggle\|ss-search\|ss-options" selectsearch/*.go | grep -v _test   # → vacío
-grep -rn "listgap.Apply" selectsearch/css.go               # 1 resultado
-grep -rn "Interactive(style.Panel)" selectsearch/css.go    # → vacío (era el hover gris)
-grep -rn "AccentWash" selectsearch/css.go                  # hover + focus
-grep -rn "style.Rotate" selectsearch/css.go                # 2 resultados (base + estado)
-grep -rn "BindState(widget.Open" selectsearch/selectsearch.go  # 1 resultado
-```
+### Update the three widgets
 
-Además: `components/conformance_test.go` debe seguir verde sin tocarlo — si
-falla, es que `RenderCSS()` emite una clase nueva no declarada, o que
-`Validate()` rechaza la hoja.
+`targetlist/targetlist.go`, `targetdate/targetdate.go`, `targethour/targethour.go`
+— the same edit in each:
 
-## 7. Verificación manual (la hace el desarrollador, no el agente)
+1. **Delete** `buildMasterCheck()` entirely.
+2. **Delete** the local part constants and `cls*` vars for the check /
+   check-all (`PartCheck`, `PartCheckTrash`, `PartCheckPencil`, `PartCheckAll`,
+   `PartCheckAllTrash`, `PartCheckAllPencil`, `PartCheckAllCount` and their
+   `clsCheck*` / `clsCheckAll*`). Keep `PartRow`, `PartList`, `PartLabel`,
+   `PartBadge`, and the widget's own lead/hour/content parts.
+3. **Drop** the `icons/trash` + `icons/pencil` imports if nothing else in the
+   file uses them (the row check moves into `listselect`).
+4. `Render()`: `Child(t.buildMasterCheck())` → `Child(listselect.Header(&t.sel,
+   t.itemIDs, t.WidgetName()))`.
+5. `buildRow(it)`: replace the block of 4 `DeriveBool`s + the `check` span
+   with:
 
-Sólo el resultado visual se comprueba a mano; todo lo funcional está cubierto
-arriba. Lista para el revisor humano:
+   ```go
+   r := listselect.RowOf(&t.sel, id, t.WidgetName())
+   isSel := DeriveBool(func() bool {
+       _ = t.sel.Changed().Get()
+       if t.sel.On().Get() {
+           return r.Edit.Get()
+       }
+       return t.Selected.Get() == id
+   })
+   row.BindState(widget.Selected, isSel).
+       BindState(widget.Invalid, r.Danger).
+       BindAttrBool("aria-selected", DeriveBool(func() bool { return isSel.Get() || r.Danger.Get() }))
+   ```
 
-1. Estrechar la ventana hasta móvil: la cabecera sigue siendo **una barra**.
-2. Abrir: el chevron gira 180° **con transición**; cerrar: vuelve.
-3. Enfocar el buscador: anillo ámbar **completo**, sin esquinas cortadas.
-4. Pasar el ratón por una opción: ámbar claro, **igual** que una fila de la
-   lista de fichas.
-5. La opción elegida queda en ámbar sólido.
+   and use `r.Check` where the old `check` span was placed in the row content
+   (`targetlist`: after the row, before the label; `targetdate` /
+   `targethour`: inside `content`, in the same slot as before).
+6. Each widget's `css.go` (`//go:build !wasm`): replace
+   `listselect.Apply(s, PartCheck, PartCheckTrash, PartCheckPencil, PartRow)`
+   with `listselect.ApplyRow(s, PartRow)`, and
+   `listselect.ApplyMaster(s, PartCheckAll, …)` with `listselect.ApplyHeader(s)`.
 
-## 8. Fuera de alcance (NO hacer)
+### Tests
 
-- No toques `searchbar`, `targetlist`, `targetdate` ni `listgap`: son la
-  referencia, no el objetivo. Si crees que a `listgap` le falta algo, **para y
-  repórtalo** (regla del harness: un consumidor no recrea lo que falta arriba).
-- No añadas un `internal/` ni un wrapper sobre `listgap`.
-- El vaciado del formulario al cambiar de paciente **no** es de este plan: va
-  en <https://github.com/tinywasm/layout/blob/main/docs/PLAN.md>.
+- **`components/listselect/`** gets a new WASM test file
+  (`listselect_ui_wasm_test.go`, `//go:build wasm`) — the consumer-shaped proof
+  the harness requires. Using a real `Mode` and a fixed
+  `ids := []string{"a","b","c"}`:
+  - `Header`: render it; assert the count text is `0 / 3`; click the select-all
+    box; assert `m.Count() == 3` and the text is `3 / 3`; click again; assert
+    `m.Count() == 0`.
+  - Arm the danger tone (`m.SetDanger(true)`, `m.SetOn(true)`); assert the
+    trash glyph is the revealed one (pencil hidden) — read
+    `data-state`/class or computed `display` on the two glyph parts.
+  - `RowOf`: with `m.SetOn(true)` and `m.Toggle("b")`, assert `Row.Edit` for
+    `"b"` is true and `Row.Danger` false; flip `SetDanger(true)` and assert the
+    reverse.
+- **`targetlist` / `targetdate` / `targethour`** WASM tests: wherever they
+  drove `buildMasterCheck` output or the old `clsCheckAll*` classes, retarget
+  to the header the widget now renders (`.<name>__sel-header`,
+  `.<name>__sel-all`, `.<name>__sel-count`). The row-check assertions move from
+  `.<name>__check` to the same class emitted by `RowOf` (keep `partCheck` =
+  `widget.Part("sel-check")` so the class is `.<name>__sel-check` — update the
+  test selectors to match). Behavioural assertions (enter selection mode →
+  boxes appear; tap a row → it marks; normal mode → no check, no header) stay
+  and must pass.
+- `components/conformance_test.go` (imports `targetlist`): if it asserts the
+  old check classes, update; otherwise leave.
 
-## 9. Etapas
+## Part 2 acceptance
 
-| # | Etapa | Defecto | Archivos | Cierra cuando |
-|---|---|---|---|---|
-| 1 | Forma de la cabecera | A | `css.go` | `TestHeaderKeepsItsShapeWhenNarrow` pasa |
-| 2 | Giro del chevron | B | `css.go`, `selectsearch.go` | `TestChevronTurnsOnOpen` pasa |
-| 3 | Esquinas del buscador | C | `css.go` | `TestDropdownPadsItsClippedCorners` pasa |
-| 4 | Contenedor de lista compartido | E | `css.go` | `TestOptionsReuseTheSharedListContainer` pasa |
-| 5 | Hover/selección del chasis | D | `css.go`, `selectsearch.go` | `TestOptionsWearTheChassisHoverAndSelection` pasa |
-| 6 | IDs por instancia | F | `selectsearch.go` | `TestTwoPickersDoNotShareIDs` pasa; grep de `ss-toggle` vacío |
-| 7 | Suite completa | — | — | `gotest` verde, conformance intacto |
+- `grep -rn "buildMasterCheck" components/` → empty.
+- `grep -rn "func Apply\b\|func ApplyMaster\b" components/listselect/` → empty
+  (replaced by `ApplyRow` / `ApplyHeader`).
+- `grep -rn "OnEdge" components/listselect/css.go` → only in `ApplyRow`'s
+  per-row box rule (the header has **no** `OnEdge`).
+- `grep -rn "DangerWash\|AccentWash" components/listselect/css.go` → empty (the
+  header fills are solid `Danger` / `Accent`).
+- `grep -rn "PartCheckAll" components/targetlist/ components/targetdate/ components/targethour/` → empty.
+- The per-row derive block (`isEditCheckSig`, `isDangerSig` …) appears **once**
+  — inside `listselect`, not in the three widgets:
+  `grep -rn "isEditCheckSig" components/target*/` → empty.
+- `gotest ./...` green.
+- `GOOS=js GOARCH=wasm go list -deps ./... | grep tinywasm/svg/sprite` → empty.
+- Manual (daemon hot-reloads `components`): open the demo `#reservation`, pick a
+  day, press 🗑 → a single clean header strip above the list (`[trash box] 0 /
+  4`), white glyph, nothing overlapping row 1; tap rows → count climbs, box
+  goes solid red; press select-all → `4 / 4`, all rows red; leave mode → header
+  gone, list identical to before. Repeat with ✏ → same, blue/`Accent`.
 
-La etapa 4 es **gate** de la 5 (la 5 estiliza filas dentro del contenedor que
-la 4 ensambla). Las etapas 1, 2, 3 y 6 son paralelas entre sí.
+---
+
+## Docs to update before finishing (both parts)
+
+- `components/docs/CATALOG.md` — `calendarslider` nav description;
+  `listselect` entry gains `Header` / `RowOf` / `ApplyRow` / `ApplyHeader`.
+- `components/docs/ARCHITECTURE.md` (or `DESIGN.md` if that is where component
+  contracts live) — a short "listselect owns the selection chrome (header +
+  row check), the target\* widgets assemble it" note; the calendarslider nav
+  mechanism (button + `slideToMonth`, not anchors, and why).
+- `components/README.md` — must still index every file in `docs/`.
+- `components/AGENTS.md` — the line about `listselect.Apply` being "the check
+  mark's whole visual contract" → update to `ApplyRow` / `ApplyHeader` +
+  `Header` / `RowOf` (the piece now owns the DOM, not only the skin).
+
+## Stages
+
+| # | Scope | Files | Done when |
+|---|---|---|---|
+| 1 | calendarslider nav | `calendarslider/calendarslider.go`, `css.go`, `README.md`, `calendarslider_test.go`, `calendarslider_wasm_test.go`, `calendarslider_contract_test.go` | Part 1 acceptance green |
+| 2 | listselect owns the chrome | `listselect/listselect.go`, `listselect/css.go`, new `listselect/listselect_ui_wasm_test.go` | `Header`/`RowOf`/`ApplyRow`/`ApplyHeader` exist + tested |
+| 3 | assemble in the widgets | `targetlist/{targetlist.go,css.go,*_wasm_test.go}`, `targetdate/…`, `targethour/…`, `components/conformance_test.go` | Part 2 acceptance green |
+| 4 | docs | `docs/CATALOG.md`, `docs/ARCHITECTURE.md`/`DESIGN.md`, `README.md`, `AGENTS.md` | indexed + accurate |
+
+Final: `gotest ./...` green, WASM build clean, sprite-leak check empty.

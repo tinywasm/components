@@ -168,6 +168,15 @@ See [docs/SKILL.md](docs/SKILL.md) for the slot-readiness contract and
 
 Forms are NOT part of `tinywasm/components`. Use `github.com/tinywasm/form` directly — it is the standard form library for the tinywasm ecosystem.
 
+## Documentation
+
+| File | What it is |
+|---|---|
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | What & why: component shape, lego pieces, navigation rules |
+| [docs/CATALOG.md](docs/CATALOG.md) | Every component, slot-readiness status, usage links |
+| [docs/SKILL.md](docs/SKILL.md) | The component-creation standard (styling DSL, file structure, icons) |
+| [docs/DOCUMENTATION.md](docs/DOCUMENTATION.md) | Documentation standards for these files |
+
 ## Development
 
 See [Component Skill Guide](docs/SKILL.md) to learn how to build your own components.

@@ -9,6 +9,11 @@ package listselect
 
 import (
 	. "github.com/tinywasm/dom"
+	"github.com/tinywasm/fmt"
+	"github.com/tinywasm/html"
+	"github.com/tinywasm/icons/pencil"
+	"github.com/tinywasm/icons/trash"
+	"github.com/tinywasm/widget"
 )
 
 // Mode is the selection state of one list. The zero value is a usable list in
@@ -188,4 +193,97 @@ func (m *Mode) CheckedIDs(ids []string) []string {
 		}
 	}
 	return res
+}
+
+// Part names for the selection chrome. Unexported: the host passes only its
+// widget Name, and listselect derives the classes from it, so neither the
+// CSS (ApplyRow/ApplyHeader) nor the markup (RowOf/Header) can drift from a
+// name the host types by hand.
+const (
+	partHeader      = widget.Part("sel-header")
+	partCheck       = widget.Part("sel-check")
+	partCheckTrash  = widget.Part("sel-check-trash")
+	partCheckPencil = widget.Part("sel-check-pencil")
+	partAll         = widget.Part("sel-all")
+	partAllTrash    = widget.Part("sel-all-trash")
+	partAllPencil   = widget.Part("sel-all-pencil")
+	partAllCount    = widget.Part("sel-count")
+)
+
+// Row is the per-row selection wiring listselect hands a target* widget so the
+// three widgets stop hand-rolling identical derives. Build it once per row in
+// buildRow.
+//
+//   - Check is the glyph box: place it in the row. It reveals a trash glyph
+//     when the row is marked while the danger tone is armed, a pencil when
+//     marked while it is not, and is invisible otherwise.
+//   - Edit   is "marked, danger tone OFF" — the widget ORs this with its own
+//     "this is the loaded record" highlight for the row's Selected state.
+//   - Danger is "marked, danger tone ON" — bind the row's Invalid state to it.
+type Row struct {
+	Check  *Element
+	Edit   *SignalBool
+	Danger *SignalBool
+}
+
+// RowOf builds the selection wiring for one row id. name is the host widget's
+// WidgetName() — listselect namespaces its parts under it so the CSS
+// (ApplyRow) and the element agree.
+func RowOf(m *Mode, id string, name widget.Name) Row {
+	edit := DeriveBool(func() bool {
+		_ = m.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
+		return m.On().Get() && !m.Danger().Get() && m.IsChecked(id)
+	})
+	danger := DeriveBool(func() bool {
+		_ = m.Changed().Get()
+		return m.On().Get() && m.Danger().Get() && m.IsChecked(id)
+	})
+	check := html.Span().Set(name.Class(partCheck).AsAttr()).
+		BindState(widget.Selected, edit).
+		BindState(widget.Invalid, danger).
+		Child(trash.Ref.Render(string(name.Class(partCheckTrash)))).
+		Child(pencil.Ref.Render(string(name.Class(partCheckPencil))))
+	return Row{Check: check, Edit: edit, Danger: danger}
+}
+
+// Header builds the in-flow selection header strip: a select-all / deselect-all
+// box (trash glyph while the danger tone is armed, pencil otherwise) and a
+// count that reads "k / N". Child() it above the list <ul>. It is hidden in
+// normal mode (ApplyHeader reveals it on the root's Open state), so the host
+// shows no header and no count until selection mode starts.
+//
+// ids returns the current rows in render order; the count is its length.
+// name is the host's WidgetName().
+func Header(m *Mode, ids func() []string, name widget.Name) *Element {
+	allChecked := DeriveBool(func() bool {
+		_ = m.Changed().Get()
+		n := m.Count()
+		return n > 0 && n == len(ids())
+	})
+
+	box := html.Span().Set(name.Class(partAll).AsAttr()).
+		Attr("role", "checkbox").
+		BindAttrBool("aria-checked", allChecked).
+		BindState(widget.Invalid, DeriveBool(func() bool { return m.On().Get() && m.Danger().Get() })).
+		BindState(widget.Selected, DeriveBool(func() bool { return m.On().Get() && !m.Danger().Get() })).
+		Child(trash.Ref.Render(string(name.Class(partAllTrash)))).
+		Child(pencil.Ref.Render(string(name.Class(partAllPencil))))
+
+	box.On("click", func(Event) {
+		if n := m.Count(); n > 0 && n == len(ids()) {
+			m.Clear()
+			return
+		}
+		m.CheckAll(ids())
+	})
+
+	count := html.Span().Set(name.Class(partAllCount).AsAttr()).
+		BindTextFunc(func() string {
+			_ = m.Changed().Get()
+			return fmt.Sprintf("%d / %d", m.Count(), len(ids()))
+		})
+
+	return html.Span().Set(name.Class(partHeader).AsAttr()).
+		Child(box).
+		Child(count)
 }

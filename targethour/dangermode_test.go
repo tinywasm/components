@@ -43,7 +43,7 @@ func TestTargetHour_NormalHighlightLeavesCheckStateless(t *testing.T) {
 	row := th.buildRow(Item{ID: "1", Label: "Row 1", LeadMain: "09:00"})
 
 	html := row.String()
-	check := html[strings.Index(html, `class='targethour__check'`):]
+	check := html[strings.Index(html, `class='targethour__sel-check'`):]
 	check = check[:strings.Index(check, "</span>")]
 	if strings.Contains(check, "data-selected") || strings.Contains(check, "data-invalid") {
 		t.Errorf("normal-mode highlight must leave the check box stateless\ncheck: %s", check)
@@ -56,9 +56,12 @@ func TestTargetHour_NormalHighlightLeavesCheckStateless(t *testing.T) {
 func TestTargetHour_CheckRidesTopEndCorner(t *testing.T) {
 	cssStr := (&TargetHour{}).RenderCSS().String()
 
-	i := strings.Index(cssStr, ".targethour__check {")
+	// Anchored at line start: the KeepSize primitives group also mentions
+	// this class (as its last selector), so a bare substring search would
+	// land on a rule that has flex-shrink/grow but no position.
+	i := strings.Index(cssStr, "\n.targethour__sel-check {")
 	if i == -1 {
-		t.Fatal("expected a rule for .targethour__check")
+		t.Fatal("expected a rule for .targethour__sel-check")
 	}
 	body := cssStr[i:]
 	if end := strings.Index(body, "}"); end != -1 {
@@ -89,18 +92,18 @@ func TestTargetHour_GlyphRevealHangsOffTheCheckBox(t *testing.T) {
 	cssStr := (&TargetHour{}).RenderCSS().String()
 
 	for _, sel := range []string{
-		`.targethour__check[data-invalid="true"] .targethour__check-trash`,
-		`.targethour__check[data-selected="true"] .targethour__check-pencil`,
-		`.targethour__check[data-selected="true"]`,
-		`.targethour__check[data-invalid="true"]`,
+		`.targethour__sel-check[data-invalid="true"] .targethour__sel-check-trash`,
+		`.targethour__sel-check[data-selected="true"] .targethour__sel-check-pencil`,
+		`.targethour__sel-check[data-selected="true"]`,
+		`.targethour__sel-check[data-invalid="true"]`,
 	} {
 		if !strings.Contains(cssStr, sel) {
 			t.Errorf("expected a check-box-scoped rule for %s", sel)
 		}
 	}
 	for _, sel := range []string{
-		`.targethour__row[data-selected="true"] .targethour__check-pencil`,
-		`.targethour__row[data-invalid="true"] .targethour__check-trash`,
+		`.targethour__row[data-selected="true"] .targethour__sel-check-pencil`,
+		`.targethour__row[data-invalid="true"] .targethour__sel-check-trash`,
 	} {
 		if strings.Contains(cssStr, sel) {
 			t.Errorf("the glyph reveal must not hang off the row: %s", sel)
@@ -112,8 +115,8 @@ func TestTargetHour_CheckBoxCarriesWhiteText(t *testing.T) {
 	cssStr := (&TargetHour{}).RenderCSS().String()
 
 	for _, tc := range []struct{ sel, want string }{
-		{`.targethour__check[data-selected="true"]`, "--color-on-primary"},
-		{`.targethour__check[data-invalid="true"]`, "--color-on-danger"},
+		{`.targethour__sel-check[data-selected="true"]`, "--color-on-primary"},
+		{`.targethour__sel-check[data-invalid="true"]`, "--color-on-danger"},
 	} {
 		i := strings.Index(cssStr, tc.sel+" {")
 		if i == -1 {
@@ -135,9 +138,12 @@ func TestTargetHour_CheckBoxCarriesWhiteText(t *testing.T) {
 func TestTargetHour_CheckHiddenUntilSelectionMode(t *testing.T) {
 	cssStr := (&TargetHour{}).RenderCSS().String()
 
-	i := strings.Index(cssStr, ".targethour__check {")
+	// Anchored at line start: the KeepSize primitives group also mentions
+	// this class (as its last selector), so a bare substring search finds no
+	// display authority there.
+	i := strings.Index(cssStr, "\n.targethour__sel-check {")
 	if i == -1 {
-		t.Fatal("expected a rule for .targethour__check")
+		t.Fatal("expected a rule for .targethour__sel-check")
 	}
 	body := cssStr[i:]
 	if end := strings.Index(body, "}"); end != -1 {
@@ -147,7 +153,7 @@ func TestTargetHour_CheckHiddenUntilSelectionMode(t *testing.T) {
 		t.Errorf("the check box must be hidden by default (normal mode), block:\n%s", body)
 	}
 
-	i = strings.Index(cssStr, `.targethour[data-open="true"] .targethour__check {`)
+	i = strings.Index(cssStr, `.targethour[data-open="true"] .targethour__sel-check {`)
 	if i == -1 {
 		t.Fatal("expected the check box to be revealed by the list's open state")
 	}
@@ -159,7 +165,7 @@ func TestTargetHour_CheckHiddenUntilSelectionMode(t *testing.T) {
 		t.Errorf("the revealed box must be a centred flex box, block:\n%s", body)
 	}
 
-	for _, part := range []string{".targethour__check-trash", ".targethour__check-pencil"} {
+	for _, part := range []string{".targethour__sel-check-trash", ".targethour__sel-check-pencil"} {
 		i := strings.Index(cssStr, part+" {")
 		if i == -1 {
 			t.Fatalf("expected a rule for %s", part)

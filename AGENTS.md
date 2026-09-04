@@ -149,12 +149,14 @@ component still lives in that component's own `svg.go`.
 
 ### The *skin* of a shared mark is assembled once too, never re-declared
 
-`listselect.Apply(sheet, …)` is the check mark's whole visual contract — box,
-reveal, glyph colour. `targetlist` and `targetdate` **call** it; neither writes
-its own version of those rules. Same rule as the geometry: two lists that
-`crudview` swaps for each other cannot each own a private copy of the skin, or
-they drift. A new shared mark gets a new `*.Apply` in the piece that owns it —
-not a block pasted into both consumers.
+`listselect` owns BOTH halves of the selection chrome — the markup and the
+skin. `RowOf`/`Header` build the row check box and the header strip (its
+`partCheck`/`partAll` classes), and `ApplyRow`/`ApplyHeader` paint them; the
+`target*` widgets assemble the pieces and never write their own version of
+either. Same rule as the geometry: two lists that `crudview` swaps for each
+other cannot each own a private copy of the chrome, or they drift. A new
+shared mark gets a new `*.Apply`-style helper in the piece that owns it — not
+a block pasted into both consumers.
 
 ## Testing
 

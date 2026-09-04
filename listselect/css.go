@@ -8,9 +8,10 @@ import (
 	"github.com/tinywasm/widget/style"
 )
 
-// Apply adds the selection check's skin to s and returns s for chaining. Both
-// target* lists call this instead of hand-writing the block, so the check
-// cannot drift between them.
+// ApplyRow adds the per-row selection-check skin to s (the host widget's
+// sheet). The host calls this instead of hand-writing the block. row is the
+// host's own row part (its class differs per widget), used only for the
+// danger wash under a marked row.
 //
 // The check rides its row's top-end corner (OnEdge), out of the flow: the
 // label never shifts when selection mode opens, and the box reads as a badge
@@ -28,8 +29,8 @@ import (
 //
 //   - WHICH GLYPH shows, and what colour the box wears, is the BOX's own
 //     Selected/Invalid state — written by the row ONLY in selection mode (see
-//     buildRow). Never the ROW's Selected/Invalid: those also mean "this is
-//     the loaded record" in normal mode, and a glyph must never appear then.
+//     RowOf). Never the ROW's Selected/Invalid: those also mean "this is the
+//     loaded record" in normal mode, and a glyph must never appear then.
 //     Invalid → trash on a solid Danger box (white glyph via --color-on-danger);
 //     Selected → pencil on a solid AccentInverse box (white via
 //     --color-on-primary). A plain Accent/Inset box would tint the glyph
@@ -37,9 +38,9 @@ import (
 //
 //   - The ROW carries the danger wash under the whole row while it is marked
 //     for delete (the row binds Invalid too, alongside the box).
-func Apply(s *style.Sheet, check, trashIcon, pencilIcon, row widget.Part) *style.Sheet {
+func ApplyRow(s *style.Sheet, row widget.Part) *style.Sheet {
 	return s.
-		Part(check,
+		Part(partCheck,
 			style.Hide(),
 			style.OnEdge(style.EdgeTop, style.SideEnd, style.SpaceNone, style.SpaceNone),
 			style.IconBox(style.IconMd),
@@ -51,34 +52,34 @@ func Apply(s *style.Sheet, check, trashIcon, pencilIcon, row widget.Part) *style
 			style.As(style.Inset),
 			style.Animate(style.MotionFast),
 		).
-		Part(trashIcon,
+		Part(partCheckTrash,
 			style.Hide(),
 			style.IconBox(style.IconSm),
 		).
-		Part(pencilIcon,
+		Part(partCheckPencil,
 			style.Hide(),
 			style.IconBox(style.IconSm),
 		).
 		// Reveal the square only inside selection mode, as a centred flex box
 		// so its single visible glyph sits dead centre. Row(SpaceNone) gives
 		// Show() a flex display to restore; CenterContent aligns both axes.
-		WhenWithin(widget.Open, "", check,
+		WhenWithin(widget.Open, "", partCheck,
 			style.Show(),
 			style.Row(style.SpaceNone),
 			style.CenterContent(),
 		).
 		// Glyph reveal + box colour: the box's OWN state, set only in
 		// selection mode.
-		WhenWithin(widget.Invalid, check, trashIcon,
+		WhenWithin(widget.Invalid, partCheck, partCheckTrash,
 			style.Show(),
 		).
-		WhenWithin(widget.Selected, check, pencilIcon,
+		WhenWithin(widget.Selected, partCheck, partCheckPencil,
 			style.Show(),
 		).
-		When(widget.Invalid, check,
+		When(widget.Invalid, partCheck,
 			style.As(style.Danger),
 		).
-		When(widget.Selected, check,
+		When(widget.Selected, partCheck,
 			style.As(style.AccentInverse),
 		).
 		// The whole row, washed red while marked for delete.
@@ -87,50 +88,54 @@ func Apply(s *style.Sheet, check, trashIcon, pencilIcon, row widget.Part) *style
 		)
 }
 
-// ApplyMaster adds the master (select-all) check's skin to s. targetlist,
-// targetdate and targethour call this instead of hand-writing the block.
+// ApplyHeader adds the in-flow selection-header skin to s. The strip is the
+// host root's first child; it is hidden until the root's Open state (the host
+// binds it from the Mode's On signal), then a centred flex row carrying the
+// select-all box and the count.
 //
-// Same shape as Apply's per-row check: hidden until selection mode opens
-// (Open on the list root), then a centred flex box carrying one glyph beside a
-// small "n / total" count label. Which glyph, and what colour the box wears,
-// is the MODE: Invalid on the box (danger tone armed) → trash on a red wash;
-// Selected on the box (edit) → pencil on an amber wash. The none / some / all
-// distinction is read from the count text ("0 / 15", "7 / 15", "15 / 15"), not
-// from a third fill — a red "all" box in edit mode would lie about the mode.
+// In normal mode the strip is display:none, so the host shows no header and
+// no count until selection mode starts — identical to the pre-mode list.
 //
-// MAINTAINER: a solid fill at "all" is a reasonable future polish — it needs a
-// compound state the DSL does not have today (mode AND count), so it is left
-// out of this first pass rather than faked mode-blind.
-func ApplyMaster(s *style.Sheet, checkAll, trashIcon, pencilIcon, count widget.Part) *style.Sheet {
+// Unlike the per-row check (ApplyRow), nothing here is OnEdge: the strip is
+// in flow, a normal row above the <ul>, so nothing can overlap the first row.
+func ApplyHeader(s *style.Sheet) *style.Sheet {
 	return s.
-		Part(checkAll,
+		Part(partHeader,
 			style.Hide(),
+		).
+		Part(partAll,
 			style.IconBox(style.IconMd),
 			style.KeepSize(),
 			style.Round(style.RadiusSm),
 			style.As(style.Inset),
-			style.OnEdge(style.EdgeTop, style.SideEnd, style.SpaceNone, style.Space2),
 			style.Animate(style.MotionFast),
 		).
-		Part(trashIcon, style.Hide(), style.IconBox(style.IconSm)).
-		Part(pencilIcon, style.Hide(), style.IconBox(style.IconSm)).
-		Part(count,
+		Part(partAllTrash,
 			style.Hide(),
+			style.IconBox(style.IconSm),
+		).
+		Part(partAllPencil,
+			style.Hide(),
+			style.IconBox(style.IconSm),
+		).
+		Part(partAllCount,
 			style.FontSize(style.TextXs),
 			style.FontWeight(style.WeightBold),
 		).
-		WhenWithin(widget.Open, "", checkAll,
+		// Reveal the strip only inside selection mode, as a centred flex row.
+		WhenWithin(widget.Open, "", partHeader,
 			style.Show(),
-			style.Row(style.Space1),
+			style.Row(style.Space2),
 			style.CenterContent(),
 		).
-		WhenWithin(widget.Open, "", count,
-			style.Show(),
-		).
-		WhenWithin(widget.Invalid, checkAll, trashIcon, style.Show()).
-		WhenWithin(widget.Selected, checkAll, pencilIcon, style.Show()).
-		When(widget.Invalid, checkAll, style.As(style.DangerWash)). // delete-select mode
-		When(widget.Selected, checkAll, style.As(style.AccentWash)) // edit-select mode
+		// Glyph reveal: the box's OWN state (set by Header from the Mode),
+		// never the row's.
+		WhenWithin(widget.Invalid, partAll, partAllTrash, style.Show()).
+		WhenWithin(widget.Selected, partAll, partAllPencil, style.Show()).
+		// Solid fills — white glyph, opaque box (the old wash ruins read as
+		// near-black glyphs on a pale fill).
+		When(widget.Invalid, partAll, style.As(style.Danger)).
+		When(widget.Selected, partAll, style.As(style.Accent))
 }
 
 // Ensure compile check for css import

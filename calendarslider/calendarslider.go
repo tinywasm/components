@@ -3,9 +3,12 @@
 // sliding between neighboring months — to the tinywasm construction harness:
 // pure Go, zero JavaScript. The old infinite slider (JS that animated
 // margin-left and recycled DOM nodes) becomes a bounded, pre-rendered strip
-// of up to maxMonths months; the ‹ › controls are plain same-page anchor
-// links (<a href="#cs-m-...">) into the neighboring month, and the browser's
-// native scroll-snap does the sliding — no click handler, no rebuild.
+// of up to maxMonths months. The ‹ › controls are <button>s; a small click
+// handler (slideToMonth) jumps the scroll-snap strip to the neighbouring
+// month card with ScrollIntoView, and the browser's scroll-snap animates it.
+// They are deliberately not <a href="#cs-m-...">: an anchor mutates
+// location.hash, which a hash-routed shell (platformd) reads as a route
+// change, blanking the view.
 package calendarslider
 
 import (
@@ -272,16 +275,38 @@ func (c *CalendarSlider) buildMonth(year, month int, prevKey, nextKey string) *E
 	monthEl.Child(Div().Set(clsMonthNm.AsAttr()).
 		Text(fmt.Sprintf("%s %d", date.MonthName(month), year)))
 
-	monthEl.Child(A("#cs-m-" + prevKey).Set(clsPrev.AsAttr()).
+	prev := Button().Set(clsPrev.AsAttr()).
+		Attr("type", "button").
 		Attr("aria-label", "Mes anterior").
 		Attr("title", "Mes anterior").
-		Text("‹"))
-	monthEl.Child(A("#cs-m-" + nextKey).Set(clsNext.AsAttr()).
+		Attr("data-target", "cs-m-"+prevKey).
+		Text("‹")
+	prev.On("click", func(Event) { slideToMonth(prevKey) })
+	monthEl.Child(prev)
+
+	next := Button().Set(clsNext.AsAttr()).
+		Attr("type", "button").
 		Attr("aria-label", "Mes siguiente").
 		Attr("title", "Mes siguiente").
-		Text("›"))
+		Attr("data-target", "cs-m-"+nextKey).
+		Text("›")
+	next.On("click", func(Event) { slideToMonth(nextKey) })
+	monthEl.Child(next)
 
 	return monthEl
+}
+
+// slideToMonth jumps the scroll-snap strip to the month card carrying the
+// given key. The ‹ › controls call this instead of being
+// <a href="#cs-m-..."> anchors: an anchor mutates location.hash, and a
+// hash-routed shell (platformd) reads that as a route change, not a scroll.
+// A <button> plus this handler keeps the slide entirely inside the widget;
+// the browser still animates it via scroll-snap. ScrollIntoView is a no-op
+// on the server build.
+func slideToMonth(key string) {
+	if ref, ok := Get("cs-m-" + key); ok {
+		ref.ScrollIntoView()
+	}
 }
 
 func (c *CalendarSlider) buildDayCells(year, month int) []*Element {

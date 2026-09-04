@@ -49,7 +49,7 @@ func TestTargetList_NormalHighlightLeavesCheckStateless(t *testing.T) {
 	row := tl.buildRow(Item{ID: "1", Label: "Row 1"})
 
 	html := row.String()
-	check := html[strings.Index(html, `class='targetlist__check'`):]
+	check := html[strings.Index(html, `class='targetlist__sel-check'`):]
 	check = check[:strings.Index(check, "</span>")]
 	if strings.Contains(check, "data-selected") || strings.Contains(check, "data-invalid") {
 		t.Errorf("normal-mode highlight must leave the check box stateless\ncheck: %s", check)
@@ -66,7 +66,7 @@ func TestTargetList_NormalHighlightLeavesCheckStateless(t *testing.T) {
 func TestTargetList_GlyphRevealHangsOffTheCheckBox(t *testing.T) {
 	cssStr := (&TargetList{}).RenderCSS().String()
 
-	for _, part := range []string{".targetlist__check-trash", ".targetlist__check-pencil"} {
+	for _, part := range []string{".targetlist__sel-check-trash", ".targetlist__sel-check-pencil"} {
 		i := strings.Index(cssStr, part+" {")
 		if i == -1 {
 			t.Fatalf("expected a rule for %s", part)
@@ -81,8 +81,8 @@ func TestTargetList_GlyphRevealHangsOffTheCheckBox(t *testing.T) {
 	}
 
 	for _, sel := range []string{
-		`.targetlist__check[data-invalid="true"] .targetlist__check-trash`,
-		`.targetlist__check[data-selected="true"] .targetlist__check-pencil`,
+		`.targetlist__sel-check[data-invalid="true"] .targetlist__sel-check-trash`,
+		`.targetlist__sel-check[data-selected="true"] .targetlist__sel-check-pencil`,
 	} {
 		if !strings.Contains(cssStr, sel) {
 			t.Errorf("expected the glyph to be revealed by %s", sel)
@@ -91,8 +91,8 @@ func TestTargetList_GlyphRevealHangsOffTheCheckBox(t *testing.T) {
 	// It must NOT be revealed from the row: that state is also the normal-mode
 	// highlight.
 	for _, sel := range []string{
-		`.targetlist__row[data-selected="true"] .targetlist__check-pencil`,
-		`.targetlist__row[data-invalid="true"] .targetlist__check-trash`,
+		`.targetlist__row[data-selected="true"] .targetlist__sel-check-pencil`,
+		`.targetlist__row[data-invalid="true"] .targetlist__sel-check-trash`,
 	} {
 		if strings.Contains(cssStr, sel) {
 			t.Errorf("the glyph reveal must not hang off the row: %s", sel)
@@ -108,8 +108,8 @@ func TestTargetList_CheckBoxCarriesWhiteText(t *testing.T) {
 	cssStr := (&TargetList{}).RenderCSS().String()
 
 	for _, tc := range []struct{ sel, want string }{
-		{`.targetlist__check[data-selected="true"]`, "--color-on-primary"},
-		{`.targetlist__check[data-invalid="true"]`, "--color-on-danger"},
+		{`.targetlist__sel-check[data-selected="true"]`, "--color-on-primary"},
+		{`.targetlist__sel-check[data-invalid="true"]`, "--color-on-danger"},
 	} {
 		i := strings.Index(cssStr, tc.sel+" {")
 		if i == -1 {
@@ -149,9 +149,12 @@ func TestTargetList_RenderUsesSharedIconGlyphs(t *testing.T) {
 func TestTargetList_CheckHiddenUntilSelectionMode(t *testing.T) {
 	cssStr := (&TargetList{}).RenderCSS().String()
 
-	i := strings.Index(cssStr, ".targetlist__check {")
+	// Anchored at line start: the KeepSize primitives group also mentions
+	// this class (as its last selector), so a bare substring search would
+	// land on a rule that has flex-shrink/grow but no display authority.
+	i := strings.Index(cssStr, "\n.targetlist__sel-check {")
 	if i == -1 {
-		t.Fatal("expected a rule for .targetlist__check")
+		t.Fatal("expected a rule for .targetlist__sel-check")
 	}
 	body := cssStr[i:]
 	if end := strings.Index(body, "}"); end != -1 {
@@ -161,7 +164,7 @@ func TestTargetList_CheckHiddenUntilSelectionMode(t *testing.T) {
 		t.Errorf("the check box must be hidden by default (normal mode), block:\n%s", body)
 	}
 
-	i = strings.Index(cssStr, `.targetlist[data-open="true"] .targetlist__check {`)
+	i = strings.Index(cssStr, `.targetlist[data-open="true"] .targetlist__sel-check {`)
 	if i == -1 {
 		t.Fatal("expected the check box to be revealed by the list's open state")
 	}
@@ -174,7 +177,7 @@ func TestTargetList_CheckHiddenUntilSelectionMode(t *testing.T) {
 	}
 
 	// Each glyph carries its own size — an svg sized only by the box overflows it.
-	for _, part := range []string{".targetlist__check-trash", ".targetlist__check-pencil"} {
+	for _, part := range []string{".targetlist__sel-check-trash", ".targetlist__sel-check-pencil"} {
 		i := strings.Index(cssStr, part+" {")
 		if i == -1 {
 			t.Fatalf("expected a rule for %s", part)
@@ -194,9 +197,9 @@ func TestTargetList_CheckHiddenUntilSelectionMode(t *testing.T) {
 func TestTargetList_CheckRidesTopEndCorner(t *testing.T) {
 	cssStr := (&TargetList{}).RenderCSS().String()
 
-	i := strings.Index(cssStr, ".targetlist__check {")
+	i := strings.Index(cssStr, "\n.targetlist__sel-check {")
 	if i == -1 {
-		t.Fatal("expected a rule for .targetlist__check")
+		t.Fatal("expected a rule for .targetlist__sel-check")
 	}
 	body := cssStr[i:]
 	if end := strings.Index(body, "}"); end != -1 {

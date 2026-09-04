@@ -51,10 +51,14 @@ Container with header, body, and footer sections.
 
 ## [CalendarSlider](../calendarslider/README.md) — ✅ Slot-ready
 Declarative month calendar (zero JS): a window of `NumMonths` months centered
-on the current month, rebuilt by ‹ › via `BindChildren`. Holidays (red),
-occupation percentage (selectable days with `N%` bar), today marker, and
-single-day selection through a `*dom.SignalString` (`YYYY-MM-DD`) with
-`BindState(widget.Selected, ...)` — the DOM patches in place, never re-renders. Satisfies `widget.Filterable` for `crudview` filter integration.
+on the current month, sliding between them via scroll-snap. The ‹ › controls
+are buttons with a small `slideToMonth` handler (never `<a href="#cs-m-...">`
+anchors — an anchor mutates `location.hash`, which a hash-routed shell reads
+as a route change). Holidays (red), occupation percentage (selectable days
+with `N%` bar), today marker, and single-day selection through a
+`*dom.SignalString` (`YYYY-MM-DD`) with `BindState(widget.Selected, ...)` —
+the DOM patches in place, never re-renders. Satisfies `widget.Filterable` for
+`crudview` filter integration.
 [Detailed Documentation →](../calendarslider/README.md)
 
 ---
@@ -89,8 +93,18 @@ select in the same slot.
 ---
 
 ## [TargetHour](../targethour/README.md) — ✅ Slot-ready
-Selectable list component for a day's booked slots: each row leads with a prominent hour (`HH:MM`) and carries an optional per-row status tint (`pending` / `confirmed` / `attended`). Same multi-selection mechanics, master select-all check, and `crudview.ListView` compatibility as `targetlist` and `targetdate`. Pairs with `CalendarSlider` (now `widget.Filterable`) as the crud filter.
+Selectable list component for a day's booked slots: each row leads with a prominent hour (`HH:MM`) and carries an optional per-row status tint (`pending` / `confirmed` / `attended`). Same multi-selection mechanics, selection header, and `crudview.ListView` compatibility as `targetlist` and `targetdate`. Pairs with `CalendarSlider` (now `widget.Filterable`) as the crud filter.
 [Detailed Documentation →](../targethour/README.md)
+
+---
+
+## ListSelect — ✅ Slot-ready (lego piece)
+Not a standalone component: owns the multi-selection chrome the `target*`
+lists assemble. `Mode` is the selection state; `RowOf` builds a row's check
+box plus its narrow Edit/Danger signals; `Header` builds the in-flow
+select-all strip (box + `k / N` count) — hidden in normal mode, revealed by
+the list root's `Open` state. `ApplyRow`/`ApplyHeader` paint the pieces.
+`targetlist`, `targetdate` and `targethour` assemble it, never re-declare it.
 
 ---
 

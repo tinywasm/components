@@ -36,11 +36,11 @@ func TestBuildMonthAgosto2026(t *testing.T) {
 	if !Contains(children[7].String(), "Agosto 2026") {
 		t.Errorf("la etiqueta del mes debería decir 'Agosto 2026', dice %s", children[7].String())
 	}
-	if !Contains(children[8].String(), "href='#cs-m-2026-07'") {
-		t.Errorf("el enlace anterior debería apuntar a julio, dice %s", children[8].String())
+	if !Contains(children[8].String(), "<button") || !Contains(children[8].String(), "data-target='cs-m-2026-07'") {
+		t.Errorf("el botón anterior debería llevar data-target a julio, dice %s", children[8].String())
 	}
-	if !Contains(children[9].String(), "href='#cs-m-2026-09'") {
-		t.Errorf("el enlace siguiente debería apuntar a septiembre, dice %s", children[9].String())
+	if !Contains(children[9].String(), "<button") || !Contains(children[9].String(), "data-target='cs-m-2026-09'") {
+		t.Errorf("el botón siguiente debería llevar data-target a septiembre, dice %s", children[9].String())
 	}
 }
 
@@ -74,12 +74,12 @@ func TestRenderWrapsAround(t *testing.T) {
 
 	// Agosto (primero) enlaza hacia atrás con octubre (último) — el bucle.
 	augMonth := c.buildMonth(2026, 8, "2026-10", "2026-09").String()
-	if !Contains(augMonth, "href='#cs-m-2026-10'") {
+	if !Contains(augMonth, "data-target='cs-m-2026-10'") {
 		t.Errorf("el 'prev' de agosto (primero) debería envolver a octubre (último), dice %s", augMonth)
 	}
 	// Octubre (último) enlaza hacia adelante con agosto (primero) — el bucle.
 	octMonth := c.buildMonth(2026, 10, "2026-09", "2026-08").String()
-	if !Contains(octMonth, "href='#cs-m-2026-08'") {
+	if !Contains(octMonth, "data-target='cs-m-2026-08'") {
 		t.Errorf("el 'next' de octubre (último) debería envolver a agosto (primero), dice %s", octMonth)
 	}
 }
@@ -231,8 +231,8 @@ func TestRenderStructure(t *testing.T) {
 	// Cada mes lleva sus dos enlaces (el bucle infinito se cubre en
 	// TestRenderWrapsAround); agosto (Start) enlaza a septiembre como
 	// siguiente.
-	if !Contains(htmlOut, "href='#cs-m-2026-09'") {
-		t.Error("agosto (Start) debería enlazar a septiembre como mes siguiente")
+	if !Contains(htmlOut, "data-target='cs-m-2026-09'") {
+		t.Error("agosto (Start) debería apuntar a septiembre como mes siguiente")
 	}
 
 	// Las flechas van superpuestas (EdgeStrip) en la hoja de estilos servida,

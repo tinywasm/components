@@ -4,13 +4,13 @@ Declarative, JavaScript-free month calendar: one month visible at a time, slidin
 
 ## Features
 
-- One month on screen at a time, starting at `Start` (default: today's month) and sliding forward through up to `NumMonths` (max 12) consecutive months. ‹ › are plain same-page anchor links (`<a href="#cs-m-...">`) into the neighboring month — the browser's native scroll-snap does the sliding. No click handler, no rebuild, no JS.
+- One month on screen at a time, starting at `Start` (default: today's month) and sliding forward through up to `NumMonths` (max 12) consecutive months. ‹ › are `<button>`s; a small click handler (`slideToMonth`) jumps the scroll-snap strip to the neighbouring month card with `ScrollIntoView`, and the browser's scroll-snap animates it. They are deliberately **not** `<a href="#cs-m-...">`: an anchor mutates `location.hash`, which a hash-routed shell (`platformd`) reads as a route change, blanking the view. No rebuild, no JS.
 - Week starts Monday; Sunday and holidays render red (Danger), matching the original component. Each month carries its own weekday header and a month name label below it, like the original's `footer-title-month`.
 - Occupation days (`Occupation []OccupationDay`) are selectable and show a `N%` bar (`data-use`) plus `title="N%"`; values clamp to 0–100.
 - Today's date is marked with a Today style and `title="Hoy"`.
 - Selected day is a `*dom.SignalString` (`YYYY-MM-DD`) written by the host or by clicking a bookable day; the DOM patches in place via `BindState(widget.Selected, ...)` — no full re-render.
 - `OnSelect` callback fired on click, in addition to the signal.
-- Accessible: `role=grid`/`row`/`gridcell`/`columnheader`, `aria-selected`, `aria-hidden` filler cells, labeled navigation links.
+- Accessible: `role=grid`/`row`/`gridcell`/`columnheader`, `aria-selected`, `aria-hidden` filler cells, labeled navigation buttons.
 - Light/dark out of the box: every color comes from theme tokens (`light-dark()`-aware), so the calendar follows whatever `data-theme` the app sets — pair it with `tinywasm/components/themetoggle` for a user-facing switch.
 - Mobile-aware: the single-month-at-a-time layout already fits a phone; the only device-specific rule grows the day cell to a more comfortable touch target — no JS, pure `On(css.Mobile, ...)`.
 

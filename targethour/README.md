@@ -78,9 +78,14 @@ returns the marked ids in render order, `OnCheckedChange(fn)` fires the count.
 The check glyph (trash / pencil) comes from `github.com/tinywasm/icons`, the
 same one the crud view's footer buttons draw.
 
-### Master check (select all)
+### Selection header (select all)
 
-In selection mode, a master check appears at the top-end corner of the list. It operates as a tri-state toggle: tapping it when no rows or some rows are checked selects all rows; tapping it when all rows are checked clears the selection. Beside the mode glyph (trash in danger mode, pencil otherwise), it displays an `n / total` count label.
+In selection mode, `listselect`'s header strip appears above the list: a
+select-all box and an `n / total` count. It operates as a tri-state toggle:
+tapping it when no rows or some rows are checked selects all rows; tapping it
+when all rows are checked clears the selection. The box carries the mode glyph
+(trash in danger mode, pencil otherwise) on a solid fill — nothing is
+absolutely positioned over the rows, so the first row is never overlapped.
 
 ## `crudview` integration
 

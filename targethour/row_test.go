@@ -16,7 +16,7 @@ func TestTargetHour_RowHasHourLabelAndCheck(t *testing.T) {
 		LeadMain: "10:30",
 	}).String()
 
-	for _, want := range []string{"targethour__row", "Fractura", "targethour__check", "targethour__hour", "10:30"} {
+	for _, want := range []string{"targethour__row", "Fractura", "targethour__sel-check", "targethour__hour", "10:30"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("buildRow output missing %q\ngot: %s", want, html)
 		}

@@ -21,7 +21,7 @@ func TestTargetDate_RowHasLeadLabelAndCheck(t *testing.T) {
 		LeadTop: "Jue", LeadMain: "15", LeadBottom: "Ene 26",
 	}).String()
 
-	for _, want := range []string{"targetdate__row", "Fractura", "targetdate__check", "15"} {
+	for _, want := range []string{"targetdate__row", "Fractura", "targetdate__sel-check", "15"} {
 		if !strings.Contains(html, want) {
 			t.Errorf("buildRow output missing %q\ngot: %s", want, html)
 		}

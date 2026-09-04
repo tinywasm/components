@@ -87,6 +87,7 @@ func (c *CalendarSlider) RenderCSS() *css.Stylesheet {
 			style.Round(style.RadiusSm),
 		).
 		Part(PartPrev,
+			style.As(style.Bare),
 			style.CenterContent(),
 			style.FontSize(style.Text2xl),
 			style.FontWeight(style.WeightBold),
@@ -96,6 +97,7 @@ func (c *CalendarSlider) RenderCSS() *css.Stylesheet {
 			style.EdgeStrip(style.Parent, style.SideStart),
 		).
 		Part(PartNext,
+			style.As(style.Bare),
 			style.CenterContent(),
 			style.FontSize(style.Text2xl),
 			style.FontWeight(style.WeightBold),

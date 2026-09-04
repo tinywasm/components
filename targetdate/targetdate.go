@@ -12,8 +12,6 @@ import (
 	"github.com/tinywasm/widget"
 
 	"github.com/tinywasm/components/listselect"
-	"github.com/tinywasm/icons/pencil"
-	"github.com/tinywasm/icons/trash"
 )
 
 // badgeChars mirrors targetlist's own budget — see that package's comment.
@@ -23,44 +21,30 @@ const badgeChars = 16
 const NameTargetDate = widget.Name("targetdate")
 
 const (
-	PartRow            = widget.Part("row")
-	PartContent        = widget.Part("content")
-	PartCheck          = widget.Part("check")
-	PartCheckTrash     = widget.Part("check-trash")
-	PartCheckPencil    = widget.Part("check-pencil")
-	PartCheckAll       = widget.Part("check-all")
-	PartCheckAllTrash  = widget.Part("check-all-trash")
-	PartCheckAllPencil = widget.Part("check-all-pencil")
-	PartCheckAllCount  = widget.Part("check-all-count")
-	PartBadge          = widget.Part("badge")
-	PartLabel          = widget.Part("label")
-	PartList           = widget.Part("list")
-	PartLead           = widget.Part("lead")
-	PartLeadStack      = widget.Part("lead-stack")
-	PartLeadTop        = widget.Part("lead-top")
-	PartLeadMain       = widget.Part("lead-main")
-	PartLeadBottom     = widget.Part("lead-bottom")
+	PartRow        = widget.Part("row")
+	PartContent    = widget.Part("content")
+	PartBadge      = widget.Part("badge")
+	PartLabel      = widget.Part("label")
+	PartList       = widget.Part("list")
+	PartLead       = widget.Part("lead")
+	PartLeadStack  = widget.Part("lead-stack")
+	PartLeadTop    = widget.Part("lead-top")
+	PartLeadMain   = widget.Part("lead-main")
+	PartLeadBottom = widget.Part("lead-bottom")
 )
 
 var (
-	clsListWrap       = NameTargetDate.Root()
-	clsList           = NameTargetDate.Class(PartList)
-	clsRow            = NameTargetDate.Class(PartRow)
-	clsContent        = NameTargetDate.Class(PartContent)
-	clsCheck          = NameTargetDate.Class(PartCheck)
-	clsCheckTrash     = NameTargetDate.Class(PartCheckTrash)
-	clsCheckPencil    = NameTargetDate.Class(PartCheckPencil)
-	clsCheckAll       = NameTargetDate.Class(PartCheckAll)
-	clsCheckAllTrash  = NameTargetDate.Class(PartCheckAllTrash)
-	clsCheckAllPencil = NameTargetDate.Class(PartCheckAllPencil)
-	clsCheckAllCount  = NameTargetDate.Class(PartCheckAllCount)
-	clsLabel          = NameTargetDate.Class(PartLabel)
-	clsBadge          = NameTargetDate.Class(PartBadge)
-	clsLead           = NameTargetDate.Class(PartLead)
-	clsLeadStack      = NameTargetDate.Class(PartLeadStack)
-	clsLeadTop        = NameTargetDate.Class(PartLeadTop)
-	clsLeadMain       = NameTargetDate.Class(PartLeadMain)
-	clsLeadBottom     = NameTargetDate.Class(PartLeadBottom)
+	clsListWrap   = NameTargetDate.Root()
+	clsList       = NameTargetDate.Class(PartList)
+	clsRow        = NameTargetDate.Class(PartRow)
+	clsContent    = NameTargetDate.Class(PartContent)
+	clsLabel      = NameTargetDate.Class(PartLabel)
+	clsBadge      = NameTargetDate.Class(PartBadge)
+	clsLead       = NameTargetDate.Class(PartLead)
+	clsLeadStack  = NameTargetDate.Class(PartLeadStack)
+	clsLeadTop    = NameTargetDate.Class(PartLeadTop)
+	clsLeadMain   = NameTargetDate.Class(PartLeadMain)
+	clsLeadBottom = NameTargetDate.Class(PartLeadBottom)
 )
 
 // Item is view.Item — see targetlist.Item's comment for why this is an
@@ -129,75 +113,34 @@ func (t *TargetDate) Render() *Element {
 	list := Ul().Set(clsList.AsAttr()).Attr("role", "listbox").BindChildren(t.rows)
 	return Div().Set(clsListWrap.AsAttr()).
 		BindStateFunc(widget.Open, func() bool { return t.sel.On().Get() }).
-		Child(t.buildMasterCheck()).
+		Child(listselect.Header(&t.sel, t.itemIDs, t.WidgetName())).
 		Child(list)
-}
-
-func (t *TargetDate) buildMasterCheck() *Element {
-	allChecked := DeriveBool(func() bool {
-		_ = t.sel.Changed().Get() // re-read after every toggle (see Mode.Changed)
-		n := t.sel.Count()
-		return n > 0 && n == len(t.items)
-	})
-	m := Span().Set(clsCheckAll.AsAttr()).
-		Attr("role", "checkbox").
-		BindAttrBool("aria-checked", allChecked).
-		// glyph selector: trash while the danger tone is armed, pencil
-		// otherwise — mirrors the row check's Invalid/Selected split, but
-		// keyed on the MODE (sel.Danger), not on "this row is checked".
-		BindState(widget.Invalid, DeriveBool(func() bool { return t.sel.On().Get() && t.sel.Danger().Get() })).
-		BindState(widget.Selected, DeriveBool(func() bool { return t.sel.On().Get() && !t.sel.Danger().Get() })).
-		Child(trash.Ref.Render(string(clsCheckAllTrash))).
-		Child(pencil.Ref.Render(string(clsCheckAllPencil))).
-		Child(Span().Set(clsCheckAllCount.AsAttr()).
-			BindTextFunc(func() string {
-				_ = t.sel.Changed().Get()
-				return fmt.Sprintf("%d / %d", t.sel.Count(), len(t.items))
-			}))
-
-	m.On("click", func(Event) {
-		if n := t.sel.Count(); n > 0 && n == len(t.items) {
-			t.sel.Clear()
-			return
-		}
-		t.sel.CheckAll(t.itemIDs())
-	})
-	return m
 }
 
 func (t *TargetDate) buildRow(it Item) *Element {
 	id := it.ID
 	key := "td-" + id
 
-	// See targetlist.buildRow for the split: isEditCheck is the narrow
-	// "marked for edit in selection mode"; isSel widens it with the
-	// normal-mode "loaded record" highlight for the ROW only. The CHECK box
-	// binds the narrow one, so a row merely loaded in normal mode reveals no
-	// glyph.
-	isEditCheckSig := DeriveBool(func() bool {
-		_ = t.sel.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
-		return t.sel.On().Get() && !t.sel.Danger().Get() && t.sel.IsChecked(id)
-	})
-	isDangerSig := DeriveBool(func() bool {
-		_ = t.sel.Changed().Get() // re-read IsChecked after every tap (see Mode.Changed)
-		return t.sel.On().Get() && t.sel.Danger().Get() && t.sel.IsChecked(id)
-	})
-	isSelSig := DeriveBool(func() bool {
+	// RowOf owns the per-row selection wiring: the narrow Edit/Danger derives
+	// and the check box. isSel widens Edit with the normal-mode highlight for
+	// the ROW only; the box binds RowOf's narrow ones, so a row merely loaded
+	// in normal mode reveals no glyph. See targetlist.buildRow.
+	r := listselect.RowOf(&t.sel, id, t.WidgetName())
+	isSel := DeriveBool(func() bool {
 		_ = t.sel.Changed().Get()
 		if t.sel.On().Get() {
-			return isEditCheckSig.Get()
+			return r.Edit.Get()
 		}
 		return t.Selected.Get() == id
 	})
-	isMarkedSig := DeriveBool(func() bool { return isSelSig.Get() || isDangerSig.Get() })
 
 	row := Li().Set(clsRow.AsAttr()).
 		ID(key).
 		Key(key).
 		Attr("role", "option").
-		BindAttrBool("aria-selected", isMarkedSig).
-		BindState(widget.Selected, isSelSig).
-		BindState(widget.Invalid, isDangerSig)
+		BindState(widget.Selected, isSel).
+		BindState(widget.Invalid, r.Danger).
+		BindAttrBool("aria-selected", DeriveBool(func() bool { return isSel.Get() || r.Danger.Get() }))
 
 	row.On("click", func(Event) {
 		if t.sel.On().Get() {
@@ -219,15 +162,9 @@ func (t *TargetDate) buildRow(it Item) *Element {
 
 	// The box owns which glyph shows and its colour via its own
 	// Selected (edit) / Invalid (delete) state, written only in selection
-	// mode. Nothing here hangs off the ROW's state. See targetlist.buildRow.
-	check := Span().Set(clsCheck.AsAttr()).
-		BindState(widget.Selected, isEditCheckSig).
-		BindState(widget.Invalid, isDangerSig).
-		Child(trash.Ref.Render(string(clsCheckTrash))).
-		Child(pencil.Ref.Render(string(clsCheckPencil)))
-
+	// mode by RowOf. Nothing here hangs off the ROW's state.
 	content := Div().Set(clsContent.AsAttr()).
-		Child(check).
+		Child(r.Check).
 		Child(Span().Set(clsLabel.AsAttr()).Text(it.Label))
 	if it.Description != "" {
 		content.Child(Span().Set(clsBadge.AsAttr()).

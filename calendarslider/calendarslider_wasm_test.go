@@ -93,41 +93,45 @@ func TestAllMonthsAlwaysInDOM(t *testing.T) {
 	}
 }
 
-// TestNavLinksTargetTheNeighbor cubre la navegación: ‹ › son enlaces de
-// página (<a href="#cs-m-...">) hacia el mes vecino — sin handler de clic,
-// el propio navegador desplaza el scroll-snap al destino. Se verifica el
-// destino a través del hash de la URL, que un enlace de ancla actualiza de
-// forma nativa.
-func TestNavLinksTargetTheNeighbor(t *testing.T) {
+// TestNavButtonsSlideToNeighbor cubre la navegación: ‹ › son <button>s; su
+// handler llama a slideToMonth, que salta el scroll-snap al mes vecino sin
+// tocar location.hash — un <a href="#cs-m-..."> lo mutaría, y un shell con
+// enrutado por hash (platformd) lo leería como cambio de ruta, no como
+// scroll.
+func TestNavButtonsSlideToNeighbor(t *testing.T) {
 	c := &CalendarSlider{Start: "2026-08"}
 	c.Init(nil)
 	Render("app", c.Render())
 
+	for _, sel := range []string{
+		"#cs-m-2026-08 .calendarslider__prev",
+		"#cs-m-2026-09 .calendarslider__prev",
+		"#cs-m-2026-10 .calendarslider__prev",
+		"#cs-m-2026-08 .calendarslider__next",
+		"#cs-m-2026-09 .calendarslider__next",
+		"#cs-m-2026-10 .calendarslider__next",
+	} {
+		if tag := query(t, sel).Get("tagName").String(); tag != "BUTTON" {
+			t.Errorf("%s debería ser un <button>, tagName = %q", sel, tag)
+		}
+	}
+
 	// Bucle infinito: agosto (primero) y octubre (último) también tienen
-	// enlace hacia el otro extremo — nunca hay que recorrer los N meses en
+	// botón hacia el otro extremo — nunca hay que recorrer los N meses en
 	// orden para volver al principio.
 	if !exists("#cs-m-2026-08 .calendarslider__prev") {
-		t.Error("el primer mes debería tener enlace 'prev' (envuelve al último)")
+		t.Error("el primer mes debería tener botón 'prev' (envuelve al último)")
 	}
 	if !exists("#cs-m-2026-10 .calendarslider__next") {
-		t.Error("el último mes debería tener enlace 'next' (envuelve al primero)")
+		t.Error("el último mes debería tener botón 'next' (envuelve al primero)")
 	}
 
+	// El hash no debe cambiar al navegar: el botón vive dentro del widget y
+	// el slide es ScrollIntoView, nunca un salto de ancla.
+	before := js.Global().Get("location").Get("hash").String()
 	query(t, "#cs-m-2026-08 .calendarslider__next").Call("click")
-	if hash := js.Global().Get("location").Get("hash").String(); hash != "#cs-m-2026-09" {
-		t.Errorf("el next de agosto debería llevar a #cs-m-2026-09, el hash quedó en %q", hash)
-	}
-
-	query(t, "#cs-m-2026-09 .calendarslider__prev").Call("click")
-	if hash := js.Global().Get("location").Get("hash").String(); hash != "#cs-m-2026-08" {
-		t.Errorf("el prev de septiembre debería volver a #cs-m-2026-08, el hash quedó en %q", hash)
-	}
-
-	// El bucle: el prev de agosto (primero) envuelve directo a octubre
-	// (último), sin pasar por septiembre.
-	query(t, "#cs-m-2026-08 .calendarslider__prev").Call("click")
-	if hash := js.Global().Get("location").Get("hash").String(); hash != "#cs-m-2026-10" {
-		t.Errorf("el prev de agosto debería envolver a #cs-m-2026-10, el hash quedó en %q", hash)
+	if after := js.Global().Get("location").Get("hash").String(); after != before {
+		t.Errorf("navegar con ‹ › no debería tocar location.hash: antes %q, después %q", before, after)
 	}
 
 	// Ningún mes se desmontó durante la navegación.
@@ -150,9 +154,13 @@ func TestExternalSelectedHighlights(t *testing.T) {
 		t.Error("escribir Selected debería pintar data-selected en el DOM")
 	}
 
-	// Al navegar (el enlace ‹ › es un <a href>, no reconstruye nada), la
-	// selección externa sobrevive.
+	// Al navegar (el botón ‹ › llama a slideToMonth, que salta el snap sin
+	// tocar location.hash), la selección externa sobrevive.
+	before := js.Global().Get("location").Get("hash").String()
 	query(t, ".calendarslider__next").Call("click")
+	if after := js.Global().Get("location").Get("hash").String(); after != before {
+		t.Errorf("navegar con ‹ › no debería tocar location.hash: antes %q, después %q", before, after)
+	}
 	if query(t, "#cs-d-2026-08-11").Call("getAttribute", "data-selected").String() != "true" {
 		t.Error("la selección debería sobrevivir a la navegación")
 	}
