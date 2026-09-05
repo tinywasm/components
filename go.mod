@@ -5,7 +5,7 @@ go 1.25.2
 require (
 	github.com/tinywasm/css v0.4.20
 	github.com/tinywasm/date v0.0.2
-	github.com/tinywasm/dom v0.13.8
+	github.com/tinywasm/dom v0.13.9
 	github.com/tinywasm/fmt v0.25.7
 	github.com/tinywasm/html v0.0.19
 	github.com/tinywasm/image v0.1.0
@@ -26,3 +26,8 @@ require (
 	github.com/tinywasm/model v0.1.7 // indirect
 	github.com/tinywasm/router v0.1.30 // indirect
 )
+
+// Local replace for unreleased work: listselect's select-all icon needs the
+// new icons/selectall glyph, not yet published. Drop this line once
+// tinywasm/icons ships past that change.
+replace github.com/tinywasm/icons => ../icons
