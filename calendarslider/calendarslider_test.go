@@ -19,28 +19,28 @@ import (
 // TestBuildMonthAgosto2026 fija la geometría del mes de agosto 2026: comienza
 // sábado (5 huecos iniciales), tiene 31 días y las celdas finales quedan en la
 // última semana parcial (1 día). El mes lleva: fila de días de la semana +
-// 6 semanas + etiqueta del mes.
+// 6 semanas + fila de navegación (prev + etiqueta + next en una sola fila).
 func TestBuildMonthAgosto2026(t *testing.T) {
 	c := &CalendarSlider{today: "2026-08-11"}
-	m := c.buildMonth(2026, 8, "2026-07", "2026-09")
+	m := c.buildMonth(2026, 8, "2026-07", "2026-09", false, false)
 	if m == nil {
 		t.Fatal("buildMonth returned nil")
 	}
 	children := m.Children()
-	if len(children) != 10 {
-		t.Fatalf("agosto 2026 debería tener fila de días + 6 semanas + etiqueta + prev + next = 10 hijos, tiene %d", len(children))
+	if len(children) != 8 {
+		t.Fatalf("agosto 2026 debería tener fila de días + 6 semanas + fila de navegación (etiqueta + prev + next en una sola fila) = 8 hijos, tiene %d", len(children))
 	}
 	if children[0].String() != c.buildWeekdayRow().String() {
 		t.Error("el primer hijo del mes debería ser la fila de días de la semana")
 	}
-	if !Contains(children[7].String(), "Agosto 2026") {
-		t.Errorf("la etiqueta del mes debería decir 'Agosto 2026', dice %s", children[7].String())
+	if !Contains(children[7].String(), "August 2026") {
+		t.Errorf("el mes lleva la fila de navegación, con la etiqueta en el medio: debería decir 'August 2026', dice %s", children[7].String())
 	}
-	if !Contains(children[8].String(), "<button") || !Contains(children[8].String(), "data-target='cs-m-2026-07'") {
-		t.Errorf("el botón anterior debería llevar data-target a julio, dice %s", children[8].String())
+	if !Contains(children[7].String(), "<button") || !Contains(children[7].String(), "data-target='cs-m-2026-07'") {
+		t.Errorf("el botón anterior debería llevar data-target a julio, dice %s", children[7].String())
 	}
-	if !Contains(children[9].String(), "<button") || !Contains(children[9].String(), "data-target='cs-m-2026-09'") {
-		t.Errorf("el botón siguiente debería llevar data-target a septiembre, dice %s", children[9].String())
+	if !Contains(children[7].String(), "<button") || !Contains(children[7].String(), "data-target='cs-m-2026-09'") {
+		t.Errorf("el botón siguiente debería llevar data-target a septiembre, dice %s", children[7].String())
 	}
 }
 
@@ -50,7 +50,7 @@ func TestBuildMonthAgosto2026(t *testing.T) {
 // bucle infinito es Render, no buildMonth — ver TestRenderWrapsAround.
 func TestBuildMonthAlwaysHasBothLinks(t *testing.T) {
 	c := &CalendarSlider{today: "2026-08-11"}
-	m := c.buildMonth(2026, 8, "2026-07", "2026-09").String()
+	m := c.buildMonth(2026, 8, "2026-07", "2026-09", false, false).String()
 	if !Contains(m, "Mes anterior") || !Contains(m, "Mes siguiente") {
 		t.Error("buildMonth debería incluir siempre ambos enlaces")
 	}
@@ -73,12 +73,12 @@ func TestRenderWrapsAround(t *testing.T) {
 	}
 
 	// Agosto (primero) enlaza hacia atrás con octubre (último) — el bucle.
-	augMonth := c.buildMonth(2026, 8, "2026-10", "2026-09").String()
+	augMonth := c.buildMonth(2026, 8, "2026-10", "2026-09", true, false).String()
 	if !Contains(augMonth, "data-target='cs-m-2026-10'") {
 		t.Errorf("el 'prev' de agosto (primero) debería envolver a octubre (último), dice %s", augMonth)
 	}
 	// Octubre (último) enlaza hacia adelante con agosto (primero) — el bucle.
-	octMonth := c.buildMonth(2026, 10, "2026-09", "2026-08").String()
+	octMonth := c.buildMonth(2026, 10, "2026-09", "2026-08", false, true).String()
 	if !Contains(octMonth, "data-target='cs-m-2026-08'") {
 		t.Errorf("el 'next' de octubre (último) debería envolver a agosto (primero), dice %s", octMonth)
 	}
@@ -91,13 +91,14 @@ func TestRenderWrapsAround(t *testing.T) {
 // filas reales — el caso más corto posible.
 func TestBuildMonthPadsToSixWeeks(t *testing.T) {
 	c := &CalendarSlider{today: "2021-02-11"}
-	m := c.buildMonth(2021, 2, "2021-01", "2021-03")
+	m := c.buildMonth(2021, 2, "2021-01", "2021-03", false, false)
 	children := m.Children()
 
-	// fila de días + 6 semanas + etiqueta + prev + next, igual que un mes de
-	// 6 filas reales (TestBuildMonthAgosto2026) — el total nunca cambia.
-	if len(children) != 10 {
-		t.Fatalf("febrero 2021 debería tener 10 hijos (igual que cualquier mes), tiene %d", len(children))
+	// fila de días + 6 semanas + fila de navegación (etiqueta + prev + next
+	// en una sola fila), igual que un mes de 6 filas reales
+	// (TestBuildMonthAgosto2026) — el total nunca cambia.
+	if len(children) != 8 {
+		t.Fatalf("febrero 2021 debería tener 8 hijos (igual que cualquier mes), tiene %d", len(children))
 	}
 
 	// Las 2 últimas semanas (índices 5 y 6 tras la fila de días de la
@@ -112,9 +113,10 @@ func TestBuildMonthPadsToSixWeeks(t *testing.T) {
 		}
 	}
 
-	// La etiqueta sigue siendo el hijo 7 (después de las 6 semanas), igual
-	// que en un mes con 6 filas reales — la posición no se mueve.
-	if !Contains(children[7].String(), "Febrero 2021") {
+	// La fila de navegación (etiqueta + ambas flechas) sigue siendo el hijo
+	// 7 (después de las 6 semanas), igual que en un mes con 6 filas reales —
+	// la posición no se mueve.
+	if !Contains(children[7].String(), "February 2021") {
 		t.Errorf("la etiqueta debería seguir en la posición 7, dice %s", children[7].String())
 	}
 }
@@ -128,7 +130,7 @@ func TestBuildMonthCells(t *testing.T) {
 		Occupation: []OccupationDay{{Date: "2026-08-11", Percent: 60}, {Date: "2026-08-02", Percent: 30}},
 	}
 	// 1 de agosto de 2026 = sábado → 5 huecos, el día 1 cae en la columna 6.
-	firstWeek := c.buildMonth(2026, 8, "2026-07", "2026-09").Children()[1]
+	firstWeek := c.buildMonth(2026, 8, "2026-07", "2026-09", false, false).Children()[1]
 	cells := firstWeek.Children()
 	if len(cells) != 7 {
 		t.Fatalf("primera semana debería tener 7 celdas, tiene %d", len(cells))
@@ -235,11 +237,15 @@ func TestRenderStructure(t *testing.T) {
 		t.Error("agosto (Start) debería apuntar a septiembre como mes siguiente")
 	}
 
-	// Las flechas van superpuestas (EdgeStrip) en la hoja de estilos servida,
-	// no como estilo inline del HTML renderizado.
+	// Las flechas son botones estáticos en flujo (fila compacta centrada
+	// abajo), sin superposición en ningún modo — y el chip también volvió
+	// al flujo (barra inferior): la hoja no posiciona nada en absoluto.
 	cssOut := c.RenderCSS().String()
-	if !strings.Contains(cssOut, "position: absolute;") {
-		t.Error("las flechas deberían ir superpuestas (position:absolute) en la hoja de estilos")
+	if strings.Contains(cssOut, "position: absolute;") {
+		t.Error("nada debería flotar con position:absolute (ni flechas ni chip)")
+	}
+	if strings.Contains(cssOut, "inset-block: 0;") {
+		t.Error("las flechas no deberían llevar EdgeStrip (inset-block: 0) en ningún modo")
 	}
 
 	if !Contains(htmlOut, "Lun") || !Contains(htmlOut, "Dom") {
@@ -248,7 +254,7 @@ func TestRenderStructure(t *testing.T) {
 	if !strings.Contains(htmlOut, "calendarslider__week-row") {
 		t.Error("las semanas deberían llevar la clase de grilla de 7 columnas")
 	}
-	if !Contains(htmlOut, "Agosto 2026") {
+	if !Contains(htmlOut, "August 2026") {
 		t.Error("cada mes debería llevar su etiqueta (mes + año)")
 	}
 
@@ -331,5 +337,148 @@ func TestCalendarSlider_SatisfiesFilterable(t *testing.T) {
 	c.OnFilterChange(func(term string) { got = term })
 	if got != "" {
 		t.Fatalf("sink must not fire on registration, got %q", got)
+	}
+}
+
+// TestNavRowAlwaysVisible cubre la regla de la fila del mes: ‹ etiqueta ›
+// estáticos en flujo, centrados abajo, idénticos en desktop y táctil,
+// siempre visibles. Sin reveal en hover/foco — volver las flechas absolutas
+// las hacía desaparecer bajo el puntero, y ocultar la fila con foco
+// cancelaba los toques en mobile (el mes no avanzaba).
+func TestNavRowAlwaysVisible(t *testing.T) {
+	c := &CalendarSlider{Start: "2026-08"}
+	c.Init(nil)
+	cssOut := c.RenderCSS().String()
+
+	for _, sel := range []string{
+		".calendarslider__month:hover .calendarslider__month-nav",
+		".calendarslider__month:focus-within .calendarslider__month-nav",
+	} {
+		if strings.Contains(cssOut, sel) {
+			t.Errorf("la fila de navegación no debería ocultarse nunca (%s presente)", sel)
+		}
+	}
+	if strings.Contains(cssOut, "inset-block: 0;") {
+		t.Errorf("las flechas no deberían llevar EdgeStrip en ningún modo")
+	}
+	if !strings.Contains(cssOut, ".calendarslider__month-nav") {
+		t.Errorf("la fila de navegación debería existir en la hoja de estilos")
+	}
+}
+
+// TestMonthNavMatchesEcosystemSize cubre la huella de 50px: las flechas son
+// cajas bare de --control-height con padding Space2 (mismo box que cada
+// cap), y la etiqueta va en TextSm como el texto del chip — nada en
+// miniatura junto a botones de 64px.
+func TestMonthNavMatchesEcosystemSize(t *testing.T) {
+	c := &CalendarSlider{Start: "2026-08"}
+	c.Init(nil)
+	cssOut := c.RenderCSS().String()
+
+	// ruleBlocks devuelve todos los bloques de la hoja para el selector: un
+	// part emite en varias capas (primitives agrupa, widgets declara), así
+	// que la primera aparición no es toda la historia.
+	ruleBlocks := func(sel string) []string {
+		var out []string
+		rest := cssOut
+		for {
+			idx := strings.Index(rest, sel+" {")
+			if idx < 0 {
+				break
+			}
+			block := rest[idx:]
+			if end := strings.Index(block, "}"); end >= 0 {
+				block = block[:end]
+			}
+			out = append(out, block)
+			rest = rest[idx+len(sel):]
+		}
+		if len(out) == 0 {
+			t.Fatalf("la regla %s no aparece", sel)
+		}
+		return out
+	}
+	ruleHas := func(sel, want string) bool {
+		for _, b := range ruleBlocks(sel) {
+			if strings.Contains(b, want) {
+				return true
+			}
+		}
+		return false
+	}
+	for _, sel := range []string{".calendarslider__prev", ".calendarslider__next"} {
+		if !ruleHas(sel, "width: 2.5em") || !ruleHas(sel, "height: 2.5em") {
+			t.Errorf("%s debería ser caja exacta 50px (IconBox Lg a TextXl)", sel)
+		}
+		if !ruleHas(sel, "font-size: var(--text-lg") {
+			t.Errorf("%s debería escalar con TextXl (fuente única con IconBox)", sel)
+		}
+	}
+	if !ruleHas(".calendarslider__month-name", "font-size: var(--text-sm") {
+		t.Errorf("la etiqueta del mes debería ir en TextSm como el chip")
+	}
+}
+
+// TestCollapseWorksEverywhere cubre el esquema de plegado: la tira se
+// muestra si y solo si está expandida — en TODOS los viewports, sin puerta
+// de device (colapsar debe funcionar en desktop también, que por defecto
+// sale expandido porque hay espacio) — y el chip no se oculta nunca: es el
+// toggle de plegado incluso expandido.
+func TestCollapseWorksEverywhere(t *testing.T) {
+	c := &CalendarSlider{Start: "2026-08"}
+	c.Init(nil)
+	cssOut := c.RenderCSS().String()
+
+	stripShown := ".calendarslider__strip[data-current=\"true\"]"
+	if !strings.Contains(cssOut, stripShown) {
+		t.Fatalf("la tira debería mostrarse por estado (%s), no aparece", stripShown)
+	}
+	// MotionSlow, no Base: 250ms se lee como corte en un panel así de alto.
+	if !strings.Contains(cssOut, "var(--duration-slow") {
+		t.Errorf("el reveal debería correr en MotionSlow (400ms)")
+	}
+	if idx, media := strings.Index(cssOut, stripShown), strings.Index(cssOut, "@media"); idx > media && media >= 0 {
+		t.Errorf("la regla %s debería ser top-level (todos los viewports), no dentro de un @media", stripShown)
+	}
+
+	// La base del chip (.clase exacta, sin pseudo ni atributo) no esconde:
+	// el chip existe como toggle también expandido.
+	base := ".calendarslider__collapsed {"
+	idx := strings.Index(cssOut, base)
+	if idx < 0 {
+		t.Fatalf("la base del chip (%s) no aparece", base)
+	}
+	rule := cssOut[idx:]
+	if end := strings.Index(rule, "}"); end >= 0 {
+		rule = rule[:end]
+	}
+	if strings.Contains(rule, "display: none;") {
+		t.Errorf("el chip no debería ocultarse en su base (es el toggle en ambos modos), dice:\n%s", rule)
+	}
+}
+
+// TestCollapsedChipIsBottomBar cubre la colocación: el chip es una barra de
+// ancho completo bajo la tira, en flujo normal — nunca flotante (tapaba la
+// tarjeta), sin ancla ni banda reservada: el flujo la ubica en ambos
+// estados. Es el segundo y último hijo de la raíz, tras la tira.
+func TestCollapsedChipIsBottomBar(t *testing.T) {
+	c := &CalendarSlider{Start: "2026-08"}
+	c.Init(nil)
+	cssOut := c.RenderCSS().String()
+
+	kids := c.Render().Children()
+	if len(kids) != 2 {
+		t.Fatalf("la raíz debería tener tira + chip, tiene %d hijos", len(kids))
+	}
+	if !Contains(kids[1].String(), "calendarslider__collapsed") {
+		t.Errorf("el chip debería ser el último hijo (barra inferior), dice:\n%s", kids[1].String())
+	}
+	for _, banned := range []string{
+		"inset-block-end:",
+		"inset-inline-start:",
+	} {
+		if strings.Contains(cssOut, banned) {
+			t.Errorf("el chip no debería anclarse (Docked eliminado): %q presente", banned)
+		}
 	}
 }

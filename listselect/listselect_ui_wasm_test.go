@@ -56,10 +56,9 @@ func TestHeaderSelectsAllAndClears(t *testing.T) {
 	}
 }
 
-// TestHeaderDangerArmsTrashGlyph: the glyph reveal is CSS — the box's own
-// Invalid/Selected state paints solid and reveals one glyph. Under the armed
-// danger tone the box must carry data-invalid (trash is the styled glyph),
-// never data-selected; once disarmed it flips to data-selected (pencil).
+// TestHeaderRestsUntilSomethingChecked: entering selection mode alone must
+// NOT tone the box — that made tapping select-all invisible, since the box
+// already looked "active" at zero. Only a mark (Toggle/CheckAll) does.
 func stateAttr(el js.Value, name string) string {
 	v := el.Call("getAttribute", name)
 	if v.IsNull() || v.IsUndefined() {
@@ -68,10 +67,36 @@ func stateAttr(el js.Value, name string) string {
 	return v.String()
 }
 
-func TestHeaderDangerArmsTrashGlyph(t *testing.T) {
+func TestHeaderRestsUntilSomethingChecked(t *testing.T) {
+	var m listselect.Mode
+	m.SetOn(true)
+	Render("app", listselect.Header(&m, ids, uiName))
+
+	box := query(t, ".uitest__sel-all")
+	if v := stateAttr(box, "data-invalid"); v != "" {
+		t.Errorf("an empty selection must not carry data-invalid, got %q", v)
+	}
+	if v := stateAttr(box, "data-selected"); v != "" {
+		t.Errorf("an empty selection must not carry data-selected, got %q", v)
+	}
+
+	m.Toggle("a")
+	if v := stateAttr(box, "data-selected"); v != "true" {
+		t.Errorf("marking a row must put data-selected on the box, got %q", v)
+	}
+}
+
+// TestHeaderDangerArmsInvalidTone: the box's OWN Invalid/Selected state (not
+// its glyph — the glyph is fixed, see selectall) tones the background solid
+// once something is marked: Danger red while marked for delete, Accent
+// amber while marked for a bulk edit. Under the armed danger tone the box
+// must carry data-invalid, never data-selected; once disarmed it flips to
+// data-selected.
+func TestHeaderDangerArmsInvalidTone(t *testing.T) {
 	var m listselect.Mode
 	m.SetDanger(true)
 	m.SetOn(true)
+	m.Toggle("a")
 	Render("app", listselect.Header(&m, ids, uiName))
 
 	box := query(t, ".uitest__sel-all")
@@ -87,7 +112,7 @@ func TestHeaderDangerArmsTrashGlyph(t *testing.T) {
 		t.Errorf("disarmed tone must drop data-invalid, got %q", v)
 	}
 	if v := stateAttr(box, "data-selected"); v != "true" {
-		t.Errorf("disarmed tone must put data-selected (pencil), got %q", v)
+		t.Errorf("disarmed tone must put data-selected, got %q", v)
 	}
 }
 

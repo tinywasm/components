@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	. "github.com/tinywasm/dom"
+	"github.com/tinywasm/time"
 	"syscall/js"
 )
 
@@ -85,11 +86,11 @@ func TestAllMonthsAlwaysInDOM(t *testing.T) {
 			t.Errorf("%s debería existir en el DOM", id)
 		}
 	}
-	if label := query(t, "#cs-m-2026-08 .calendarslider__month-name").Get("textContent").String(); label != "Agosto 2026" {
-		t.Fatalf("etiqueta de agosto = %q, want Agosto 2026", label)
+	if label := query(t, "#cs-m-2026-08 .calendarslider__month-name").Get("textContent").String(); label != "August 2026" {
+		t.Fatalf("etiqueta de agosto = %q, want August 2026", label)
 	}
-	if label := query(t, "#cs-m-2026-10 .calendarslider__month-name").Get("textContent").String(); label != "Octubre 2026" {
-		t.Fatalf("etiqueta de octubre = %q, want Octubre 2026", label)
+	if label := query(t, "#cs-m-2026-10 .calendarslider__month-name").Get("textContent").String(); label != "October 2026" {
+		t.Fatalf("etiqueta de octubre = %q, want October 2026", label)
 	}
 }
 
@@ -163,5 +164,101 @@ func TestExternalSelectedHighlights(t *testing.T) {
 	}
 	if query(t, "#cs-d-2026-08-11").Call("getAttribute", "data-selected").String() != "true" {
 		t.Error("la selección debería sobrevivir a la navegación")
+	}
+}
+
+// TestWrapNavigationJumpsInstantly cubre el bug real: el ‹ del primer mes
+// (envuelve al último) y el › del último (envuelve al primero) deben saltar
+// sin animación — un scroll suave ahí viaja visualmente en la dirección
+// contraria a través de todos los meses intermedios, lo que se lee como un
+// reinicio. La navegación entre meses vecinos sigue siendo suave.
+func TestWrapNavigationJumpsInstantly(t *testing.T) {
+	c := &CalendarSlider{Start: "2026-08", NumMonths: 3}
+	c.Init(nil)
+	Render("app", c.Render())
+
+	var lastBehavior string
+	proto := js.Global().Get("Element").Get("prototype")
+	original := proto.Get("scrollIntoView")
+	spy := js.FuncOf(func(this js.Value, args []js.Value) any {
+		if len(args) > 0 {
+			lastBehavior = args[0].Get("behavior").String()
+		}
+		return nil
+	})
+	proto.Set("scrollIntoView", spy)
+	defer func() {
+		proto.Set("scrollIntoView", original)
+		spy.Release()
+	}()
+
+	query(t, "#cs-m-2026-08 .calendarslider__prev").Call("click")
+	if lastBehavior != "instant" {
+		t.Errorf("wrap prev (agosto -> octubre) behavior = %q, want instant", lastBehavior)
+	}
+
+	query(t, "#cs-m-2026-08 .calendarslider__next").Call("click")
+	if lastBehavior != "smooth" {
+		t.Errorf("adjacent next (agosto -> septiembre) behavior = %q, want smooth", lastBehavior)
+	}
+
+	query(t, "#cs-m-2026-10 .calendarslider__next").Call("click")
+	if lastBehavior != "instant" {
+		t.Errorf("wrap next (octubre -> agosto) behavior = %q, want instant", lastBehavior)
+	}
+}
+
+// TestCollapsedChipTogglesEverywhere cubre el chip como toggle de plegado
+// en ambos modos: visible también expandido (es el control de plegado, no
+// solo el estado colapsado); un tap pliega, otro despliega. A nivel de
+// atributo data-current de la tira — sin leer viewport, porque el mecanismo
+// es idéntico en desktop y mobile.
+func TestCollapsedChipTogglesEverywhere(t *testing.T) {
+	c := &CalendarSlider{Start: "2026-08"}
+	c.Init(nil)
+	Render("app", c.Render())
+
+	stripState := func() string {
+		v := query(t, ".calendarslider__strip").Call("getAttribute", "data-current")
+		if v.IsNull() || v.IsUndefined() {
+			return ""
+		}
+		return v.String()
+	}
+	if got := stripState(); got != "true" {
+		t.Fatalf("recién montado (expandido) data-current = %q, want true", got)
+	}
+	query(t, ".calendarslider__collapsed").Call("click")
+	if got := stripState(); got == "true" {
+		t.Errorf("tras plegar con el chip data-current = %q, want ausente", got)
+	}
+	query(t, ".calendarslider__collapsed").Call("click")
+	if got := stripState(); got != "true" {
+		t.Errorf("tras desplegar con el chip data-current = %q, want true", got)
+	}
+}
+
+// TestChipCollapseDefaultsToToday cubre el plegado con el chip sin día
+// elegido: plegar así equivale a tocar hoy — fija Selected a hoy (nunca una
+// casilla en blanco) con sus callbacks, y la tira se oculta igual.
+func TestChipCollapseDefaultsToToday(t *testing.T) {
+	var gotSelect, gotFilter string
+	c := &CalendarSlider{Start: "2026-08"}
+	c.OnSelect = func(date string) { gotSelect = date }
+	c.OnFilterChange(func(term string) { gotFilter = term })
+	c.Init(nil)
+	Render("app", c.Render())
+
+	today := time.FormatDate(time.Now())
+	query(t, ".calendarslider__collapsed").Call("click")
+	if c.Selected.Get() != today {
+		t.Errorf("plegar sin selección debería fijar hoy (%s), Selected = %q", today, c.Selected.Get())
+	}
+	if gotSelect != today || gotFilter != today {
+		t.Errorf("plegar sin selección debería notificar como tocar hoy: OnSelect = %q, filter = %q", gotSelect, gotFilter)
+	}
+	v := query(t, ".calendarslider__strip").Call("getAttribute", "data-current")
+	if !v.IsNull() && v.String() == "true" {
+		t.Error("tras plegar la tira debería ocultarse")
 	}
 }

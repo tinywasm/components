@@ -84,7 +84,15 @@ func (t *TargetDate) SetSelectMode(on bool)        { t.sel.SetOn(on) }
 func (t *TargetDate) SetDanger(on bool)            { t.sel.SetDanger(on) }
 func (t *TargetDate) OnCheckedChange(fn func(int)) { t.sel.OnChange = fn }
 
+// itemIDs is the "current rows" listselect.Header/RowOf read to size the "k /
+// N" count and the select-all tri-state. t.items is a plain field, not a
+// signal — reading t.rows.Get() first is what makes a derive that calls
+// itemIDs() re-run on every SetItems (a reload, a filter, a day switch), not
+// just on a selection change. Skipping this read is the exact bug that left
+// the header's count frozen after a reload: the derive had nothing here to
+// resubscribe to.
 func (t *TargetDate) itemIDs() []string {
+	_ = t.rows.Get()
 	ids := make([]string, len(t.items))
 	for i, it := range t.items {
 		ids[i] = it.ID

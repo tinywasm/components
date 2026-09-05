@@ -15,7 +15,9 @@ import (
 	"github.com/tinywasm/date"
 	. "github.com/tinywasm/dom"
 	"github.com/tinywasm/fmt"
+	"github.com/tinywasm/fmt/lang"
 	. "github.com/tinywasm/html"
+	"github.com/tinywasm/svg"
 	"github.com/tinywasm/time"
 	"github.com/tinywasm/widget"
 )
@@ -24,40 +26,52 @@ import (
 const NameCalendarSlider = widget.Name("calendarslider")
 
 const (
-	PartWeekday       = widget.Part("weekday")
-	PartWeekRow       = widget.Part("week-row")
-	PartStrip         = widget.Part("strip")
-	PartMonth         = widget.Part("month")
-	PartMonthName     = widget.Part("month-name")
-	PartDay           = widget.Part("day")
-	PartDayNum        = widget.Part("day-num")
-	PartDayStack      = widget.Part("day-stack")
-	PartDayUse        = widget.Part("day-use")
-	PartDaySelectable = widget.Part("day-selectable")
-	PartDayOff        = widget.Part("day-off")
-	PartDayRed        = widget.Part("day-red")
-	PartDayToday      = widget.Part("day-today")
-	PartPrev          = widget.Part("prev")
-	PartNext          = widget.Part("next")
+	PartWeekday         = widget.Part("weekday")
+	PartWeekRow         = widget.Part("week-row")
+	PartStrip           = widget.Part("strip")
+	PartMonth           = widget.Part("month")
+	PartMonthName       = widget.Part("month-name")
+	PartDay             = widget.Part("day")
+	PartDayNum          = widget.Part("day-num")
+	PartDayStack        = widget.Part("day-stack")
+	PartDayUse          = widget.Part("day-use")
+	PartDaySelectable   = widget.Part("day-selectable")
+	PartDayOff          = widget.Part("day-off")
+	PartDayRed          = widget.Part("day-red")
+	PartDayToday        = widget.Part("day-today")
+	PartPrev            = widget.Part("prev")
+	PartNext            = widget.Part("next")
+	PartMonthNav        = widget.Part("month-nav")
+	PartCollapsed       = widget.Part("collapsed")
+	PartCollapsedToggle = widget.Part("collapsed-toggle")
+	PartCollapsedCap    = widget.Part("collapsed-cap")
+	PartCollapsedIcon   = widget.Part("collapsed-icon")
+	PartCollapsedText   = widget.Part("collapsed-text")
 )
 
 var (
-	clsRoot     = NameCalendarSlider.Root()
-	clsWeekday  = NameCalendarSlider.Class(PartWeekday)
-	clsWeekRow  = NameCalendarSlider.Class(PartWeekRow)
-	clsStrip    = NameCalendarSlider.Class(PartStrip)
-	clsMonth    = NameCalendarSlider.Class(PartMonth)
-	clsMonthNm  = NameCalendarSlider.Class(PartMonthName)
-	clsDay      = NameCalendarSlider.Class(PartDay)
-	clsDayNum   = NameCalendarSlider.Class(PartDayNum)
-	clsDayStack = NameCalendarSlider.Class(PartDayStack)
-	clsDayUse   = NameCalendarSlider.Class(PartDayUse)
-	clsDaySel   = NameCalendarSlider.Class(PartDaySelectable)
-	clsDayOff   = NameCalendarSlider.Class(PartDayOff)
-	clsDayRed   = NameCalendarSlider.Class(PartDayRed)
-	clsDayToday = NameCalendarSlider.Class(PartDayToday)
-	clsPrev     = NameCalendarSlider.Class(PartPrev)
-	clsNext     = NameCalendarSlider.Class(PartNext)
+	clsRoot            = NameCalendarSlider.Root()
+	clsWeekday         = NameCalendarSlider.Class(PartWeekday)
+	clsWeekRow         = NameCalendarSlider.Class(PartWeekRow)
+	clsStrip           = NameCalendarSlider.Class(PartStrip)
+	clsMonth           = NameCalendarSlider.Class(PartMonth)
+	clsMonthNm         = NameCalendarSlider.Class(PartMonthName)
+	clsDay             = NameCalendarSlider.Class(PartDay)
+	clsDayNum          = NameCalendarSlider.Class(PartDayNum)
+	clsDayStack        = NameCalendarSlider.Class(PartDayStack)
+	clsDayUse          = NameCalendarSlider.Class(PartDayUse)
+	clsDaySel          = NameCalendarSlider.Class(PartDaySelectable)
+	clsDayOff          = NameCalendarSlider.Class(PartDayOff)
+	clsDayRed          = NameCalendarSlider.Class(PartDayRed)
+	clsDayToday        = NameCalendarSlider.Class(PartDayToday)
+	clsPrev            = NameCalendarSlider.Class(PartPrev)
+	clsNext            = NameCalendarSlider.Class(PartNext)
+	clsMonthNav        = NameCalendarSlider.Class(PartMonthNav)
+	clsCollapsed       = NameCalendarSlider.Class(PartCollapsed)
+	clsCollapsedToggle = NameCalendarSlider.Class(PartCollapsedToggle)
+	clsCollapsedCap    = NameCalendarSlider.Class(PartCollapsedCap)
+	clsCollapsedIcon   = NameCalendarSlider.Class(PartCollapsedIcon)
+	clsCollapsedText   = NameCalendarSlider.Class(PartCollapsedText)
 )
 
 // weekdayNames es el encabezado de cada sección: la semana comienza en lunes,
@@ -67,6 +81,17 @@ var weekdayNames = [7]string{"Lun", "Mar", "Mie", "Jue", "Vie", "Sab", "Dom"}
 // maxMonths es el tope de meses navegables por slide, igual al límite del
 // calendario original — evita una tira de scroll-snap sin control.
 const maxMonths = 12
+
+const iconCalendar = svg.Icon("cs-calendar")
+
+var calendarSliderSeq int
+
+func nextCalendarSliderID() int {
+	calendarSliderSeq++
+	return calendarSliderSeq
+}
+
+const suffixCollapsedToggle = "-collapsed-toggle"
 
 // Holiday es un feriado del calendario.
 type Holiday struct {
@@ -111,6 +136,9 @@ type CalendarSlider struct {
 	onFilter func(term string) // set via OnFilterChange — satisfies widget.Filterable
 
 	today string // fecha local de hoy, "YYYY-MM-DD"
+
+	uid      string      // per-instance id prefix; two calendars on one page must not collide
+	expanded *SignalBool // true = full calendar showing; false = mobile collapsed chip showing
 }
 
 var _ widget.Filterable = (*CalendarSlider)(nil)
@@ -149,7 +177,13 @@ func (c *CalendarSlider) Init(_ Ctx) {
 	if c.Selected == nil {
 		c.Selected = NewString("")
 	}
-	c.today = time.FormatDate(time.Now()) // "YYYY-MM-DD" (zona local)
+	if c.expanded == nil {
+		c.expanded = NewBool(true)
+	}
+	if c.uid == "" {
+		c.uid = fmt.Sprintf("%s-%d", string(NameCalendarSlider), nextCalendarSliderID())
+	}
+	c.today = time.FormatDate(time.Now())
 }
 
 // numMonths aplica el default (0 = 3) y el tope maxMonths.
@@ -197,18 +231,80 @@ func (c *CalendarSlider) Render() *Element {
 		keys[i] = date.MonthKey(y, m)
 	}
 
-	strip := Div().Set(clsStrip.AsAttr())
+	strip := Div().Set(clsStrip.AsAttr()).
+		Attr("role", "grid").
+		Attr("aria-label", "Calendario").
+		BindState(widget.Current, c.expanded)
 	for i, key := range keys {
 		y, m := date.ParseMonthKey(key)
 		prevKey := keys[(i-1+n)%n]
 		nextKey := keys[(i+1)%n]
-		strip.Child(c.buildMonth(y, m, prevKey, nextKey))
+		prevWraps := i == 0
+		nextWraps := i == n-1
+		strip.Child(c.buildMonth(y, m, prevKey, nextKey, prevWraps, nextWraps))
 	}
 
 	return Div().Set(clsRoot.AsAttr()).
-		Attr("role", "grid").
-		Attr("aria-label", "Calendario").
-		Child(strip)
+		Child(strip).
+		Child(c.buildCollapsed())
+}
+
+// buildCollapsed builds the bottom bar the calendar folds into and unfolds
+// from: a hidden checkbox + <label> — selectsearch's own open/close idiom
+// (see its PartHeader/toggle, selectsearch.go ~213-261) — toggles
+// c.expanded with the same two-way sync, no JS beyond that one listener.
+// Rendered last, full width, in normal flow under the strip, on every
+// viewport (it is the fold control even while expanded: tap to collapse,
+// tap to expand) — see the collapse rules in css.go. Both strip and chip
+// read the same c.expanded signal in opposite directions (strip follows it,
+// the chip's checkbox mirrors it); the chip carries no state attribute of
+// its own because no rule selects on it.
+//
+// The date text goes through lang.Translate, exactly like the month label
+// and for the identical reason: date.WeekdayName/date.MonthName return
+// English canonical names, never a hardcoded language — this component
+// registers no dictionary itself, it only asks to translate. With no
+// dictionary registered anywhere in the running app this reads "Monday 18
+// August 2026"; a host that has registered Spanish sees "Lunes 18 Agosto
+// 2026" with no further code change here.
+func (c *CalendarSlider) buildCollapsed() *Element {
+	toggle := Input("checkbox").Set(clsCollapsedToggle.AsAttr()).
+		ID(c.uid+suffixCollapsedToggle).
+		BindAttrBool("checked", c.expanded).
+		On("change", func(e Event) {
+			expanded := e.TargetChecked()
+			c.expanded.Set(expanded)
+			// Folding with no day picked picks today: the chip must never
+			// fold onto a blank label. Identical to tapping today itself —
+			// same signal, same callbacks — so the list filters to today.
+			if !expanded && c.Selected.Get() == "" && c.today != "" {
+				c.Selected.Set(c.today)
+				if c.OnSelect != nil {
+					c.OnSelect(c.today)
+				}
+				if c.onFilter != nil {
+					c.onFilter(c.today)
+				}
+			}
+		})
+
+	text := Span().Set(clsCollapsedText.AsAttr()).
+		BindTextFunc(func() string {
+			y, m, d := date.ParseDateKey(c.Selected.Get())
+			if y == 0 {
+				return ""
+			}
+			weekday := date.WeekdayName(date.Weekday(y, m, d))
+			return lang.Translate(weekday, d, date.MonthName(m), y).String()
+		})
+
+	label := Label().Set(clsCollapsed.AsAttr()).
+		Attr("for", c.uid+suffixCollapsedToggle).
+		Child(Div().Set(clsCollapsedCap.AsAttr()).
+			Child(iconCalendar.Render(string(clsCollapsedIcon)))).
+		Child(text)
+
+	return Div().Child(toggle).Child(label)
 }
 
 // buildWeekdayRow arma la fila de días de la semana (lunes primero) que cada
@@ -238,7 +334,7 @@ const weeksPerMonth = 6
 // (ver Render). Cada mes es el único visible a la vez (scroll-snap en
 // PartStrip), así que sus flechas son, en la práctica, "las" flechas de
 // navegación mientras esté en pantalla.
-func (c *CalendarSlider) buildMonth(year, month int, prevKey, nextKey string) *Element {
+func (c *CalendarSlider) buildMonth(year, month int, prevKey, nextKey string, prevWraps, nextWraps bool) *Element {
 	key := date.MonthKey(year, month)
 	monthEl := Div().Set(clsMonth.AsAttr()).
 		Key(key).
@@ -272,8 +368,8 @@ func (c *CalendarSlider) buildMonth(year, month int, prevKey, nextKey string) *E
 		monthEl.Child(fillerWeek)
 	}
 
-	monthEl.Child(Div().Set(clsMonthNm.AsAttr()).
-		Text(fmt.Sprintf("%s %d", date.MonthName(month), year)))
+	monthName := Div().Set(clsMonthNm.AsAttr()).
+		Text(lang.Translate(date.MonthName(month), year).String())
 
 	prev := Button().Set(clsPrev.AsAttr()).
 		Attr("type", "button").
@@ -281,32 +377,39 @@ func (c *CalendarSlider) buildMonth(year, month int, prevKey, nextKey string) *E
 		Attr("title", "Mes anterior").
 		Attr("data-target", "cs-m-"+prevKey).
 		Text("‹")
-	prev.On("click", func(Event) { slideToMonth(prevKey) })
-	monthEl.Child(prev)
-
+	prev.On("click", func(Event) { slideToMonth(prevKey, prevWraps) })
 	next := Button().Set(clsNext.AsAttr()).
 		Attr("type", "button").
 		Attr("aria-label", "Mes siguiente").
 		Attr("title", "Mes siguiente").
 		Attr("data-target", "cs-m-"+nextKey).
 		Text("›")
-	next.On("click", func(Event) { slideToMonth(nextKey) })
-	monthEl.Child(next)
+	next.On("click", func(Event) { slideToMonth(nextKey, nextWraps) })
+
+	monthEl.Child(Div().Set(clsMonthNav.AsAttr()).
+		Child(prev).
+		Child(monthName).
+		Child(next))
 
 	return monthEl
 }
 
 // slideToMonth jumps the scroll-snap strip to the month card carrying the
-// given key. The ‹ › controls call this instead of being
-// <a href="#cs-m-..."> anchors: an anchor mutates location.hash, and a
-// hash-routed shell (platformd) reads that as a route change, not a scroll.
-// A <button> plus this handler keeps the slide entirely inside the widget;
-// the browser still animates it via scroll-snap. ScrollIntoView is a no-op
-// on the server build.
-func slideToMonth(key string) {
-	if ref, ok := Get("cs-m-" + key); ok {
-		ref.ScrollIntoView()
+// given key. instant selects ScrollIntoViewInstant over the normal smooth
+// ScrollIntoView — reserved for the two wrap edges (first month's ‹, last
+// month's ›), where a smooth scroll would visibly travel across every
+// month in between in the wrong apparent direction. Every adjacent-month
+// navigation keeps calling this with instant=false.
+func slideToMonth(key string, instant bool) {
+	ref, ok := Get("cs-m-" + key)
+	if !ok {
+		return
 	}
+	if instant {
+		ref.ScrollIntoViewInstant()
+		return
+	}
+	ref.ScrollIntoView()
 }
 
 func (c *CalendarSlider) buildDayCells(year, month int) []*Element {
@@ -382,7 +485,7 @@ func (c *CalendarSlider) buildDay(year, month, day int) *Element {
 
 	li := Li().Set(classes...).
 		Key(dateStr).
-		ID("cs-d-" + dateStr).
+		ID("cs-d-"+dateStr).
 		Attr("role", "gridcell").
 		Attr("data-date", dateStr).
 		BindState(widget.Selected, isSel).
@@ -399,6 +502,7 @@ func (c *CalendarSlider) buildDay(year, month, day int) *Element {
 	if selectable {
 		li.On("click", func(Event) {
 			c.Selected.Set(dateStr)
+			c.expanded.Set(false)
 			if c.OnSelect != nil {
 				c.OnSelect(dateStr)
 			}
@@ -409,4 +513,3 @@ func (c *CalendarSlider) buildDay(year, month, day int) *Element {
 	}
 	return li
 }
-
