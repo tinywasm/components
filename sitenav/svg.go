@@ -2,7 +2,7 @@
 
 package sitenav
 
-import "github.com/tinywasm/svg/sprite"
+import "webtyp.com/svg/sprite"
 
 // IconSvg registers the hamburger menu and close icon glyphs for mobile navigation.
 func (sn *SiteNav) IconSvg() *sprite.Sprite {

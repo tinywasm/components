@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tinywasm/view"
-	"github.com/tinywasm/widget"
+	"webtyp.com/view"
+	"webtyp.com/widget"
 )
 
 // A row with no StatusOf carries no tint state.

@@ -1,9 +1,9 @@
 package contentcard
 
 import (
-	. "github.com/tinywasm/dom"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	. "webtyp.com/html"
+	"webtyp.com/widget"
 )
 
 // NameContentCard is the widget name.

@@ -3,8 +3,8 @@
 package modaldialog
 
 import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/css"
+	"webtyp.com/widget/style"
 )
 
 // RenderCSS defines the modaldialog visual contract using the style DSL.

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tinywasm/image"
+	"webtyp.com/image"
 )
 
 func TestHeroBanner_AutoRotateAndReducedMotion(t *testing.T) {

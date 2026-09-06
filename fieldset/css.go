@@ -3,9 +3,9 @@
 package fieldset
 
 import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/css"
+	"webtyp.com/widget"
+	"webtyp.com/widget/style"
 )
 
 // RenderCSS defines the fieldset widget visual contract using the style DSL.

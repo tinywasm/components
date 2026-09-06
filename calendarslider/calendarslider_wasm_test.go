@@ -5,8 +5,8 @@ package calendarslider
 import (
 	"testing"
 
-	. "github.com/tinywasm/dom"
-	"github.com/tinywasm/time"
+	. "webtyp.com/dom"
+	"webtyp.com/time"
 	"syscall/js"
 )
 

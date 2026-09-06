@@ -5,7 +5,7 @@ package listselect_test
 import (
 	"testing"
 
-	"github.com/tinywasm/components/listselect"
+	"webtyp.com/components/listselect"
 )
 
 func TestZeroValueIsNormalMode(t *testing.T) {

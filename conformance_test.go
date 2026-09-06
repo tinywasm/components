@@ -12,27 +12,27 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/tinywasm/components/actionbutton"
-	"github.com/tinywasm/components/calendarslider"
-	"github.com/tinywasm/components/contentcard"
-	"github.com/tinywasm/components/datatable"
-	"github.com/tinywasm/components/fieldset"
-	"github.com/tinywasm/components/herobanner"
-	"github.com/tinywasm/components/infobar"
-	"github.com/tinywasm/components/modaldialog"
-	"github.com/tinywasm/components/searchbar"
-	"github.com/tinywasm/components/selectsearch"
-	"github.com/tinywasm/components/sitenav"
-	"github.com/tinywasm/components/statgrid"
-	"github.com/tinywasm/components/targethour"
-	"github.com/tinywasm/components/targetlist"
-	"github.com/tinywasm/components/themetoggle"
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
+	"webtyp.com/components/actionbutton"
+	"webtyp.com/components/calendarslider"
+	"webtyp.com/components/contentcard"
+	"webtyp.com/components/datatable"
+	"webtyp.com/components/fieldset"
+	"webtyp.com/components/herobanner"
+	"webtyp.com/components/infobar"
+	"webtyp.com/components/modaldialog"
+	"webtyp.com/components/searchbar"
+	"webtyp.com/components/selectsearch"
+	"webtyp.com/components/sitenav"
+	"webtyp.com/components/statgrid"
+	"webtyp.com/components/targethour"
+	"webtyp.com/components/targetlist"
+	"webtyp.com/components/themetoggle"
+	"webtyp.com/css"
+	"webtyp.com/widget"
 	"testing"
 )
 
-// Allowed CSS variables in github.com/tinywasm/css v0.2.0 (and widget/style)
+// Allowed CSS variables in webtyp.com/css v0.2.0 (and widget/style)
 var allowedVars = map[string]bool{
 	"--color-primary":      true,
 	"--color-on-primary":   true,
@@ -180,10 +180,10 @@ func TestConformance(t *testing.T) {
 			return fmt.Errorf("failed to parse %s: %w", path, err)
 		}
 
-		// Check for forbidden imports: github.com/tinywasm/css is only allowed in css.go files
+		// Check for forbidden imports: webtyp.com/css is only allowed in css.go files
 		for _, imp := range node.Imports {
-			if imp.Path != nil && imp.Path.Value == `"github.com/tinywasm/css"` && !strings.HasSuffix(path, "css.go") {
-				t.Errorf("%s: imports forbidden package \"github.com/tinywasm/css\"", path)
+			if imp.Path != nil && imp.Path.Value == `"webtyp.com/css"` && !strings.HasSuffix(path, "css.go") {
+				t.Errorf("%s: imports forbidden package \"webtyp.com/css\"", path)
 			}
 		}
 
@@ -272,13 +272,13 @@ func TestConformance(t *testing.T) {
 					t.Errorf("%s: uses forbidden Media", path)
 				}
 				if ident.Name == "RootCSS" {
-					t.Errorf("%s: uses forbidden RootCSS (only reserved for app / tinywasm/dom)", path)
+					t.Errorf("%s: uses forbidden RootCSS (only reserved for app / webtyp/dom)", path)
 				}
 				if ident.Name == "Theme" {
-					t.Errorf("%s: uses forbidden Theme (only reserved for app / tinywasm/dom)", path)
+					t.Errorf("%s: uses forbidden Theme (only reserved for app / webtyp/dom)", path)
 				}
 				if ident.Name == "Declare" {
-					t.Errorf("%s: uses forbidden Declare (only reserved for app / tinywasm/dom)", path)
+					t.Errorf("%s: uses forbidden Declare (only reserved for app / webtyp/dom)", path)
 				}
 			}
 

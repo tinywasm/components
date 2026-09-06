@@ -3,15 +3,15 @@ name: component-creation
 description: Standard for creating reusable, efficient, WebAssembly-ready UI components. Pattern based on RenderCSS() and the widget package visual-contract.
 ---
 
-# SKILL: tinywasm/components
+# SKILL: webtyp/components
 
-A catalog of reusable, efficient, and WebAssembly-ready UI components in the TinyWasm ecosystem.
+A catalog of reusable, efficient, and WebAssembly-ready UI components in the WebTyp ecosystem.
 
 ---
 
 ## Guide to Styling with Visual Contract (The One Page Guide)
 
-With the construction harness closed, styling components in the TinyWasm ecosystem is done by declaring `RenderCSS() *css.Stylesheet`, built with the typed `style.Sheet` DSL. It prevents local color patching, manual class strings, and media query overheads.
+With the construction harness closed, styling components in the WebTyp ecosystem is done by declaring `RenderCSS() *css.Stylesheet`, built with the typed `style.Sheet` DSL. It prevents local color patching, manual class strings, and media query overheads.
 
 ### Quick Reference
 
@@ -31,10 +31,10 @@ With the construction harness closed, styling components in the TinyWasm ecosyst
 
 ## File Structure
 
-Each component resides in its own folder within `tinywasm/components`. There are **no `.css` files** — styles and assets are expressed as Go code in backend-only files (`css.go`, `svg.go`, etc.).
+Each component resides in its own folder within `webtyp/components`. There are **no `.css` files** — styles and assets are expressed as Go code in backend-only files (`css.go`, `svg.go`, etc.).
 
 ```
-tinywasm/components/
+webtyp/components/
 └── mycomponent/
     ├── mycomponent.go   # Struct, Render() + optional Init(ctx) — shared WASM + SSR
     ├── css.go           # !wasm only: RenderCSS() *css.Stylesheet visual sheet
@@ -62,8 +62,8 @@ Pipeline: **`IconSvg()` in `svg.go`** → sprite built in memory → **injected 
 package mycomponent
 
 import (
-	"github.com/tinywasm/svg"
-	"github.com/tinywasm/svg/sprite"
+	"webtyp.com/svg"
+	"webtyp.com/svg/sprite"
 )
 
 func (m *MyComponent) IconSvg() *sprite.Sprite {
@@ -126,6 +126,6 @@ A component's Go struct name and folder/package name must be at least two words,
 
 ### WASM / TinyGo Constraints
 
-- **No Go stdlib** (`fmt`/`strings`/`errors`): use `github.com/tinywasm/fmt`.
-- **WASM files must never import** `github.com/tinywasm/css` or `github.com/tinywasm/widget/style`. Move all styling code into `css.go` under `//go:build !wasm`.
+- **No Go stdlib** (`fmt`/`strings`/`errors`): use `webtyp.com/fmt`.
+- **WASM files must never import** `webtyp.com/css` or `webtyp.com/widget/style`. Move all styling code into `css.go` under `//go:build !wasm`.
 - Use `switch` instead of `map` for performance and heap optimization in TinyGo.

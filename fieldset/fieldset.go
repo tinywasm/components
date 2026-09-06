@@ -1,8 +1,8 @@
 package fieldset
 
 import (
-	"github.com/tinywasm/dom"
-	"github.com/tinywasm/widget"
+	"webtyp.com/dom"
+	"webtyp.com/widget"
 )
 
 // Fieldset is the skin's receiver type. The SSR collector instantiates it to call

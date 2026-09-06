@@ -3,11 +3,11 @@
 package targethour
 
 import (
-	"github.com/tinywasm/components/listgap"
-	"github.com/tinywasm/components/listselect"
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/components/listgap"
+	"webtyp.com/components/listselect"
+	"webtyp.com/css"
+	"webtyp.com/widget"
+	"webtyp.com/widget/style"
 )
 
 // RenderCSS defines the targethour visual contract using the style DSL.

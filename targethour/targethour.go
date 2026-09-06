@@ -6,13 +6,13 @@
 package targethour
 
 import (
-	. "github.com/tinywasm/dom"
-	"github.com/tinywasm/fmt"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/view"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	"webtyp.com/fmt"
+	. "webtyp.com/html"
+	"webtyp.com/view"
+	"webtyp.com/widget"
 
-	"github.com/tinywasm/components/listselect"
+	"webtyp.com/components/listselect"
 )
 
 const badgeChars = 16

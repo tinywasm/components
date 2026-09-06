@@ -1,11 +1,11 @@
 package sitenav
 
 import (
-	. "github.com/tinywasm/dom"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/image"
-	"github.com/tinywasm/svg"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	. "webtyp.com/html"
+	"webtyp.com/image"
+	"webtyp.com/svg"
+	"webtyp.com/widget"
 )
 
 // NameSiteNav is the widget name for sitenav.

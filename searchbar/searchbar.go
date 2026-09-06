@@ -1,10 +1,10 @@
 package searchbar
 
 import (
-	. "github.com/tinywasm/dom"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/svg"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	. "webtyp.com/html"
+	"webtyp.com/svg"
+	"webtyp.com/widget"
 )
 
 // NameSearchBar is the widget identity; it produces the class prefix

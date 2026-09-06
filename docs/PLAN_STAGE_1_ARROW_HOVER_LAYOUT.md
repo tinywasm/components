@@ -116,7 +116,7 @@ label sits between the two arrows once they're a compact flanking row):
 
 Do NOT touch `slideToMonth`'s signature or body in this stage — that is
 Stage 2's job (`docs/PLAN_STAGE_2_INFINITE_LOOP.md`), which depends on a
-`tinywasm/dom` addition not yet published. Keep the click handlers exactly
+`webtyp/dom` addition not yet published. Keep the click handlers exactly
 as they are today, just relocated into this new wrapper.
 
 `monthEl`'s own children are now, in order: the weekday row, the (up to 6)
@@ -129,18 +129,18 @@ children). This changes two existing tests — see Stage 1.4.
 
 `date.MonthName` used to return the Spanish name directly ("Agosto") —
 `components/docs/PLAN_STAGE_2_INFINITE_LOOP.md`'s sibling repo plan
-(`https://github.com/tinywasm/date/blob/main/docs/PLAN.md`) changes that to
+(`https://github.com/webtyp/date/blob/main/docs/PLAN.md`) changes that to
 the English canonical name ("August"): **this library never hardcodes a
 human language, the consumer decides** — the same rule
 `layout/crudview` already follows for every string it renders (see
-`https://github.com/tinywasm/layout/blob/main/docs/DICTIONARY.md`). The
+`https://github.com/webtyp/layout/blob/main/docs/DICTIONARY.md`). The
 snippet above already reflects the fix: `lang.Translate(date.MonthName(month),
 year).String()` instead of `fmt.Sprintf("%s %d", date.MonthName(month), year)`.
 
 Add the import to `calendarslider.go`'s import block:
 
 ```go
-"github.com/tinywasm/fmt/lang"
+"webtyp.com/fmt/lang"
 ```
 
 This call is **safe to make regardless of dispatch order** against the

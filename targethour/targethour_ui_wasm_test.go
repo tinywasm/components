@@ -5,8 +5,8 @@ package targethour_test
 import (
 	"testing"
 
-	"github.com/tinywasm/components/targethour"
-	. "github.com/tinywasm/dom"
+	"webtyp.com/components/targethour"
+	. "webtyp.com/dom"
 	"syscall/js"
 )
 

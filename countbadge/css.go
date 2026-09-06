@@ -3,9 +3,9 @@
 package countbadge
 
 import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/css"
+	"webtyp.com/widget"
+	"webtyp.com/widget/style"
 )
 
 // RenderCSS defines the countbadge visual contract using the style DSL.

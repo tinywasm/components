@@ -5,8 +5,8 @@ package targetlist_test
 import (
 	"testing"
 
-	"github.com/tinywasm/components/targetlist"
-	. "github.com/tinywasm/dom"
+	"webtyp.com/components/targetlist"
+	. "webtyp.com/dom"
 	"syscall/js"
 )
 

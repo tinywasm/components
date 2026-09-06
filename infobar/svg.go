@@ -2,7 +2,7 @@
 
 package infobar
 
-import "github.com/tinywasm/svg/sprite"
+import "webtyp.com/svg/sprite"
 
 // IconSvg registers default icons for contact items (phone, email, pin, clock).
 func (ib *InfoBar) IconSvg() *sprite.Sprite {

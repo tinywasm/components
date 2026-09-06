@@ -3,8 +3,8 @@
 package searchbar
 
 import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/css"
+	"webtyp.com/widget/style"
 )
 
 // RenderCSS defines the search bar's visual contract using the style DSL.

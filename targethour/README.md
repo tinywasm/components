@@ -7,12 +7,12 @@ assembles `components/listselect`, it does not re-declare it — so a `crudview`
 can swap one for the other as `Config.List`.
 
 ## Import
-`"github.com/tinywasm/components/targethour"`
+`"webtyp.com/components/targethour"`
 
 ## Usage
 
 ```go
-import "github.com/tinywasm/components/targethour"
+import "webtyp.com/components/targethour"
 
 th := &targethour.TargetHour{
 	Selected: selected,        // *dom.SignalString shared with the crud form (optional)
@@ -75,7 +75,7 @@ Identical to `targetlist` / `targetdate`: `SetSelectMode(true)` opens it (the
 root carries `data-open`), a tap toggles a row's check, `SetDanger(true)`
 paints checked rows red (delete) instead of blue (edit), `CheckedIDs()`
 returns the marked ids in render order, `OnCheckedChange(fn)` fires the count.
-The check glyph (trash / pencil) comes from `github.com/tinywasm/icons`, the
+The check glyph (trash / pencil) comes from `webtyp.com/icons`, the
 same one the crud view's footer buttons draw.
 
 ### Selection header (select all)

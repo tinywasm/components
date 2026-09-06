@@ -3,11 +3,11 @@
 package searchbar
 
 import (
-	"github.com/tinywasm/svg/sprite"
+	"webtyp.com/svg/sprite"
 )
 
 // IconSvg registers the bar's magnifier. Method receiver (not a free function)
-// so tinywasm/ssr detects a single receiver type for the package and emits
+// so webtyp/ssr detects a single receiver type for the package and emits
 // RenderCSS + IconSvg together.
 func (s *SearchBar) IconSvg() *sprite.Sprite {
 	// A FILL shape (closed outline), never stroke lines: the sprite renders

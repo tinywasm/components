@@ -3,7 +3,7 @@ package herobanner
 import (
 	"testing"
 
-	"github.com/tinywasm/dom"
+	"webtyp.com/dom"
 )
 
 var _ dom.Component = (*HeroBanner)(nil)

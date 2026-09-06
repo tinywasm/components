@@ -3,10 +3,10 @@
 package selectsearch
 
 import (
-	"github.com/tinywasm/components/listgap"
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/components/listgap"
+	"webtyp.com/css"
+	"webtyp.com/widget"
+	"webtyp.com/widget/style"
 )
 
 // RenderCSS defines the selectsearch visual contract using the style DSL.

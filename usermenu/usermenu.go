@@ -3,11 +3,11 @@
 package usermenu
 
 import (
-	. "github.com/tinywasm/dom"
-	"github.com/tinywasm/fmt"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/svg"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	"webtyp.com/fmt"
+	. "webtyp.com/html"
+	"webtyp.com/svg"
+	"webtyp.com/widget"
 )
 
 // NameUserMenu is the widget identity.

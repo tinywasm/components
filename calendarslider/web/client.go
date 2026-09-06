@@ -3,10 +3,10 @@
 package main
 
 import (
-	"github.com/tinywasm/components/calendarslider"
-	"github.com/tinywasm/components/themetoggle"
-	. "github.com/tinywasm/dom"
-	. "github.com/tinywasm/html"
+	"webtyp.com/components/calendarslider"
+	"webtyp.com/components/themetoggle"
+	. "webtyp.com/dom"
+	. "webtyp.com/html"
 )
 
 type App struct {

@@ -5,7 +5,7 @@ package modaldialog
 import (
 	"testing"
 
-	. "github.com/tinywasm/dom"
+	. "webtyp.com/dom"
 	"syscall/js"
 )
 

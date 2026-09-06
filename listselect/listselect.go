@@ -8,13 +8,13 @@
 package listselect
 
 import (
-	. "github.com/tinywasm/dom"
-	"github.com/tinywasm/fmt"
-	"github.com/tinywasm/html"
-	"github.com/tinywasm/icons/pencil"
-	"github.com/tinywasm/icons/selectall"
-	"github.com/tinywasm/icons/trash"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	"webtyp.com/fmt"
+	"webtyp.com/html"
+	"webtyp.com/icons/pencil"
+	"webtyp.com/icons/selectall"
+	"webtyp.com/icons/trash"
+	"webtyp.com/widget"
 )
 
 // Mode is the selection state of one list. The zero value is a usable list in

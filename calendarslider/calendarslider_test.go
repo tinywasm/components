@@ -6,12 +6,12 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/tinywasm/fmt"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/fmt"
+	"webtyp.com/widget"
 )
 
 // La aritmética pura de fechas (bisiestos, días por mes, día de la semana,
-// suma de meses, claves YYYY-MM) vive y se prueba en github.com/tinywasm/date
+// suma de meses, claves YYYY-MM) vive y se prueba en webtyp.com/date
 // — reutilizable fuera de este componente. Ver TestBuildMonthPadsToSixWeeks
 // más abajo para la única cobertura que sigue siendo de calendarslider: cómo
 // usa esa aritmética para armar la grilla.

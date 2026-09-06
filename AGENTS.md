@@ -1,23 +1,23 @@
-# Agent Guide — `tinywasm/components`
+# Agent Guide — `webtyp/components`
 
 Constraints for agents adding or modifying UI components. Read this before any change.
 
 ---
 
-## Construction Harness — typed & explicit (the TinyWasm approach)
+## Construction Harness — typed & explicit (the WebTyp approach)
 
-This library is part of TinyWasm's **construction harness**: the typed, explicit API is what keeps an
+This library is part of WebTyp's **construction harness**: the typed, explicit API is what keeps an
 agent that doesn't know the library from building wrong code. The compiler must reject mistakes; what
 it can't catch becomes a `devMode` warning — never a silent failure.
 
-- **Typed over `any`** — no generic slots; typed builder methods (like `tinywasm/json`), reusing `fmt` types. Anything reactive goes only through a signal binding (`BindText`/`Bind*`), which requires a signal.
+- **Typed over `any`** — no generic slots; typed builder methods (like `webtyp/json`), reusing `fmt` types. Anything reactive goes only through a signal binding (`BindText`/`Bind*`), which requires a signal.
 - **Explicit names** — `Text` (static) vs `BindText` (reactive); reading the call states intent.
 - **Illegal states unrepresentable** — dynamic content has ONE path, typed to require a signal.
 - **Minimal public surface** — export only what the author types; engine plumbing stays unexported.
 - **Docs are minimal "how" instructions, not long skills** — if a rule must be *remembered*, close it
   with types, not prose.
 
-(Ecosystem rationale: `tinywasm/app/docs/CONSTRUCTION_HARNESS.md`.)
+(Ecosystem rationale: `webtyp/app/docs/CONSTRUCTION_HARNESS.md`.)
 
 ---
 
@@ -70,7 +70,7 @@ style/variant is this?" and put that in the name, not just the generic UI concep
 
 ## No Generics
 
-Zero generic functions in this ecosystem (follow the `tinywasm/fmt` codec rule "cero any, cero map").
+Zero generic functions in this ecosystem (follow the `webtyp/fmt` codec rule "cero any, cero map").
 The DOM boundary is `string`/`bool`, so use concrete typed signals — never `Signal[T]`:
 
 - `SignalString`/`SignalBool`/`SignalNodes`; `NewString`/`NewBool`/`NewNodes`; `Get`/`Set`; `Toggle()` on bool
@@ -90,9 +90,9 @@ unexported; expose behavior through methods.
 
 Every `.go` file YOU write is in exactly one of three states. **Every byte of
 an untagged file ships to the browser** — the WASM binary must stay minimal.
-Some ecosystem libraries (e.g. `tinywasm/svg`) never use `//go:build`
+Some ecosystem libraries (e.g. `webtyp/svg`) never use `//go:build`
 internally and instead split backend-only code into a separate importable
-sub-package (`tinywasm/svg/sprite`) — YOU still choose whether to import that
+sub-package (`webtyp/svg/sprite`) — YOU still choose whether to import that
 sub-package from a tagged or untagged file, and that choice is yours to get
 right; the library cannot enforce it for you.
 
@@ -100,48 +100,48 @@ right; the library cannot enforce it for you.
 |---|---|---|
 | *(none)* | WASM **and** backend | `Render()`, signals, typed name constants (icon names, CSS classes) |
 | `//go:build wasm` | WASM only | browser-only interaction (`web/client.go`, JS bridges) |
-| `//go:build !wasm` | backend/SSR only | CSS embeds (`css.go`), `IconSvg()` + SVG geometry (`svg.go`, imports `tinywasm/svg/sprite`), `RenderJS`, heavy HTML strings |
+| `//go:build !wasm` | backend/SSR only | CSS embeds (`css.go`), `IconSvg()` + SVG geometry (`svg.go`, imports `webtyp/svg/sprite`), `RenderJS`, heavy HTML strings |
 
 - Lifecycle/reactive code goes in `//go:build wasm` files; provide `!wasm` stubs for any function
   called from tag-less code (e.g. inside `Render()`), returning no-ops / `""`.
-- **No Go stdlib** (`fmt`/`strings`/`errors`): use `github.com/tinywasm/fmt`. DOM only via
-  `github.com/tinywasm/dom`, never `syscall/js`.
+- **No Go stdlib** (`fmt`/`strings`/`errors`): use `webtyp.com/fmt`. DOM only via
+  `webtyp.com/dom`, never `syscall/js`.
 - `switch`, not `map`. No `defer/recover` (a no-op in TinyGo WASM) — use O(1) guards.
-- `tinywasm/ssr` builds its extractor with the default backend toolchain, so `!wasm` files ARE
+- `webtyp/ssr` builds its extractor with the default backend toolchain, so `!wasm` files ARE
   included in SSR extraction — tagging never breaks SSR.
 
 ## SVG icons — name is shared, drawing is backend-only
 
 The icon's *name* is the only thing the WASM binary may carry; the geometry is
-extracted by `tinywasm/ssr` and injected inline into `<body>` by `sitec`
+extracted by `webtyp/ssr` and injected inline into `<body>` by `sitec`
 (no `/assets/icons.svg` URL — `href="#id"` resolves without a network request).
 
 - Declare the reference in the untagged component file:
   `const iconX = svg.Icon("comp-x")` (prefix ids with the component name).
-  Import `github.com/tinywasm/svg` — safe from any untagged file.
+  Import `webtyp.com/svg` — safe from any untagged file.
 - Define the geometry in `svg.go` under `//go:build !wasm`:
   `sprite.Define(iconX, "0 0 16 16", sprite.Path("..."))` (package
-  `github.com/tinywasm/svg/sprite`), returned by `IconSvg() *sprite.Sprite`.
+  `webtyp.com/svg/sprite`), returned by `IconSvg() *sprite.Sprite`.
   Always `fill="currentColor"` (Path hardcodes it); color/size are controlled
   from CSS at the use-site.
 - Render with `iconX.Render(string(ClsCompIcon))` — never a raw `"#id"` string,
   never hand-built `<svg><use>` (the `svg.Svg()`/`svg.Use()` builders were removed).
-- **`github.com/tinywasm/svg/sprite` compiles fine for wasm too** (it's pure
+- **`webtyp.com/svg/sprite` compiles fine for wasm too** (it's pure
   Go, no build tag of its own) — forgetting `//go:build !wasm` on your
   `svg.go` does NOT fail the build, it silently ships sprite geometry plus
-  the `tinywasm/json`/`tinywasm/model` serialization code to the browser.
+  the `webtyp/json`/`webtyp/model` serialization code to the browser.
   This is caught only by the mandatory pre-publish check, never skip it:
 
   ```bash
-  GOOS=js GOARCH=wasm go list -deps ./... | grep tinywasm/svg/sprite   # must be empty
+  GOOS=js GOARCH=wasm go list -deps ./... | grep webtyp/svg/sprite   # must be empty
   ```
 
-### A glyph two components share comes from `tinywasm/icons`, not a local copy
+### A glyph two components share comes from `webtyp/icons`, not a local copy
 
 If the *same* glyph appears in more than one component (the trash/pencil marks
 `targetlist`/`targetdate` draw are also `crudview`'s footer buttons), do NOT
 define its geometry in one of them and import it sideways, and do NOT paste the
-path into each. Import the per-glyph package — `github.com/tinywasm/icons/trash`,
+path into each. Import the per-glyph package — `webtyp.com/icons/trash`,
 `.../pencil`, … — and take `trash.Ref` (markup) + `trash.Def()` (your
 `IconSvg()` sprite). One id, one geometry, assembled everywhere; `assetmin`
 collapses the duplicate `Def()`s to one `<symbol>`. A glyph private to one
@@ -161,7 +161,7 @@ a block pasted into both consumers.
 ## Testing
 
 ```bash
-go install github.com/tinywasm/devflow/cmd/gotest@latest   # external agents have no global gotest
+go install webtyp.com/devflow/cmd/gotest@latest   # external agents have no global gotest
 gotest
 ```
 

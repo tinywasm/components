@@ -2,7 +2,7 @@
 
 package selectsearch
 
-import "github.com/tinywasm/svg/sprite"
+import "webtyp.com/svg/sprite"
 
 func (c *SelectSearch) IconSvg() *sprite.Sprite {
 	return sprite.NewSprite(

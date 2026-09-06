@@ -1,10 +1,10 @@
 package datatable
 
 import (
-	. "github.com/tinywasm/dom"
-	. "github.com/tinywasm/fmt"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	. "webtyp.com/fmt"
+	. "webtyp.com/html"
+	"webtyp.com/widget"
 )
 
 // NameDataTable is the widget name.

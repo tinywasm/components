@@ -128,7 +128,7 @@ func TestTargetList_CheckBoxCarriesWhiteText(t *testing.T) {
 	}
 }
 
-// The row markup references the shared tinywasm/icons glyphs, not a fixed tick.
+// The row markup references the shared webtyp/icons glyphs, not a fixed tick.
 func TestTargetList_RenderUsesSharedIconGlyphs(t *testing.T) {
 	tl := &TargetList{}
 	tl.Init(nil)

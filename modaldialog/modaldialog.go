@@ -1,9 +1,9 @@
 package modaldialog
 
 import (
-	. "github.com/tinywasm/dom"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	. "webtyp.com/html"
+	"webtyp.com/widget"
 )
 
 // NameModalDialog is the widget name for modal dialog.

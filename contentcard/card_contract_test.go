@@ -3,7 +3,7 @@ package contentcard
 import (
 	"testing"
 
-	"github.com/tinywasm/dom"
+	"webtyp.com/dom"
 )
 
 var _ dom.Component = (*ContentCard)(nil)

@@ -18,9 +18,9 @@ repeat for the others independently.**
 
 | Stage | File | What | Blocked on |
 |---|---|---|---|
-| 1 | [PLAN_STAGE_1_ARROW_HOVER_LAYOUT.md](PLAN_STAGE_1_ARROW_HOVER_LAYOUT.md) | Day grid reclaims the width the ‹ › gutter used to reserve permanently; arrows become a compact row flanking the month name (always visible, any device) and additionally grow into full-height edge overlays on mouse-hover/keyboard-focus only | Nothing — can run first, alone, anytime (it also fixes the month label's now-stale raw-Spanish rendering, see its Stage 1.2, but that fix is safe against either version of `tinywasm/date`) |
-| 2 | [PLAN_STAGE_2_INFINITE_LOOP.md](PLAN_STAGE_2_INFINITE_LOOP.md) | The wrap edge (last→first, first→last) jumps instantly instead of smooth-scrolling backwards across every month in between | `tinywasm/dom`'s `PLAN.md` (below) must be merged + published + version-bumped in `components/go.mod` first |
-| 3 | [PLAN_STAGE_3_MOBILE_COLLAPSE.md](PLAN_STAGE_3_MOBILE_COLLAPSE.md) | On mobile only, picking a day collapses the calendar to a compact chip ("Monday 18 August 2026" by default); tapping it re-expands | `tinywasm/date`'s `PLAN.md` (below) must be merged + published + version-bumped in `components/go.mod` first |
+| 1 | [PLAN_STAGE_1_ARROW_HOVER_LAYOUT.md](PLAN_STAGE_1_ARROW_HOVER_LAYOUT.md) | Day grid reclaims the width the ‹ › gutter used to reserve permanently; arrows become a compact row flanking the month name (always visible, any device) and additionally grow into full-height edge overlays on mouse-hover/keyboard-focus only | Nothing — can run first, alone, anytime (it also fixes the month label's now-stale raw-Spanish rendering, see its Stage 1.2, but that fix is safe against either version of `webtyp/date`) |
+| 2 | [PLAN_STAGE_2_INFINITE_LOOP.md](PLAN_STAGE_2_INFINITE_LOOP.md) | The wrap edge (last→first, first→last) jumps instantly instead of smooth-scrolling backwards across every month in between | `webtyp/dom`'s `PLAN.md` (below) must be merged + published + version-bumped in `components/go.mod` first |
+| 3 | [PLAN_STAGE_3_MOBILE_COLLAPSE.md](PLAN_STAGE_3_MOBILE_COLLAPSE.md) | On mobile only, picking a day collapses the calendar to a compact chip ("Monday 18 August 2026" by default); tapping it re-expands | `webtyp/date`'s `PLAN.md` (below) must be merged + published + version-bumped in `components/go.mod` first |
 
 ## External prerequisites (separate repos, separate plans, already written)
 
@@ -28,9 +28,9 @@ Two of the three stages need one small, additive capability each from a
 foundational repo `components` depends on. Both are self-contained plans,
 already written, sitting in their own repo:
 
-- `https://github.com/tinywasm/dom/blob/main/docs/PLAN.md` — adds
+- `https://github.com/webtyp/dom/blob/main/docs/PLAN.md` — adds
   `Reference.ScrollIntoViewInstant()`. Pure addition. Gates Stage 2.
-- `https://github.com/tinywasm/date/blob/main/docs/PLAN.md` — adds
+- `https://github.com/webtyp/date/blob/main/docs/PLAN.md` — adds
   `WeekdayName` and `ParseDateKey`, **and changes `MonthName`'s existing
   return values from Spanish to English** — a breaking change to
   already-shipped behavior, deliberate (see "Translation registration"
@@ -40,7 +40,7 @@ already written, sitting in their own repo:
 
 Dispatch and merge these two first (they have no dependency on each other
 or on any calendarslider stage), then bump `components/go.mod` (`go get -u
-github.com/tinywasm/dom@latest github.com/tinywasm/date@latest && go mod
+github.com/webtyp/dom@latest github.com/webtyp/date@latest && go mod
 tidy`) before dispatching Stage 2 or Stage 3. Stage 1 needs neither and has
 no reason to wait for them.
 
@@ -48,10 +48,10 @@ no reason to wait for them.
 
 `date.MonthName`/`date.WeekdayName` return English — the canonical,
 untranslated form. `calendarslider` (Stages 1 and 3) renders them through
-`lang.Translate(...)` (`github.com/tinywasm/fmt/lang`) but registers **no**
+`lang.Translate(...)` (`webtyp.com/fmt/lang`) but registers **no**
 dictionary itself: *"the library never registers words, so you decide the
 language your users see"* —
-`https://github.com/tinywasm/layout/blob/main/docs/DICTIONARY.md`,
+`https://github.com/webtyp/layout/blob/main/docs/DICTIONARY.md`,
 the same rule `layout/crudview` already follows for its own strings
 ("Confirm", "Cancel", "Delete", …). With no dictionary registered anywhere
 in the running app, everything renders in English — that is the correct
@@ -62,7 +62,7 @@ A real application that wants Spanish (or any of the other 7 languages
 `layout/docs/DICTIONARY.md` shows for crudview's words:
 
 ```go
-import "github.com/tinywasm/fmt/lang"
+import "webtyp.com/fmt/lang"
 
 func init() {
 	lang.RegisterWords([]lang.DictEntry{
@@ -134,6 +134,6 @@ interaction checks a test suite cannot fully cover on its own.
   follows `expanded`, chip its negation), same mechanics as specified.
 - Verification: `gotest` (vet ✅ race ✅ tests ✅ wasm ✅) and
   `gotest -tinygo` green from `components/`; sprite-leak check
-  (`go list -deps ./... | grep tinywasm/svg/sprite`) empty. Manual
+  (`go list -deps ./... | grep webtyp/svg/sprite`) empty. Manual
   browser checks (hover reveal, wrap-jump feel, mobile collapse/expand)
   still pending — they need a real viewport, not covered here.

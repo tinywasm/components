@@ -5,7 +5,7 @@
 ## Usage
 
 ```go
-import "github.com/tinywasm/components/infobar"
+import "webtyp.com/components/infobar"
 
 bar := &infobar.InfoBar{
     Items: []infobar.InfoItem{

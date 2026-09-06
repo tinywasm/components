@@ -21,7 +21,7 @@
 //     plain override cannot do this safely.
 //   - the lateral inset value, calibrated to crudview's master-detail indent
 //     budget (16px total: crudview card 4 + list 4 + this 8). Retuning it means
-//     re-checking crudview/css.go in tinywasm/layout.
+//     re-checking crudview/css.go in webtyp/layout.
 //
 // MobileOpts carries the phone-breakpoint overrides. The caller spreads them
 // into its OWN On(css.Mobile, …) — the conformance rail keeps the css import
@@ -39,8 +39,8 @@
 package listgap
 
 import (
-	"github.com/tinywasm/widget"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/widget"
+	"webtyp.com/widget/style"
 )
 
 // rowGap must clear PartBadge's own straddle: the badge hangs

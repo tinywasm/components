@@ -3,9 +3,9 @@
 package calendarslider
 
 import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/css"
+	"webtyp.com/widget"
+	"webtyp.com/widget/style"
 )
 
 // RenderCSS describe el aspecto del calendario con los tokens del tema. La
@@ -180,7 +180,7 @@ func (c *CalendarSlider) RenderCSS() *css.Stylesheet {
 		// keeps that same fill ratio instead of bleeding edge to edge.
 		// Both are system tokens; no raw pixels, no viewBox padding hacks —
 		// svg.go keeps the plain FontAwesome viewBox + currentColor path,
-		// the same shape every tinywasm/icons glyph package ships.
+		// the same shape every webtyp/icons glyph package ships.
 		Part(PartCollapsedIcon,
 			style.FontSize(style.TextLg),
 			style.IconBox(style.IconMd),

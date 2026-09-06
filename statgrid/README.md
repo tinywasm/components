@@ -5,7 +5,7 @@
 ## Usage
 
 ```go
-import "github.com/tinywasm/components/statgrid"
+import "webtyp.com/components/statgrid"
 
 grid := &statgrid.StatGrid{
     Items: []statgrid.StatItem{

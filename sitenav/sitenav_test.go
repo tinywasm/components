@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tinywasm/js"
-	"github.com/tinywasm/widget"
+	"webtyp.com/js"
+	"webtyp.com/widget"
 )
 
 func TestSiteNav_AccessibilityAttributes(t *testing.T) {

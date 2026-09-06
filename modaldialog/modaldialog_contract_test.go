@@ -4,7 +4,7 @@ import (
 	"regexp"
 	"testing"
 
-	"github.com/tinywasm/dom"
+	"webtyp.com/dom"
 )
 
 var _ dom.Component = (*ModalDialog)(nil)

@@ -5,12 +5,12 @@ owns it. Out of the flow (`OnEdge`), so the host keeps its box whether the
 bubble shows "1", "99" or nothing at all.
 
 ## Import
-`"github.com/tinywasm/components/countbadge"`
+`"webtyp.com/components/countbadge"`
 
 ## Usage
 
 ```go
-import "github.com/tinywasm/components/countbadge"
+import "webtyp.com/components/countbadge"
 
 count := dom.NewString("0")
 visible := dom.NewBool(false)

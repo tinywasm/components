@@ -1,4 +1,4 @@
-# tinywasm/components — Architecture
+# webtyp/components — Architecture
 
 WHAT & WHY, not HOW. Implementation guidance lives in
 [`components/AGENTS.md`](../../AGENTS.md) and the component skill
@@ -9,13 +9,13 @@ WHAT & WHY, not HOW. Implementation guidance lives in
 A component is a leaf building block with zero layout knowledge: it implements
 `Render() *dom.Element` (plus an optional `Init(ctx)`) and declares its visual
 contract through `RenderCSS()` in a `//go:build !wasm` file. Layout skeletons
-live in `tinywasm/layout`; this repo never imports it. See
+live in `webtyp/layout`; this repo never imports it. See
 [`README.md#where-components-fit`](../README.md#where-components-fit).
 
 ```
 flowchart TD
-  A[consumer composition root] --> B[tinywasm/layout shell e.g. crudview]
-  B --> C[tinywasm/components leaf]
+  A[consumer composition root] --> B[webtyp/layout shell e.g. crudview]
+  B --> C[webtyp/components leaf]
   C --> D[typed signals + Bind*]
   C --> E[RenderCSS&#40;&#41; sheet]
 ```

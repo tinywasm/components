@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tinywasm/components/targethour"
-	"github.com/tinywasm/view"
+	"webtyp.com/components/targethour"
+	"webtyp.com/view"
 )
 
 type listViewContract interface {

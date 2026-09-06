@@ -1,23 +1,23 @@
 # Components Catalog
 
-This catalog documents the available reusable components in `tinywasm/components`.
+This catalog documents the available reusable components in `webtyp/components`.
 
 [← Back to Main README](../README.md)
 
 ## Theme
 
-All components consume CSS custom properties from `tinywasm/dom`'s `theme.css`.
+All components consume CSS custom properties from `webtyp/dom`'s `theme.css`.
 Inject `dom.ThemeCSS` into your page `<head>` once via the site builder.
 Components do not define colors — they inherit from the theme.
 
 ## Where components fit
 
 `components` are raw reusable pieces with no layout knowledge. A layout
-skeleton in `tinywasm/layout` (`platformd`, `rightpanel`, `crudview`) exposes
+skeleton in `webtyp/layout` (`platformd`, `rightpanel`, `crudview`) exposes
 named slots; the consumer's composition root (e.g. `config/layouts`)
 preconfigures a layout once and injects these components into its slots.
 Modules never assemble components by hand, and this repo never imports
-`tinywasm/layout`. See the [root README](../README.md#where-components-fit)
+`webtyp/layout`. See the [root README](../README.md#where-components-fit)
 for the full diagram.
 
 ## Overview
@@ -125,6 +125,6 @@ Signal-driven floating button that cycles between `auto → dark → light` them
 
 ## Forms
 
-Forms are NOT part of `tinywasm/components`.
-Use `github.com/tinywasm/form` directly — it is the only form library in the
-tinywasm ecosystem and provides field layout, validation, labels and submission.
+Forms are NOT part of `webtyp/components`.
+Use `webtyp.com/form` directly — it is the only form library in the
+webtyp ecosystem and provides field layout, validation, labels and submission.

@@ -2,7 +2,7 @@
 
 package calendarslider
 
-import "github.com/tinywasm/svg/sprite"
+import "webtyp.com/svg/sprite"
 
 // IconSvg ships the collapsed chip's calendar glyph. FontAwesome Free 6
 // "calendar-day" (solid), viewBox 0 0 448 512.

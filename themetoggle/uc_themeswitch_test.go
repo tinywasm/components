@@ -5,8 +5,8 @@ package themetoggle
 import (
 	"testing"
 
-	"github.com/tinywasm/dom"
-	"github.com/tinywasm/fmt"
+	"webtyp.com/dom"
+	"webtyp.com/fmt"
 )
 
 func setUp() {

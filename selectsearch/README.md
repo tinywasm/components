@@ -14,7 +14,7 @@ Signal-driven searchable dropdown with static options, live filtering, and optio
 ## Usage
 
 ```go
-import "github.com/tinywasm/components/selectsearch"
+import "webtyp.com/components/selectsearch"
 
 ss := &selectsearch.SelectSearch{
     Placeholder: "Choose an option...",
@@ -48,6 +48,6 @@ ss := &selectsearch.SelectSearch{
 `SelectSearch` implements `widget.Filterable`: picking an option calls the
 registered sink with the option's `ID`. This is in addition to `OnSelect`
 (which also gets `Description`) — a host that only needs the generic
-narrowing contract (e.g. `tinywasm/layout/crudview`'s `Filter` slot) can drop
+narrowing contract (e.g. `webtyp/layout/crudview`'s `Filter` slot) can drop
 a `*SelectSearch` in without any bespoke wiring, the same way it accepts a
 `*searchbar.SearchBar` today.

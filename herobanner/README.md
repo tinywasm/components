@@ -6,8 +6,8 @@
 
 ```go
 import (
-    "github.com/tinywasm/components/actionbutton"
-    "github.com/tinywasm/components/herobanner"
+    "webtyp.com/components/actionbutton"
+    "webtyp.com/components/herobanner"
 )
 
 hero := &herobanner.HeroBanner{

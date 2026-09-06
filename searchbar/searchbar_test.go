@@ -4,7 +4,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tinywasm/widget"
+	"webtyp.com/widget"
 )
 
 func TestSearchBar_RendersBarAndInput(t *testing.T) {

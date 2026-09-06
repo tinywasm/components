@@ -16,8 +16,8 @@ Signal-driven component to toggle the application theme (dark / light).
 
 ```go
 import (
-	"github.com/tinywasm/components/themetoggle"
-	"github.com/tinywasm/dom"
+	"webtyp.com/components/themetoggle"
+	"webtyp.com/dom"
 )
 
 func main() {

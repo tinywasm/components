@@ -3,8 +3,8 @@
 package contentcard
 
 import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/css"
+	"webtyp.com/widget/style"
 )
 
 // RenderCSS defines the visual sheet for contentcard.

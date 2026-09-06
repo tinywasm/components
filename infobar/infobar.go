@@ -1,10 +1,10 @@
 package infobar
 
 import (
-	. "github.com/tinywasm/dom"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/svg"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	. "webtyp.com/html"
+	"webtyp.com/svg"
+	"webtyp.com/widget"
 )
 
 // NameInfoBar is the widget name for infobar.

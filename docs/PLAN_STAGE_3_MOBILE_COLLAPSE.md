@@ -10,8 +10,8 @@ REVIEWER: none
 ## ⚠️ BLOCKING PREREQUISITE — do not dispatch this stage until it is satisfied
 
 This stage calls `date.WeekdayName` and `date.ParseDateKey`, neither of
-which exists in any published `tinywasm/date` version yet. Both are added by
-`https://github.com/tinywasm/date/blob/main/docs/PLAN.md` (a separate,
+which exists in any published `webtyp/date` version yet. Both are added by
+`https://github.com/webtyp/date/blob/main/docs/PLAN.md` (a separate,
 already-written, self-contained plan in that repo) — which ALSO changes
 `date.MonthName`'s existing return values from Spanish to English (a
 breaking change to already-shipped behavior, not just an addition: see that
@@ -20,9 +20,9 @@ plan's Stage 1). Before dispatching THIS stage:
 1. That `date` plan must be dispatched, merged, and published (new `date`
    version tagged).
 2. `components/go.mod` must be bumped to that new version:
-   `go get -u github.com/tinywasm/date@latest` from `components/`, then
+   `go get -u webtyp.com/date@latest` from `components/`, then
    `go mod tidy`.
-3. Confirm `grep -n "func WeekdayName\|func ParseDateKey" $(go env GOPATH)/pkg/mod/github.com/tinywasm/date@*/date.go`
+3. Confirm `grep -n "func WeekdayName\|func ParseDateKey" $(go env GOPATH)/pkg/mod/webtyp.com/date@*/date.go`
    finds both before writing a single line of this stage.
 4. **The `MonthName` breaking change ripples into 3 EXISTING tests that
    assert its old Spanish output — fix these in the SAME commit as the
@@ -115,14 +115,14 @@ This is exactly the split needed: desktop never hides the strip and never
 shows the collapsed row, no matter what; mobile shows exactly one of the two,
 picked by each element's OWN `data-open`.
 
-## Stage 3.1 — a local icon (no new shared `tinywasm/icons` package)
+## Stage 3.1 — a local icon (no new shared `webtyp/icons` package)
 
 The collapsed chip's icon is specific to this one component's own chrome —
 the same situation `selectsearch` was in for its dropdown chevron
-(`iconArrowDown`, defined locally, not in `tinywasm/icons`). Follow that
-exact precedent, not the shared-icon-per-package convention `tinywasm/icons`
+(`iconArrowDown`, defined locally, not in `webtyp/icons`). Follow that
+exact precedent, not the shared-icon-per-package convention `webtyp/icons`
 uses for cross-component action glyphs (trash/pencil/etc.) — a local icon is
-correct here, do not create a new `tinywasm/icons` subpackage for this.
+correct here, do not create a new `webtyp/icons` subpackage for this.
 
 **New file: `svg.go`** (this component has no icons today, so no such file
 exists yet — this is the SSR-split convention every icon-bearing component
@@ -133,7 +133,7 @@ follows: geometry behind `//go:build !wasm`, never in the main file):
 
 package calendarslider
 
-import "github.com/tinywasm/svg/sprite"
+import "webtyp.com/svg/sprite"
 
 // IconSvg ships the collapsed chip's calendar glyph. FontAwesome Free 6
 // "calendar-day" (solid), viewBox 0 0 448 512.
@@ -153,8 +153,8 @@ func (c *CalendarSlider) IconSvg() *sprite.Sprite {
 const iconCalendar = svg.Icon("cs-calendar")
 ```
 
-Add `"github.com/tinywasm/svg"` to this file's import block (not present
-today). Also add `"github.com/tinywasm/fmt/lang"`, needed by
+Add `"webtyp.com/svg"` to this file's import block (not present
+today). Also add `"webtyp.com/fmt/lang"`, needed by
 `buildCollapsed` in Stage 3.3 below — if Stage 1 already merged, the import
 is there already from its Stage 1.2; do not add it twice.
 

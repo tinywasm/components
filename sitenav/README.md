@@ -6,8 +6,8 @@
 
 ```go
 import (
-    "github.com/tinywasm/components/actionbutton"
-    "github.com/tinywasm/components/sitenav"
+    "webtyp.com/components/actionbutton"
+    "webtyp.com/components/sitenav"
 )
 
 nav := &sitenav.SiteNav{

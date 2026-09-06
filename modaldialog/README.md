@@ -3,14 +3,14 @@
 Modal dialog overlay with backdrop and close button.
 
 ## Import
-`"github.com/tinywasm/components/modaldialog"`
+`"webtyp.com/components/modaldialog"`
 
 ## Usage
 
 ```go
 import (
-    "github.com/tinywasm/components/modaldialog"
-    . "github.com/tinywasm/html"
+    "webtyp.com/components/modaldialog"
+    . "webtyp.com/html"
 )
 
 m := &modaldialog.ModalDialog{

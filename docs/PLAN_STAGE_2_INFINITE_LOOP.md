@@ -10,17 +10,17 @@ REVIEWER: none
 ## ⚠️ BLOCKING PREREQUISITE — do not dispatch this stage until it is satisfied
 
 This stage calls `dom.Reference.ScrollIntoViewInstant()`, which does not
-exist in any published `tinywasm/dom` version yet. It is added by
-`https://github.com/tinywasm/dom/blob/main/docs/PLAN.md` (a separate,
+exist in any published `webtyp/dom` version yet. It is added by
+`https://github.com/webtyp/dom/blob/main/docs/PLAN.md` (a separate,
 already-written, self-contained plan in that repo). Before dispatching THIS
 stage:
 
 1. That `dom` plan must be dispatched, merged, and published (new `dom`
    version tagged).
 2. `components/go.mod` must be bumped to that new version:
-   `go get -u github.com/tinywasm/dom@latest` from `components/`, then
+   `go get -u webtyp.com/dom@latest` from `components/`, then
    `go mod tidy`.
-3. Confirm `grep -n "ScrollIntoViewInstant" $(go env GOPATH)/pkg/mod/github.com/tinywasm/dom@*/reference.go`
+3. Confirm `grep -n "ScrollIntoViewInstant" $(go env GOPATH)/pkg/mod/webtyp.com/dom@*/reference.go`
    finds it before writing a single line of this stage.
 
 If dispatched before that, every step below fails to compile — this is not

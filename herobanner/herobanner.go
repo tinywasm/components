@@ -1,10 +1,10 @@
 package herobanner
 
 import (
-	. "github.com/tinywasm/dom"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/image"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	. "webtyp.com/html"
+	"webtyp.com/image"
+	"webtyp.com/widget"
 )
 
 // NameHeroBanner is the widget name for herobanner.

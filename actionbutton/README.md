@@ -3,12 +3,12 @@
 Versatile button component with variant support.
 
 ## Import
-`"github.com/tinywasm/components/actionbutton"`
+`"webtyp.com/components/actionbutton"`
 
 ## Usage
 
 ```go
-import "github.com/tinywasm/components/actionbutton"
+import "webtyp.com/components/actionbutton"
 
 btn := &actionbutton.ActionButton{
     Text: "Save Changes",

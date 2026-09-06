@@ -2,7 +2,7 @@
 
 package themetoggle
 
-import . "github.com/tinywasm/dom"
+import . "webtyp.com/dom"
 
 func (t *ThemeToggle) Init(_ Ctx) {
 	t.theme = NewString(string(defaultTheme))

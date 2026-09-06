@@ -1,9 +1,9 @@
 package themetoggle
 
 import (
-	. "github.com/tinywasm/dom"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	. "webtyp.com/html"
+	"webtyp.com/widget"
 )
 
 // NameThemeToggle is the widget name.
@@ -18,7 +18,7 @@ var (
 )
 
 // storageKey identifica la entrada de localStorage del componente.
-const storageKey = "tinywasm-themeswitch"
+const storageKey = "webtyp-themeswitch"
 
 // TsTheme representa el estado de tema del componente.
 type TsTheme string
@@ -41,7 +41,7 @@ type ThemeToggle struct {
 	// supported es falso solo cuando el navegador no puede resolver
 	// light-dark() (ver dom.SupportsLightDark): en ese caso el toggle no
 	// tiene nada que hacer — el color ya está fijo en modo claro por el
-	// fallback de tinywasm/css — y un botón que no responde al pulsarlo se
+	// fallback de webtyp/css — y un botón que no responde al pulsarlo se
 	// lee como un bug, no como una limitación del dispositivo. Calculado una
 	// sola vez en Init, antes del primer Render (ver themeswitch_wasm.go).
 	// SSR (themeswitch_backend.go) no puede saberlo — no hay navegador — así

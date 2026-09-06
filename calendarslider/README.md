@@ -11,13 +11,13 @@ Declarative, JavaScript-free month calendar: one month visible at a time, slidin
 - Selected day is a `*dom.SignalString` (`YYYY-MM-DD`) written by the host or by clicking a bookable day; the DOM patches in place via `BindState(widget.Selected, ...)` — no full re-render.
 - `OnSelect` callback fired on click, in addition to the signal.
 - Accessible: `role=grid`/`row`/`gridcell`/`columnheader`, `aria-selected`, `aria-hidden` filler cells, labeled navigation buttons.
-- Light/dark out of the box: every color comes from theme tokens (`light-dark()`-aware), so the calendar follows whatever `data-theme` the app sets — pair it with `tinywasm/components/themetoggle` for a user-facing switch.
+- Light/dark out of the box: every color comes from theme tokens (`light-dark()`-aware), so the calendar follows whatever `data-theme` the app sets — pair it with `webtyp/components/themetoggle` for a user-facing switch.
 - Mobile-aware: the single-month-at-a-time layout already fits a phone; the only device-specific rule grows the day cell to a more comfortable touch target — no JS, pure `On(css.Mobile, ...)`.
 
 ## Usage
 
 ```go
-import "github.com/tinywasm/components/calendarslider"
+import "webtyp.com/components/calendarslider"
 
 cal := &calendarslider.CalendarSlider{
     Start:     "2026-08", // first month of the strip (defaults to today's month)

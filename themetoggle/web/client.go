@@ -3,8 +3,8 @@
 package main
 
 import (
-	. "github.com/tinywasm/dom"
-	. "github.com/tinywasm/html"
+	. "webtyp.com/dom"
+	. "webtyp.com/html"
 )
 
 type App struct {

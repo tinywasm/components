@@ -5,8 +5,8 @@ package targetdate_test
 import (
 	"testing"
 
-	"github.com/tinywasm/components/targetdate"
-	. "github.com/tinywasm/dom"
+	"webtyp.com/components/targetdate"
+	. "webtyp.com/dom"
 	"syscall/js"
 )
 

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	. "github.com/tinywasm/fmt"
+	. "webtyp.com/fmt"
 )
 
 var (

@@ -3,7 +3,7 @@
 package fieldset
 
 import (
-	"github.com/tinywasm/widget"
+	"webtyp.com/widget"
 	"regexp"
 	"strings"
 	"testing"

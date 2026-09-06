@@ -3,10 +3,10 @@
 package targethour
 
 import (
-	"github.com/tinywasm/icons/pencil"
-	"github.com/tinywasm/icons/selectall"
-	"github.com/tinywasm/icons/trash"
-	"github.com/tinywasm/svg/sprite"
+	"webtyp.com/icons/pencil"
+	"webtyp.com/icons/selectall"
+	"webtyp.com/icons/trash"
+	"webtyp.com/svg/sprite"
 )
 
 // IconSvg registers the shared trash/pencil action glyphs (see

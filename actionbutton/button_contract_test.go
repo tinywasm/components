@@ -3,7 +3,7 @@ package actionbutton
 import (
 	"testing"
 
-	"github.com/tinywasm/dom"
+	"webtyp.com/dom"
 )
 
 var _ dom.Component = (*ActionButton)(nil)

@@ -3,8 +3,8 @@ package calendarslider
 import (
 	"testing"
 
-	"github.com/tinywasm/dom"
-	"github.com/tinywasm/widget"
+	"webtyp.com/dom"
+	"webtyp.com/widget"
 )
 
 var _ dom.Component = (*CalendarSlider)(nil)

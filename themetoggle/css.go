@@ -3,8 +3,8 @@
 package themetoggle
 
 import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/css"
+	"webtyp.com/widget/style"
 )
 
 // RenderCSS defines the themetoggle visual contract using style DSL. It is a

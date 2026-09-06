@@ -5,9 +5,9 @@ package listselect_test
 import (
 	"testing"
 
-	"github.com/tinywasm/components/listselect"
-	. "github.com/tinywasm/dom"
-	"github.com/tinywasm/widget"
+	"webtyp.com/components/listselect"
+	. "webtyp.com/dom"
+	"webtyp.com/widget"
 	"syscall/js"
 )
 

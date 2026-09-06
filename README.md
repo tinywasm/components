@@ -1,7 +1,7 @@
-# TinyWasm Components
+# WebTyp Components
 <img src="docs/img/badges.svg">
 
-A catalog of reusable, efficient, and WebAssembly-ready UI components for the TinyWasm ecosystem.
+A catalog of reusable, efficient, and WebAssembly-ready UI components for the WebTyp ecosystem.
 
 ## Features
 
@@ -12,14 +12,14 @@ A catalog of reusable, efficient, and WebAssembly-ready UI components for the Ti
 -   **No generics**: concrete typed signals (`SignalString`/`SignalBool`/`SignalNodes`), matching the
     ecosystem's "cero any, cero map" rule — readable, TinyGo-friendly.
 -   **SSR/CSR Split**: CSS and heavy assets are server-side only; WASM binaries remain tiny.
--   **Fluent API**: Uses `tinywasm/dom` for type-safe, declarative UI construction.
--   **Theme Integration**: Consumes canonical tokens from `tinywasm/dom`.
+-   **Fluent API**: Uses `webtyp/dom` for type-safe, declarative UI construction.
+-   **Theme Integration**: Consumes canonical tokens from `webtyp/dom`.
 -   **Explicit Registration**: Only pay for what you use (tree-shakeable).
 
 ## Installation
 
 ```bash
-go get github.com/tinywasm/components
+go get webtyp.com/components
 ```
 
 To enable the default theme, inject `dom.ThemeCSS` into your page `<head>` once via your site builder.
@@ -30,9 +30,9 @@ To enable the default theme, inject `dom.ThemeCSS` into your page `<head>` once 
 
 ```go
 import (
-    "github.com/tinywasm/components/actionbutton"
-    "github.com/tinywasm/components/contentcard"
-    . "github.com/tinywasm/dom"
+    "webtyp.com/components/actionbutton"
+    "webtyp.com/components/contentcard"
+    . "webtyp.com/dom"
 )
 ```
 
@@ -64,8 +64,8 @@ DOM updates itself — you never call `Update()`.
 
 ```go
 import (
-    . "github.com/tinywasm/dom"
-    . "github.com/tinywasm/html"
+    . "webtyp.com/dom"
+    . "webtyp.com/html"
 )
 
 type LikeButton struct {
@@ -142,8 +142,8 @@ See [Component Catalog](docs/CATALOG.md) for full documentation.
 The ecosystem is layered:
 
 ```
-tinywasm/components  →  raw reusable pieces (this repo). No layout knowledge.
-tinywasm/layout       →  published layout skeletons (platformd shell, rightpanel,
+webtyp/components  →  raw reusable pieces (this repo). No layout knowledge.
+webtyp/layout       →  published layout skeletons (platformd shell, rightpanel,
                           crudview) with named slots (Form, Detail, HeadControls, …).
 consumer's composition root (e.g. config/layouts)
                        →  preconfigures a layout once, injecting components into
@@ -153,7 +153,7 @@ consumer's composition root (e.g. config/layouts)
 
 Two rules keep this layering intact:
 
-- **`components` never imports `tinywasm/layout`.** The reverse (layout importing
+- **`components` never imports `webtyp/layout`.** The reverse (layout importing
   a component) is allowed but assembly belongs to the consumer, not this repo.
 - **Assembly never lives in modules.** A module consumes a preconfigured layout;
   it does not construct `ActionButton`/`DataTable`/etc. by hand inside a slot.
@@ -166,7 +166,7 @@ See [docs/SKILL.md](docs/SKILL.md) for the slot-readiness contract and
 
 ## Forms
 
-Forms are NOT part of `tinywasm/components`. Use `github.com/tinywasm/form` directly — it is the standard form library for the tinywasm ecosystem.
+Forms are NOT part of `webtyp/components`. Use `webtyp.com/form` directly — it is the standard form library for the webtyp ecosystem.
 
 ## Documentation
 
@@ -188,9 +188,9 @@ See [Component Skill Guide](docs/SKILL.md) to learn how to build your own compon
 
 ### Running Tests
 
-Use `gotest` (the tinywasm runner — WASM tests run against a real DOM), never `go test`:
+Use `gotest` (the webtyp runner — WASM tests run against a real DOM), never `go test`:
 
 ```bash
-go install github.com/tinywasm/devflow/cmd/gotest@latest
+go install webtyp.com/devflow/cmd/gotest@latest
 gotest
 ```

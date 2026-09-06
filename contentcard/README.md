@@ -3,14 +3,14 @@
 Container with header, body, and footer sections.
 
 ## Import
-`"github.com/tinywasm/components/contentcard"`
+`"webtyp.com/components/contentcard"`
 
 ## Usage
 
 ```go
 import (
-    "github.com/tinywasm/components/contentcard"
-    . "github.com/tinywasm/html"
+    "webtyp.com/components/contentcard"
+    . "webtyp.com/html"
 )
 
 c := &contentcard.ContentCard{

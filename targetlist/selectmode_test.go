@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tinywasm/components/targetlist"
+	"webtyp.com/components/targetlist"
 )
 
 // API-level assembly tests. Row MARKUP is asserted in the internal test file,

@@ -8,7 +8,7 @@ keystroke and the host decides what that means.
 ## Usage
 
 ```go
-import "github.com/tinywasm/components/searchbar"
+import "webtyp.com/components/searchbar"
 
 bar := &searchbar.SearchBar{Placeholder: "Buscar..."}
 bar.OnFilterChange(func(term string) { /* filter your list */ })

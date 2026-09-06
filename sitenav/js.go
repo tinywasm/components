@@ -2,7 +2,7 @@
 
 package sitenav
 
-import "github.com/tinywasm/js"
+import "webtyp.com/js"
 
 // RenderJS returns the vanilla JavaScript snippet responsible for the mobile
 // menu toggle behavior and link click auto-close.

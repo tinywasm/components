@@ -1,6 +1,6 @@
 // Package calendarslider ports the legacy "calendar normal" widget — a
 // single-month view with holidays, occupation percentages and day selection,
-// sliding between neighboring months — to the tinywasm construction harness:
+// sliding between neighboring months — to the webtyp construction harness:
 // pure Go, zero JavaScript. The old infinite slider (JS that animated
 // margin-left and recycled DOM nodes) becomes a bounded, pre-rendered strip
 // of up to maxMonths months. The ‹ › controls are <button>s; a small click
@@ -12,14 +12,14 @@
 package calendarslider
 
 import (
-	"github.com/tinywasm/date"
-	. "github.com/tinywasm/dom"
-	"github.com/tinywasm/fmt"
-	"github.com/tinywasm/fmt/lang"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/svg"
-	"github.com/tinywasm/time"
-	"github.com/tinywasm/widget"
+	"webtyp.com/date"
+	. "webtyp.com/dom"
+	"webtyp.com/fmt"
+	"webtyp.com/fmt/lang"
+	. "webtyp.com/html"
+	"webtyp.com/svg"
+	"webtyp.com/time"
+	"webtyp.com/widget"
 )
 
 // NameCalendarSlider is the widget identity.

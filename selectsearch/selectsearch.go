@@ -1,11 +1,11 @@
 package selectsearch
 
 import (
-	. "github.com/tinywasm/dom"
-	"github.com/tinywasm/fmt"
-	. "github.com/tinywasm/html"
-	"github.com/tinywasm/svg"
-	"github.com/tinywasm/widget"
+	. "webtyp.com/dom"
+	"webtyp.com/fmt"
+	. "webtyp.com/html"
+	"webtyp.com/svg"
+	"webtyp.com/widget"
 )
 
 // NameSelectSearch is the widget name.
@@ -142,7 +142,7 @@ var _ widget.Filterable = (*SelectSearch)(nil)
 // SEPARATE, additive wiring path from OnSelect — OnSelect still gets
 // (id, description) for a consumer that needs both; OnFilterChange exists so
 // a host that only knows the generic Filterable contract (e.g.
-// tinywasm/layout/crudview's Filter slot) can drop a *SelectSearch into the
+// webtyp/layout/crudview's Filter slot) can drop a *SelectSearch into the
 // same seam a *searchbar.SearchBar fills today, with no bespoke glue.
 //
 // The signature is fixed by widget.Filterable — do not add a parameter, do

@@ -191,7 +191,7 @@ func TestTargetDate_CheckHiddenUntilSelectionMode(t *testing.T) {
 	}
 }
 
-// The row markup references the shared tinywasm/icons glyphs, not a fixed tick.
+// The row markup references the shared webtyp/icons glyphs, not a fixed tick.
 func TestTargetDate_RenderUsesSharedIconGlyphs(t *testing.T) {
 	td := &TargetDate{}
 	td.Init(nil)

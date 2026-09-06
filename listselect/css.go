@@ -3,9 +3,9 @@
 package listselect
 
 import (
-	"github.com/tinywasm/css"
-	"github.com/tinywasm/widget"
-	"github.com/tinywasm/widget/style"
+	"webtyp.com/css"
+	"webtyp.com/widget"
+	"webtyp.com/widget/style"
 )
 
 // ApplyRow adds the per-row selection-check skin to s (the host widget's

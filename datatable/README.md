@@ -3,12 +3,12 @@
 Data table for structured information.
 
 ## Import
-`"github.com/tinywasm/components/datatable"`
+`"webtyp.com/components/datatable"`
 
 ## Usage
 
 ```go
-import "github.com/tinywasm/components/datatable"
+import "webtyp.com/components/datatable"
 
 t := &datatable.DataTable{
     Headers: []string{"ID", "Name", "Role"},
