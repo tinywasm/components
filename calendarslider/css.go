@@ -28,11 +28,18 @@ import (
 // más cómodo.
 func (c *CalendarSlider) RenderCSS() *css.Stylesheet {
 	return style.For(c).
+		// Full width, not Compact: the widget must use its whole column —
+		// capped at 24rem it floated centered with dead margins inside a
+		// wide aside. The grid tracks (1fr) and the square days do the rest.
 		Root(
-			style.Center(style.Compact),
+			style.Center(style.Full),
 		).
+		// FixedGrid with a real gap (not SpaceNone): the cells grow with
+		// their track but the gutters stay one constant Space2 step — the
+		// original calendar read as separate cards with even air, never as
+		// one fused slab. Same gap header and weeks, so the columns align.
 		Part(PartWeekRow,
-			style.FixedGrid(7, style.SpaceNone),
+			style.FixedGrid(7, style.Space2),
 		).
 		Part(PartStrip,
 			style.ScrollRow(style.SpaceNone),
@@ -74,15 +81,20 @@ func (c *CalendarSlider) RenderCSS() *css.Stylesheet {
 		Part(PartDayStack,
 			style.Stack(style.SpaceNone),
 		).
+		// The day fills its grid track and keeps the square shape at any
+		// width: MediaBox(AspectSquare) sizes the box off the column, so a
+		// 7-column grid never drops below ~24px (today's size, kept as the
+		// floor for free) and grows proportionally on wider viewports. No
+		// IconBox (a fixed box is what stranded the small cells), no mobile
+		// override (aspect covers every breakpoint, touch-sized by geometry).
+		// Centering comes with the MediaBox recipe itself.
 		Part(PartDay,
-			style.CenterContent(),
-			style.IconBox(style.IconMd),
-			style.CenterSelf(),
+			style.MediaBox(style.AspectSquare),
 		).
 		Part(PartDayNum,
 			style.Grow(),
 			style.CenterContent(),
-			style.FontSize(style.TextXs),
+			style.FontSize(style.TextSm),
 			style.FontWeight(style.WeightBold),
 		).
 		Part(PartDayUse,
@@ -177,13 +189,6 @@ func (c *CalendarSlider) RenderCSS() *css.Stylesheet {
 			style.Grow(),
 			style.FontSize(style.TextSm),
 			style.FontWeight(style.WeightBold),
-		).
-		// The chip is always visible, on every viewport: it is the corner
-		// the calendar folds into and unfolds from, so it must exist as a
-		// toggle even while expanded (tap to collapse, tap to expand). No
-		// RevealedBy, no OnlyOn gate — just the docked styling below.
-		On(css.Mobile, PartDay,
-			style.IconBox(style.IconLg),
 		).
 		Stylesheet()
 }

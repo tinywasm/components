@@ -366,7 +366,59 @@ func TestNavRowAlwaysVisible(t *testing.T) {
 	}
 }
 
-// TestMonthNavMatchesEcosystemSize cubre la huella de 50px: las flechas son
+// TestDaysFillTheirTrack cubre el crecimiento proporcional: el día es un
+// cuadrado del ancho de su columna (aspect-ratio), nunca caja fija — a 7
+// columnas no baja de ~24px (el tamaño actual, conservado como piso) y crece
+// en viewports anchos. Sin override móvil: el aspect cubre todo.
+func TestDaysFillTheirTrack(t *testing.T) {
+	c := &CalendarSlider{Start: "2026-08"}
+	c.Init(nil)
+	cssOut := c.RenderCSS().String()
+
+	idx := strings.Index(cssOut, ".calendarslider__day {")
+	if idx < 0 {
+		t.Fatal("la regla base del día no aparece")
+	}
+	rule := cssOut[idx:]
+	if end := strings.Index(rule, "}"); end >= 0 {
+		rule = rule[:end]
+	}
+	if !strings.Contains(rule, "aspect-ratio") {
+		t.Errorf("el día debería dimensionarse por aspect-ratio (cuadrado de su columna), dice:\n%s", rule)
+	}
+	if strings.Contains(rule, "width: 1.5em") || strings.Contains(rule, "height: 1.5em") {
+		t.Errorf("el día no debería llevar caja fija IconBox, dice:\n%s", rule)
+	}
+	if media := strings.Index(cssOut, "@media"); media >= 0 {
+		if strings.Contains(cssOut[media:], ".calendarslider__day {") {
+			t.Errorf("el día no debería tener regla móvil propia (el aspect cubre todo)")
+		}
+	}
+	// Gutters constantes: header y semanas llevan el mismo gap Space2 —
+	// las celdas crecen pero la separación nunca se fusiona en bloque.
+	// (Se revisan todos los bloques: el primero es el fragmento primitives.)
+	foundGap := false
+	rest := cssOut
+	for {
+		i := strings.Index(rest, ".calendarslider__week-row {")
+		if i < 0 {
+			break
+		}
+		block := rest[i:]
+		if end := strings.Index(block, "}"); end >= 0 {
+			block = block[:end]
+		}
+		if strings.Contains(block, "var(--space-2") {
+			foundGap = true
+			break
+		}
+		rest = rest[i+1:]
+	}
+	if !foundGap {
+		t.Errorf("la grilla debería llevar gap Space2 uniforme")
+	}
+}
+
 // cajas bare de --control-height con padding Space2 (mismo box que cada
 // cap), y la etiqueta va en TextSm como el texto del chip — nada en
 // miniatura junto a botones de 64px.

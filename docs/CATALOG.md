@@ -57,7 +57,9 @@ anchors — an anchor mutates `location.hash`, which a hash-routed shell reads
 as a route change). Holidays (red), occupation percentage (selectable days
 with `N%` bar), today marker, and single-day selection through a
 `*dom.SignalString` (`YYYY-MM-DD`) with `BindState(widget.Selected, ...)` —
-the DOM patches in place, never re-renders. The month nav is one static
+the DOM patches in place, never re-renders. Day cells fill their grid track
+(squares via aspect-ratio, ~24px floor, no fixed boxes), so the grid always
+uses the full card width. The month nav is one static
 centered row (‹ label ›, 50px boxes from the closed scales), identical on
 desktop and touch — no hover reveal anywhere. Folding works on every
 viewport: the strip shows if and only if expanded (desktop defaults to
